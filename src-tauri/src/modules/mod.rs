@@ -18,6 +18,7 @@ pub mod group_settings;
 pub mod codex_account;
 pub mod codex_quota;
 pub mod codex_oauth;
+pub mod tray;
 
 // 重新导出常用函数
 pub use account::*;

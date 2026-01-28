@@ -61,8 +61,8 @@
       "storageTitle": "Adresáře a úložiště",
       "dataDir": "Datový adresář",
       "dataDirDesc": "Umístění pro uložení účtů a konfiguračních souborů.",
-      "fpDir": "Úložiště otisků",
-      "fpDirDesc": "Umístění pro soubory otisků zařízení."
+      "fpDir": "Úložiště Antigravity",
+      "fpDirDesc": "Umístění datových souborů Antigravity."
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -160,6 +160,7 @@
       "default": "Výchozí",
       "overall": "Podle celkové kvóty",
       "byGroup": "Podle kvóty {{group}}",
+      "byGroupReset": "Podle času resetu {{group}}",
       "createdAt": "Podle data vytvoření",
       "descTooltip": "Sestupně, kliknutím přepnete na vzestupně",
       "ascTooltip": "Vzestupně, kliknutím přepnete na sestupně",
@@ -530,6 +531,15 @@
     "message": "Současná verze v{{current}}, je k dispozici nová verze.",
     "action": "Stáhnout nyní"
   },
+  "closeDialog": {
+    "title": "Zavřít okno",
+    "description": "Vyberte akci při zavírání okna",
+    "minimize": "Minimalizovat do tray",
+    "minimizeDesc": "Aplikace bude dál běžet na pozadí",
+    "quit": "Ukončit aplikaci",
+    "quitDesc": "Zcela ukončí aplikaci",
+    "remember": "Zapamatovat mou volbu a už se neptat"
+  },
   "group_settings": {
     "title": "Správa skupin",
     "group_list": "Seznam skupin",
@@ -634,6 +644,8 @@
     "sort": {
       "weekly": "Týdenní kvóta",
       "hourly": "5hodinová kvóta",
+      "weeklyReset": "Čas týdenního resetu",
+      "hourlyReset": "Čas resetu 5 hodin",
       "descTooltip": "Sestupně (kliknutím přepnete na vzestupně)",
       "ascTooltip": "Vzestupně (kliknutím přepnete na sestupně)",
       "toggleDirection": "Přepnout směr",

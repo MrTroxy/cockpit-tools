@@ -57,7 +57,7 @@ export function CodexAccountsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'FREE' | 'PLUS' | 'PRO' | 'TEAM' | 'ENTERPRISE'>('all');
-  const [sortBy, setSortBy] = useState<'weekly' | 'hourly' | 'created_at'>('created_at');
+  const [sortBy, setSortBy] = useState<'weekly' | 'hourly' | 'created_at' | 'weekly_reset' | 'hourly_reset'>('created_at');
   const [sortDirection, setSortDirection] = useState<'desc' | 'asc'>('asc');
   const [switching, setSwitching] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -447,14 +447,24 @@ export function CodexAccountsPage() {
         return sortDirection === 'desc' ? diff : -diff;
       }
 
-      const aValue =
-        sortBy === 'weekly'
-          ? a.quota?.weekly_percentage ?? -1
-          : a.quota?.hourly_percentage ?? -1;
-      const bValue =
-        sortBy === 'weekly'
-          ? b.quota?.weekly_percentage ?? -1
-          : b.quota?.hourly_percentage ?? -1;
+      if (sortBy === 'weekly_reset' || sortBy === 'hourly_reset') {
+        const aReset =
+          sortBy === 'weekly_reset'
+            ? a.quota?.weekly_reset_time ?? null
+            : a.quota?.hourly_reset_time ?? null;
+        const bReset =
+          sortBy === 'weekly_reset'
+            ? b.quota?.weekly_reset_time ?? null
+            : b.quota?.hourly_reset_time ?? null;
+        if (aReset === null && bReset === null) return 0;
+        if (aReset === null) return 1;
+        if (bReset === null) return -1;
+        const diff = bReset - aReset;
+        return sortDirection === 'desc' ? diff : -diff;
+      }
+
+      const aValue = sortBy === 'weekly' ? a.quota?.weekly_percentage ?? -1 : a.quota?.hourly_percentage ?? -1;
+      const bValue = sortBy === 'weekly' ? b.quota?.weekly_percentage ?? -1 : b.quota?.hourly_percentage ?? -1;
       const diff = bValue - aValue;
       return sortDirection === 'desc' ? diff : -diff;
     });
@@ -543,6 +553,8 @@ export function CodexAccountsPage() {
               <option value="created_at">{t('codex.sort.createdAt', '按创建时间')}</option>
               <option value="weekly">{t('codex.sort.weekly', '按周配额')}</option>
               <option value="hourly">{t('codex.sort.hourly', '按5小时配额')}</option>
+              <option value="weekly_reset">{t('codex.sort.weeklyReset', '按周配额重置时间')}</option>
+              <option value="hourly_reset">{t('codex.sort.hourlyReset', '按5小时配额重置时间')}</option>
             </select>
           </div>
 

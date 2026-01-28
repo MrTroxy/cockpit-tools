@@ -61,8 +61,8 @@
       "storageTitle": "디렉터리 및 저장소",
       "dataDir": "데이터 디렉터리",
       "dataDirDesc": "계정 및 구성 파일 저장 위치.",
-      "fpDir": "지문 저장소",
-      "fpDirDesc": "기기 지문 파일 저장 위치."
+      "fpDir": "Antigravity 저장소",
+      "fpDirDesc": "Antigravity 데이터 파일 저장 위치."
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -160,6 +160,7 @@
       "default": "기본값",
       "overall": "전체 할당량순",
       "byGroup": "{{group}} 할당량순",
+      "byGroupReset": "{{group}} 재설정 시간",
       "createdAt": "생성 시간순",
       "descTooltip": "내림차순, 오름차순으로 전환 클릭",
       "ascTooltip": "오름차순, 내림차순으로 전환 클릭",
@@ -530,6 +531,15 @@
     "message": "현재 버전은 v{{current}}입니다. 새로운 버전을 사용할 수 있습니다.",
     "action": "지금 다운로드"
   },
+  "closeDialog": {
+    "title": "창 닫기",
+    "description": "창을 닫을 때의 동작을 선택하세요",
+    "minimize": "트레이로 최소화",
+    "minimizeDesc": "앱은 백그라운드에서 계속 실행됩니다",
+    "quit": "앱 종료",
+    "quitDesc": "애플리케이션을 완전히 종료합니다",
+    "remember": "내 선택을 기억하고 다시 묻지 않기"
+  },
   "group_settings": {
     "title": "그룹 관리",
     "group_list": "그룹 목록",
@@ -634,6 +644,8 @@
     "sort": {
       "weekly": "주간 할당량",
       "hourly": "5시간 할당량",
+      "weeklyReset": "주간 할당량 재설정 시간",
+      "hourlyReset": "5시간 할당량 재설정 시간",
       "descTooltip": "내림차순 (클릭하여 오름차순으로 전환)",
       "ascTooltip": "오름차순 (클릭하여 내림차순으로 전환)",
       "toggleDirection": "정렬 방향 전환",

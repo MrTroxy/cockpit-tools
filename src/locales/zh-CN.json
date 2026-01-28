@@ -58,11 +58,16 @@
       "every1hour": "每 1 小时",
       "minutes": "分",
       "refreshIntervalLimited": "配额重置唤醒已启用，刷新间隔最小值为 2 分钟",
+      "closeBehavior": "窗口关闭行为",
+      "closeBehaviorDesc": "选择关闭窗口时的默认行为",
+      "closeBehaviorAsk": "每次询问",
+      "closeBehaviorMinimize": "最小化到托盘",
+      "closeBehaviorQuit": "退出应用",
       "storageTitle": "目录与存储",
       "dataDir": "数据目录",
       "dataDirDesc": "账号与配置文件的存储位置。",
-      "fpDir": "指纹存储目录",
-      "fpDirDesc": "设备指纹文件的存储位置。"
+      "fpDir": "Antigravity存储目录",
+      "fpDirDesc": "Antigravity数据文件的存储位置。"
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -161,6 +166,7 @@
       "overall": "按综合配额",
       "createdAt": "按创建时间",
       "byGroup": "按 {{group}} 配额",
+      "byGroupReset": "按 {{group}} 重置时间",
       "descTooltip": "当前：降序，点击切换为升序",
       "ascTooltip": "当前：升序，点击切换为降序",
       "toggleDirection": "切换排序方向"
@@ -530,6 +536,15 @@
     "message": "当前版本 v{{current}}，新版本已可用。",
     "action": "前往下载"
   },
+  "closeDialog": {
+    "title": "关闭窗口",
+    "description": "请选择关闭窗口时的操作",
+    "minimize": "最小化到托盘",
+    "minimizeDesc": "应用将在后台继续运行",
+    "quit": "退出应用",
+    "quitDesc": "完全关闭应用程序",
+    "remember": "记住我的选择，不再询问"
+  },
   "group_settings": {
     "title": "分组管理",
     "group_list": "分组列表",
@@ -634,6 +649,8 @@
     "sort": {
       "weekly": "按周配额",
       "hourly": "按5小时配额",
+      "weeklyReset": "按周配额重置时间",
+      "hourlyReset": "按5小时配额重置时间",
       "descTooltip": "当前：降序，点击切换为升序",
       "ascTooltip": "当前：升序，点击切换为降序",
       "toggleDirection": "切换排序方向",

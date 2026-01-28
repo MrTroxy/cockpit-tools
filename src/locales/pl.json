@@ -61,8 +61,8 @@
       "storageTitle": "Katalogi i pamięć",
       "dataDir": "Katalog danych",
       "dataDirDesc": "Lokalizacja przechowywania kont i plików konfiguracji.",
-      "fpDir": "Magazyn odcisków",
-      "fpDirDesc": "Lokalizacja plików odcisków urządzeń."
+      "fpDir": "Magazyn Antigravity",
+      "fpDirDesc": "Lokalizacja plików danych Antigravity."
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -160,6 +160,7 @@
       "default": "Domyślne",
       "overall": "Według ogólnego limitu",
       "byGroup": "Według limitu {{group}}",
+      "byGroupReset": "Według czasu resetu {{group}}",
       "createdAt": "Według daty utworzenia",
       "descTooltip": "Malejąco, kliknij dla rosnąco",
       "ascTooltip": "Rosnąco, kliknij dla malejąco",
@@ -530,6 +531,15 @@
     "message": "Aktualna wersja v{{current}}, dostępna jest nowa wersja.",
     "action": "Pobierz teraz"
   },
+  "closeDialog": {
+    "title": "Zamknij okno",
+    "description": "Wybierz działanie podczas zamykania okna",
+    "minimize": "Minimalizuj do zasobnika",
+    "minimizeDesc": "Aplikacja będzie działać w tle",
+    "quit": "Zakończ aplikację",
+    "quitDesc": "Całkowicie zamyka aplikację",
+    "remember": "Zapamiętaj mój wybór i nie pytaj ponownie"
+  },
   "group_settings": {
     "title": "Zarządzanie grupami",
     "group_list": "Lista grup",
@@ -634,6 +644,8 @@
     "sort": {
       "weekly": "Limit tygodniowy",
       "hourly": "Limit 5-godzinny",
+      "weeklyReset": "Czas tygodniowego resetu",
+      "hourlyReset": "Czas resetu 5-godzinnego",
       "descTooltip": "Malejąco (kliknij, aby zmienić na rosnąco)",
       "ascTooltip": "Rosnąco (kliknij, aby zmienić na malejąco)",
       "toggleDirection": "Zmień kierunek sortowania",

@@ -26,6 +26,7 @@ interface GeneralConfig {
   language: string;
   theme: string;
   auto_refresh_minutes: number;
+  close_behavior: 'ask' | 'minimize' | 'quit';
 }
 
 export function SettingsPage() {
@@ -55,6 +56,7 @@ export function SettingsPage() {
   const [language, setLanguage] = useState(getCurrentLanguage());
   const [theme, setTheme] = useState('system');
   const [autoRefresh, setAutoRefresh] = useState('5');
+  const [closeBehavior, setCloseBehavior] = useState<'ask' | 'minimize' | 'quit'>('ask');
   const [generalLoaded, setGeneralLoaded] = useState(false);
   const generalSaveTimerRef = useRef<number | null>(null);
   const suppressGeneralSaveRef = useRef(false);
@@ -124,6 +126,7 @@ export function SettingsPage() {
           language,
           theme,
           autoRefreshMinutes: autoRefreshNum,
+          closeBehavior,
         });
         window.dispatchEvent(new Event('config-updated'));
       } catch (err) {
@@ -137,7 +140,7 @@ export function SettingsPage() {
         window.clearTimeout(generalSaveTimerRef.current);
       }
     };
-  }, [autoRefresh, generalLoaded, language, theme, t]);
+  }, [autoRefresh, closeBehavior, generalLoaded, language, theme, t]);
 
   useEffect(() => {
     const handleLanguageUpdated = (event: Event) => {
@@ -217,6 +220,29 @@ export function SettingsPage() {
       document.documentElement.setAttribute('data-theme', newTheme);
     }
   };
+
+  useEffect(() => {
+    if (theme !== 'system') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => applyTheme('system');
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, [theme]);
   
   const loadGeneralConfig = async () => {
     try {
@@ -224,6 +250,7 @@ export function SettingsPage() {
       setLanguage(normalizeLanguage(config.language));
       setTheme(config.theme);
       setAutoRefresh(String(config.auto_refresh_minutes));
+      setCloseBehavior(config.close_behavior || 'ask');
       // 同步语言
       changeLanguage(config.language);
       applyTheme(config.theme);
@@ -362,6 +389,24 @@ export function SettingsPage() {
                     <option value="light">{t('settings.general.themeLight')}</option>
                     <option value="dark">{t('settings.general.themeDark')}</option>
                     <option value="system">{t('settings.general.themeSystem')}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="settings-row">
+                <div className="row-label">
+                  <div className="row-title">{t('settings.general.closeBehavior')}</div>
+                  <div className="row-desc">{t('settings.general.closeBehaviorDesc')}</div>
+                </div>
+                <div className="row-control">
+                  <select 
+                    className="settings-select" 
+                    value={closeBehavior} 
+                    onChange={(e) => setCloseBehavior(e.target.value as 'ask' | 'minimize' | 'quit')}
+                  >
+                    <option value="ask">{t('settings.general.closeBehaviorAsk')}</option>
+                    <option value="minimize">{t('settings.general.closeBehaviorMinimize')}</option>
+                    <option value="quit">{t('settings.general.closeBehaviorQuit')}</option>
                   </select>
                 </div>
               </div>

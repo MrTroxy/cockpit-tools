@@ -7,6 +7,19 @@ All notable changes to Cockpit Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+## [0.4.1] - 2026-01-29
+
+### Added
+- **Close Confirmation**: New close dialog with minimize/quit actions and a “remember choice” option.
+- **Close Behavior Setting**: Configure the default close action in Settings → General.
+- **Tray Menu**: System tray menu with navigation shortcuts and quota refresh actions.
+- **Sorting Enhancements**: Sort by reset time for Antigravity group quotas and Codex weekly/hourly quotas.
+
+### Changed
+- **i18n**: Updated translations for close dialog, close behavior, and reset-time sorting across all 17 languages.
+- **UI Polish**: Refined styling to support the new close dialog and related layout updates.
+
+
 ## [0.4.0] - 2026-01-28
 
 ### Added

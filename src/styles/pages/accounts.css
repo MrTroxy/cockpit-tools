@@ -1,0 +1,234 @@
+/* ============================================
+   Merged Accounts Page - Grid/List View (Redesigned)
+   ============================================ */
+
+/* View Switcher - Pill Style */
+.view-switcher {
+  display: flex;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+  padding: 3px;
+  border: none;
+}
+
+.view-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.view-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.view-btn.active {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Accounts Grid - Compact Futurist Card View */
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* 缩小宽度以支持一排3-4个 */
+  gap: 16px;
+  padding-bottom: 40px;
+  animation: fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.account-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 12px; /* 稍微减小圆角 */
+  padding: 14px; /* 减小内边距 */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.02), 
+    0 4px 16px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  overflow: visible; /* 允许悬停效果稍微溢出 */
+}
+
+/* Hover Effect */
+.account-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.06), 
+    0 12px 24px rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Current Account */
+.account-card.current {
+  background: #ffffff;
+  border: 1px solid var(--primary); /* 简化选中样式，用细边框 */
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.08);
+}
+
+.account-card.current::before {
+  display: none; /* 移除原来的左侧粗线条，太占空间 */
+}
+
+/* Card Top Row */
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.account-card .account-email {
+  font-size: 13px;
+  padding: 2px 6px;
+  background: transparent; /* 移除背景让视觉更轻 */
+  margin-left: -4px; /* 微调对齐 */
+}
+
+/* Card Quota Grid - Redesigned */
+.card-quota-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  background: #f8fafc; /* 非常淡的背景 */
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.quota-compact-item {
+  gap: 4px;
+}
+
+/* Neon Glow Progress Bars */
+.quota-compact-bar-track {
+  height: 5px; /* 稍微变细 */
+}
+
+/* Card Footer - Compact & Clean */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.card-date {
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.7;
+  padding: 0;
+  background: transparent;
+}
+
+/* Minimalist Action Bar - No Background */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: transparent; /* 移除背景 */
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.card-action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  color: var(--text-muted); /* 默认灰色 */
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.card-action-btn:hover:not(:disabled) {
+  background: rgba(0,0,0,0.04); /* 只有悬停时才有淡淡的背景 */
+  color: var(--text-primary);
+  transform: none; /* 移除放大效果，保持稳重 */
+  box-shadow: none;
+}
+
+.card-action-btn.success:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+}
+
+.card-action-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+/* Tech-Badge - Compact */
+.tier-badge {
+  padding: 2px 6px;
+  font-size: 10px;
+  border-radius: 3px;
+}
+
+.tier-badge::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+  z-index: -1;
+}
+
+.tier-badge.pro {
+  background: #2563eb; /* Royal Blue */
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tier-badge.ultra {
+  background: #7c3aed; /* Violet */
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .accounts-grid .account-card {
+  background: #1e293b;
+  border-color: rgba(255,255,255,0.05);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .account-card .account-email {
+  background: rgba(255,255,255,0.05);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .card-quota-grid {
+  background: rgba(0,0,0,0.2);
+  border-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .quota-compact-bar-track {
+  background: rgba(255,255,255,0.1);
+}
+
+[data-theme="dark"] .view-btn.active {
+  background: #334155;
+  color: #fff;
+}
+
+[data-theme="dark"] .card-actions {
+  background: #1e293b;
+  border-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .card-date {
+  background: rgba(255,255,255,0.05);
+  color: #94a3b8;
+}

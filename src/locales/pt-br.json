@@ -61,8 +61,8 @@
       "storageTitle": "Directories & Storage",
       "dataDir": "Data Directory",
       "dataDirDesc": "Storage location for accounts and configuration files.",
-      "fpDir": "Fingerprint Storage",
-      "fpDirDesc": "Storage location for device fingerprint files."
+      "fpDir": "Armazenamento do Antigravity",
+      "fpDirDesc": "Local de armazenamento dos arquivos de dados do Antigravity."
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -160,6 +160,7 @@
       "default": "Padrão",
       "overall": "Por cota total",
       "byGroup": "Por cota de {{group}}",
+      "byGroupReset": "Por horário de redefinição de {{group}}",
       "createdAt": "Por data de criação",
       "descTooltip": "Decrescente, clique para Ascendente",
       "ascTooltip": "Ascendente, clique para Decrescente",
@@ -530,6 +531,15 @@
     "message": "Versão atual v{{current}}, uma nova versão está disponível.",
     "action": "Baixar agora"
   },
+  "closeDialog": {
+    "title": "Fechar janela",
+    "description": "Escolha uma ação ao fechar a janela",
+    "minimize": "Minimizar para a bandeja",
+    "minimizeDesc": "O app continuará em execução em segundo plano",
+    "quit": "Sair do aplicativo",
+    "quitDesc": "Fechar completamente o aplicativo",
+    "remember": "Lembrar minha escolha e não perguntar novamente"
+  },
   "group_settings": {
     "title": "Gerenciamento de grupos",
     "group_list": "Lista de grupos",
@@ -634,6 +644,8 @@
     "sort": {
       "weekly": "Cota semanal",
       "hourly": "Cota de 5 horas",
+      "weeklyReset": "Horário de redefinição semanal",
+      "hourlyReset": "Horário de redefinição de 5 horas",
       "descTooltip": "Decrescente (clique para Ascendente)",
       "ascTooltip": "Ascendente (clique para Decrescente)",
       "toggleDirection": "Alternar direção",

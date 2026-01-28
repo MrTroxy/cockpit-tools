@@ -4,8 +4,10 @@ mod utils;
 mod commands;
 pub mod error;
 
-use tauri::Manager;
+use tauri::{Emitter, Manager, RunEvent};
+use tauri::WindowEvent;
 use modules::logger;
+use modules::config::CloseWindowBehavior;
 use tracing::info;
 use std::sync::OnceLock;
 
@@ -21,7 +23,7 @@ pub fn get_app_handle() -> Option<&'static tauri::AppHandle> {
 pub fn run() {
     logger::init_logger();
     
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
@@ -29,6 +31,7 @@ pub fn run() {
             let _ = app.get_webview_window("main")
                 .map(|window| {
                     let _ = window.show();
+                    let _ = window.unminimize();
                     let _ = window.set_focus();
                 });
         }))
@@ -62,7 +65,36 @@ pub fn run() {
                 modules::websocket::start_server().await;
             });
             
+            // 初始化系统托盘
+            if let Err(e) = modules::tray::create_tray(app.handle()) {
+                logger::log_error(&format!("[Tray] 创建系统托盘失败: {}", e));
+            }
+            
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                let config = modules::config::get_user_config();
+                
+                match config.close_behavior {
+                    CloseWindowBehavior::Minimize => {
+                        // 直接最小化到托盘
+                        api.prevent_close();
+                        let _ = window.hide();
+                        info!("[Window] 窗口已最小化到托盘");
+                    }
+                    CloseWindowBehavior::Quit => {
+                        // 直接退出，不阻止关闭
+                        info!("[Window] 用户选择退出应用");
+                    }
+                    CloseWindowBehavior::Ask => {
+                        // 需要询问用户，阻止关闭并发送事件到前端
+                        api.prevent_close();
+                        let _ = window.emit("window:close_requested", ());
+                        info!("[Window] 等待用户选择关闭行为");
+                    }
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             // Account Commands
@@ -75,6 +107,7 @@ pub fn run() {
             commands::account::set_current_account,
             commands::account::fetch_account_quota,
             commands::account::refresh_all_quotas,
+            commands::account::refresh_current_quota,
             commands::account::switch_account,
             commands::account::bind_account_fingerprint,
             commands::account::get_bound_accounts,
@@ -126,6 +159,7 @@ pub fn run() {
             commands::system::get_general_config,
             commands::system::save_general_config,
             commands::system::set_wakeup_override,
+            commands::system::handle_window_close,
 
             // Wakeup Commands
             commands::wakeup::trigger_wakeup,
@@ -159,6 +193,7 @@ pub fn run() {
             commands::codex::export_codex_accounts,
             commands::codex::refresh_codex_quota,
             commands::codex::refresh_all_codex_quotas,
+            commands::codex::refresh_current_codex_quota,
             commands::codex::prepare_codex_oauth_url,
             commands::codex::complete_codex_oauth,
             commands::codex::cancel_codex_oauth,
@@ -166,6 +201,16 @@ pub fn run() {
             commands::codex::is_codex_oauth_port_in_use,
             commands::codex::close_codex_oauth_port,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        if let RunEvent::Reopen { .. } = event {
+            if let Some(window) = app_handle.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }
+    });
 }

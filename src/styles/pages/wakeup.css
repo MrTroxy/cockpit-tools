@@ -1,0 +1,474 @@
+/* ============================================
+   Wakeup Tasks
+   ============================================ */
+.wakeup-page {
+  gap: 20px;
+}
+
+.wakeup-heading {
+  align-items: flex-end;
+}
+
+.wakeup-global-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.wakeup-global-toggle .toggle-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.wakeup-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+}
+
+.wakeup-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.wakeup-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  transition: 0.3s;
+  border-radius: 999px;
+}
+
+.wakeup-slider:before {
+  position: absolute;
+  content: '';
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--text-secondary);
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.wakeup-switch input:checked + .wakeup-slider {
+  background: var(--gradient-primary);
+  border-color: transparent;
+}
+
+.wakeup-switch input:checked + .wakeup-slider:before {
+  transform: translateX(20px);
+  background-color: #fff;
+}
+
+/* .wakeup-toolbar - 已统一使用标准 .toolbar */
+
+
+.wakeup-task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  padding-bottom: 32px;
+}
+
+.wakeup-task-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wakeup-task-card.is-disabled {
+  opacity: 0.7;
+}
+
+.wakeup-task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.wakeup-task-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.wakeup-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.wakeup-task-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.wakeup-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wakeup-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wakeup-form-group > label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wakeup-form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wakeup-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.wakeup-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+}
+
+.wakeup-input-small {
+  width: 90px;
+}
+
+.wakeup-input-time {
+  min-width: 120px;
+}
+
+.wakeup-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: pre-line;
+}
+
+.wakeup-toggle-group {
+  display: flex;
+  gap: 8px;
+}
+
+.wakeup-toggle-group .btn.is-active {
+  background: var(--gradient-primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.wakeup-segmented {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+}
+
+.wakeup-segment-btn {
+  flex: 1;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.wakeup-segment-btn:hover {
+  background: var(--bg-hover);
+}
+
+.wakeup-segment-btn.active {
+  background: var(--gradient-primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.wakeup-chip-list,
+.wakeup-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wakeup-chip {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.wakeup-chip:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.wakeup-chip.selected {
+  background: var(--gradient-primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.wakeup-mode-panel {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.wakeup-custom-row,
+.wakeup-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.wakeup-quick-actions {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.wakeup-preview-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.wakeup-cron-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.wakeup-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.wakeup-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wakeup-panel-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+}
+
+.wakeup-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wakeup-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wakeup-history-item {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wakeup-history-item.is-failed {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.wakeup-history-item.is-success {
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.wakeup-history-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.wakeup-history-status {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wakeup-history-time {
+  color: var(--text-muted);
+}
+
+.wakeup-history-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.wakeup-history-badge.manual {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+.wakeup-history-badge.auto {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.wakeup-history-task {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.wakeup-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.wakeup-history-message {
+  font-size: 12px;
+  color: #dc2626;
+  white-space: pre-line;
+}
+
+.wakeup-history-item.is-success .wakeup-history-message {
+  color: var(--text-secondary);
+}
+
+.wakeup-history-prompt {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.wakeup-test-modal .modal-body,
+.wakeup-history-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wakeup-history-modal .modal-body {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+@media (max-width: 1100px) {
+  .accounts-page .filter-select {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .accounts-page .toolbar {
+    padding: 14px;
+  }
+
+  .accounts-page .search-box {
+    width: clamp(140px, 30vw, 220px);
+  }
+
+  .accounts-page .accounts-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+/* [data-theme="dark"] .main-content.accounts-page {
+  --accounts-surface: rgba(17, 24, 39, 0.75);
+  --accounts-surface-strong: rgba(17, 24, 39, 0.9);
+  --accounts-surface-soft: rgba(17, 24, 39, 0.6);
+  --accounts-border: rgba(148, 163, 184, 0.18);
+  --accounts-border-strong: rgba(148, 163, 184, 0.28);
+  --accounts-shadow: 0 16px 32px rgba(2, 6, 23, 0.5);
+}
+
+[data-theme="dark"] .main-content.accounts-page::before {
+  opacity: 0.6;
+} */
+
+[data-theme="dark"] .accounts-page .account-card {
+  background: linear-gradient(170deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8));
+}
+
+[data-theme="dark"] .accounts-page .card-actions {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+[data-theme="dark"] .accounts-page .card-date {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+[data-theme="dark"] .accounts-page .card-action-btn.export-btn {
+  color: #5eead4;
+}
+

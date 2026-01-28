@@ -16,7 +16,7 @@ pub fn get_current_codex_account() -> Result<Option<CodexAccount>, String> {
 
 /// 切换 Codex 账号（包含 token 刷新检查）
 #[tauri::command]
-pub async fn switch_codex_account(account_id: String) -> Result<CodexAccount, String> {
+pub async fn switch_codex_account(app: AppHandle, account_id: String) -> Result<CodexAccount, String> {
     let mut account = codex_account::load_account(&account_id)
         .ok_or_else(|| format!("账号不存在: {}", account_id))?;
     
@@ -42,7 +42,9 @@ pub async fn switch_codex_account(account_id: String) -> Result<CodexAccount, St
     }
     
     // 切换账号（写入 auth.json）
-    codex_account::switch_account(&account_id)
+    let account = codex_account::switch_account(&account_id)?;
+    let _ = crate::modules::tray::update_tray_menu(&app);
+    Ok(account)
 }
 
 /// 删除 Codex 账号
@@ -77,15 +79,34 @@ pub fn export_codex_accounts(account_ids: Vec<String>) -> Result<String, String>
 
 /// 刷新单个账号配额
 #[tauri::command]
-pub async fn refresh_codex_quota(account_id: String) -> Result<CodexQuota, String> {
-    codex_quota::refresh_account_quota(&account_id).await
+pub async fn refresh_codex_quota(app: AppHandle, account_id: String) -> Result<CodexQuota, String> {
+    let result = codex_quota::refresh_account_quota(&account_id).await;
+    if result.is_ok() {
+        let _ = crate::modules::tray::update_tray_menu(&app);
+    }
+    result
+}
+
+#[tauri::command]
+pub async fn refresh_current_codex_quota(app: AppHandle) -> Result<(), String> {
+    let Some(account) = codex_account::get_current_account() else {
+        return Err("未找到当前 Codex 账号".to_string());
+    };
+    let result = codex_quota::refresh_account_quota(&account.id).await;
+    if result.is_ok() {
+        let _ = crate::modules::tray::update_tray_menu(&app);
+        Ok(())
+    } else {
+        Err(result.err().unwrap_or_else(|| "刷新 Codex 配额失败".to_string()))
+    }
 }
 
 /// 刷新所有账号配额
 #[tauri::command]
-pub async fn refresh_all_codex_quotas() -> Result<i32, String> {
+pub async fn refresh_all_codex_quotas(app: AppHandle) -> Result<i32, String> {
     let results = codex_quota::refresh_all_quotas().await?;
     let success_count = results.iter().filter(|(_, r)| r.is_ok()).count();
+    let _ = crate::modules::tray::update_tray_menu(&app);
     Ok(success_count as i32)
 }
 

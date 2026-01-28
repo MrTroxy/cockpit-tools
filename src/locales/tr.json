@@ -61,8 +61,8 @@
       "storageTitle": "Directories & Storage",
       "dataDir": "Data Directory",
       "dataDirDesc": "Storage location for accounts and configuration files.",
-      "fpDir": "Fingerprint Storage",
-      "fpDirDesc": "Storage location for device fingerprint files."
+      "fpDir": "Antigravity Depolama",
+      "fpDirDesc": "Antigravity veri dosyalarının depolandığı konum."
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -160,6 +160,7 @@
       "default": "Varsayılan",
       "overall": "Toplam kotaya göre",
       "byGroup": "{{group}} kotasına göre",
+      "byGroupReset": "{{group}} sıfırlama zamanına göre",
       "createdAt": "Oluşturma zamanına göre",
       "descTooltip": "Azalan, Artan için tıkla",
       "ascTooltip": "Artan, Azalan için tıkla",
@@ -530,6 +531,15 @@
     "message": "Mevcut sürüm v{{current}}, yeni bir sürüm mevcut.",
     "action": "Şimdi İndir"
   },
+  "closeDialog": {
+    "title": "Pencereyi kapat",
+    "description": "Pencereyi kapatırken bir eylem seçin",
+    "minimize": "Tepsiye küçült",
+    "minimizeDesc": "Uygulama arka planda çalışmaya devam eder",
+    "quit": "Uygulamadan çık",
+    "quitDesc": "Uygulamayı tamamen kapat",
+    "remember": "Seçimimi hatırla, tekrar sorma"
+  },
   "group_settings": {
     "title": "Grup yönetimi",
     "group_list": "Grup listesi",
@@ -634,6 +644,8 @@
     "sort": {
       "weekly": "Haftalık kota",
       "hourly": "5 saatlik kota",
+      "weeklyReset": "Haftalık sıfırlama zamanı",
+      "hourlyReset": "5 saatlik sıfırlama zamanı",
       "descTooltip": "Azalan (Artan için tıkla)",
       "ascTooltip": "Artan (Azalan için tıkla)",
       "toggleDirection": "Sıralama yönünü değiştir",

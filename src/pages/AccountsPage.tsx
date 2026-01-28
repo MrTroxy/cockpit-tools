@@ -30,7 +30,7 @@ import { useAccountStore } from '../stores/useAccountStore';
 import * as accountService from '../services/accountService';
 import { FingerprintWithStats, Account } from '../types/account';
 import { Page } from '../types/navigation';
-import { getQuotaClass, formatResetTimeDisplay, getSubscriptionTier, getDisplayModels, getModelShortName } from '../utils/account';
+import { getQuotaClass, formatResetTimeDisplay, getSubscriptionTier, getDisplayModels, getModelShortName, matchModelName } from '../utils/account';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { save } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
@@ -95,6 +95,7 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
   const [displayGroups, setDisplayGroups] = useState<DisplayGroup[]>([]);
   const [sortBy, setSortBy] = useState<'overall' | 'created_at' | string>('overall');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const resetSortPrefix = 'reset:';
   
   const showAddModalRef = useRef(showAddModal);
   const addTabRef = useRef(addTab);
@@ -117,6 +118,30 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
       }
     }
     return quotas;
+  };
+
+  const getGroupResetTimestamp = (account: Account, group: DisplayGroup): number | null => {
+    if (!account.quota?.models?.length) {
+      return null;
+    }
+    const groupModelIds = group.models.map((id) => id.toLowerCase());
+    let earliest: number | null = null;
+    for (const model of account.quota.models) {
+      const modelName = model.name.toLowerCase();
+      const belongsToGroup = groupModelIds.some((id) => matchModelName(modelName, id));
+      if (!belongsToGroup) {
+        continue;
+      }
+      const parsed = new Date(model.reset_time);
+      if (Number.isNaN(parsed.getTime())) {
+        continue;
+      }
+      const timestamp = parsed.getTime();
+      if (earliest === null || timestamp < earliest) {
+        earliest = timestamp;
+      }
+    }
+    return earliest;
   };
 
   // 根据分组配置获取模型所属分组的名称
@@ -157,6 +182,20 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
         const diff = b.created_at - a.created_at;
         return sortDirection === 'desc' ? diff : -diff;
       });
+    } else if (sortBy.startsWith(resetSortPrefix) && displayGroups.length > 0) {
+      const targetGroupId = sortBy.slice(resetSortPrefix.length);
+      const targetGroup = displayGroups.find((group) => group.id === targetGroupId);
+      if (targetGroup) {
+        result.sort((a, b) => {
+          const aReset = getGroupResetTimestamp(a, targetGroup);
+          const bReset = getGroupResetTimestamp(b, targetGroup);
+          if (aReset === null && bReset === null) return 0;
+          if (aReset === null) return 1;
+          if (bReset === null) return -1;
+          const diff = bReset - aReset;
+          return sortDirection === 'desc' ? diff : -diff;
+        });
+      }
     } else if (sortBy !== 'default' && sortBy !== 'overall' && displayGroups.length > 0) {
       // 按指定分组配额排序，相同配额按总配额再排序
       const groupSettings: GroupSettings = {
@@ -983,6 +1022,11 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
                 {displayGroups.map(group => (
                   <option key={group.id} value={group.id}>
                     {t('accounts.sort.byGroup', { group: group.name, defaultValue: `按 ${group.name} 配额` })}
+                  </option>
+                ))}
+                {displayGroups.map(group => (
+                  <option key={`${group.id}-reset`} value={`${resetSortPrefix}${group.id}`}>
+                    {t('accounts.sort.byGroupReset', { group: group.name, defaultValue: `按 ${group.name} 重置时间` })}
                   </option>
                 ))}
               </select>

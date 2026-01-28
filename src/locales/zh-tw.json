@@ -61,8 +61,8 @@
       "storageTitle": "Directories & Storage",
       "dataDir": "Data Directory",
       "dataDirDesc": "Storage location for accounts and configuration files.",
-      "fpDir": "Fingerprint Storage",
-      "fpDirDesc": "Storage location for device fingerprint files."
+      "fpDir": "Antigravity 儲存目錄",
+      "fpDirDesc": "Antigravity 資料檔案的儲存位置。"
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -160,6 +160,7 @@
       "default": "默認排序",
       "overall": "按綜合配額",
       "byGroup": "按 {{group}} 配額",
+      "byGroupReset": "按 {{group}} 重置時間",
       "createdAt": "按創建時間",
       "descTooltip": "當前：降序，點擊切換為昇序",
       "ascTooltip": "當前：昇序，點擊切換為降序",
@@ -530,6 +531,15 @@
     "message": "目前版本 v{{current}}，新版本已可用。",
     "action": "前往下載"
   },
+  "closeDialog": {
+    "title": "關閉視窗",
+    "description": "選擇關閉視窗時的操作",
+    "minimize": "最小化到托盤",
+    "minimizeDesc": "應用程式將在背景繼續執行",
+    "quit": "結束應用程式",
+    "quitDesc": "完全關閉應用程式",
+    "remember": "記住我的選擇，不再詢問"
+  },
   "group_settings": {
     "title": "分組管理",
     "group_list": "分組列表",
@@ -634,6 +644,8 @@
     "sort": {
       "weekly": "按週配額",
       "hourly": "按5小時配額",
+      "weeklyReset": "按週配額重置時間",
+      "hourlyReset": "按5小時配額重置時間",
       "descTooltip": "目前：降序，點擊切換為升序",
       "ascTooltip": "目前：升序，點擊切換為降序",
       "toggleDirection": "切換排序方向",

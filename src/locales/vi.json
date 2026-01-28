@@ -61,8 +61,8 @@
       "storageTitle": "Thư mục & Lưu trữ",
       "dataDir": "Thư mục dữ liệu",
       "dataDirDesc": "Vị trí lưu trữ tài khoản và cấu hình.",
-      "fpDir": "Thư mục dấu vân tay",
-      "fpDirDesc": "Vị trí lưu trữ dấu vân tay thiết bị."
+      "fpDir": "Thư mục lưu trữ Antigravity",
+      "fpDirDesc": "Vị trí lưu trữ tệp dữ liệu Antigravity."
     },
     "network": {
       "apiTitle": "API Antigravity Cockpit",
@@ -160,6 +160,7 @@
       "default": "Mặc định",
       "overall": "Theo tổng hạn mức",
       "byGroup": "Theo hạn mức {{group}}",
+      "byGroupReset": "Theo thời gian đặt lại {{group}}",
       "createdAt": "Theo thời gian tạo",
       "descTooltip": "Giảm dần, nhấn để chuyển Tăng dần",
       "ascTooltip": "Tăng dần, nhấn để chuyển Giảm dần",
@@ -530,6 +531,15 @@
     "message": "Phiên bản hiện tại v{{current}}, đã có phiên bản mới.",
     "action": "Tải về ngay"
   },
+  "closeDialog": {
+    "title": "Đóng cửa sổ",
+    "description": "Chọn hành động khi đóng cửa sổ",
+    "minimize": "Thu nhỏ vào khay",
+    "minimizeDesc": "Ứng dụng sẽ tiếp tục chạy nền",
+    "quit": "Thoát ứng dụng",
+    "quitDesc": "Đóng hoàn toàn ứng dụng",
+    "remember": "Ghi nhớ lựa chọn của tôi và không hỏi lại"
+  },
   "group_settings": {
     "title": "Quản lý nhóm",
     "group_list": "Danh sách nhóm",
@@ -634,6 +644,8 @@
     "sort": {
       "weekly": "Hạn mức tuần",
       "hourly": "Hạn mức 5 giờ",
+      "weeklyReset": "Thời gian đặt lại theo tuần",
+      "hourlyReset": "Thời gian đặt lại 5 giờ",
       "descTooltip": "Giảm dần (nhấn để chuyển Tăng dần)",
       "ascTooltip": "Tăng dần (nhấn để chuyển Giảm dần)",
       "toggleDirection": "Đổi hướng sắp xếp",

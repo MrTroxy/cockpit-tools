@@ -65,8 +65,10 @@ pub async fn get_current_account() -> Result<Option<models::Account>, String> {
 }
 
 #[tauri::command]
-pub async fn set_current_account(account_id: String) -> Result<(), String> {
-    modules::set_current_account_id(&account_id)
+pub async fn set_current_account(app: tauri::AppHandle, account_id: String) -> Result<(), String> {
+    modules::set_current_account_id(&account_id)?;
+    let _ = crate::modules::tray::update_tray_menu(&app);
+    Ok(())
 }
 
 #[tauri::command]
@@ -78,8 +80,27 @@ pub async fn fetch_account_quota(account_id: String) -> AppResult<models::QuotaD
 }
 
 #[tauri::command]
-pub async fn refresh_all_quotas() -> Result<modules::account::RefreshStats, String> {
-    modules::account::refresh_all_quotas_logic().await
+pub async fn refresh_all_quotas(app: tauri::AppHandle) -> Result<modules::account::RefreshStats, String> {
+    let result = modules::account::refresh_all_quotas_logic().await;
+    if result.is_ok() {
+        let _ = crate::modules::tray::update_tray_menu(&app);
+    }
+    result
+}
+
+#[tauri::command]
+pub async fn refresh_current_quota(app: tauri::AppHandle) -> Result<(), String> {
+    let Some(account) = modules::get_current_account().map_err(|e| e.to_string())? else {
+        return Err("未找到当前账号".to_string());
+    };
+    let mut account = account;
+    let quota = modules::fetch_quota_with_retry(&mut account)
+        .await
+        .map_err(|e| e.to_string())?;
+    modules::update_account_quota(&account.id, quota)
+        .map_err(|e| e.to_string())?;
+    let _ = crate::modules::tray::update_tray_menu(&app);
+    Ok(())
 }
 
 /// 切换账号（完整流程：Token刷新 + 关闭程序 + 注入 + 指纹同步 + 重启）

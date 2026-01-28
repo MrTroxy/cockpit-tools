@@ -58,11 +58,16 @@
       "every1hour": "Every hour",
       "minutes": "min",
       "refreshIntervalLimited": "Quota reset wakeup enabled, minimum refresh interval is 2 minutes",
+      "closeBehavior": "Close behavior",
+      "closeBehaviorDesc": "Choose the default action when closing the window",
+      "closeBehaviorAsk": "Ask every time",
+      "closeBehaviorMinimize": "Minimize to tray",
+      "closeBehaviorQuit": "Quit application",
       "storageTitle": "Directories & Storage",
       "dataDir": "Data Directory",
       "dataDirDesc": "Storage location for accounts and configuration files.",
-      "fpDir": "Fingerprint Storage",
-      "fpDirDesc": "Storage location for device fingerprint files."
+      "fpDir": "Antigravity Storage",
+      "fpDirDesc": "Storage location for Antigravity data files."
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -161,6 +166,7 @@
       "overall": "By overall quota",
       "createdAt": "By creation time",
       "byGroup": "By {{group}} quota",
+      "byGroupReset": "By {{group}} reset time",
       "descTooltip": "Desc, click to switch to Asc",
       "ascTooltip": "Asc, click to switch to Desc",
       "toggleDirection": "Toggle sort direction"
@@ -530,6 +536,15 @@
     "message": "Current version v{{current}}, a new version is available.",
     "action": "Download Now"
   },
+  "closeDialog": {
+    "title": "Close Window",
+    "description": "Choose an action when closing the window",
+    "minimize": "Minimize to Tray",
+    "minimizeDesc": "App will continue running in the background",
+    "quit": "Quit Application",
+    "quitDesc": "Completely close the application",
+    "remember": "Remember my choice, don't ask again"
+  },
   "group_settings": {
     "title": "Group Management",
     "group_list": "Group List",
@@ -634,6 +649,8 @@
     "sort": {
       "weekly": "Weekly quota",
       "hourly": "5-hour quota",
+      "weeklyReset": "Weekly reset time",
+      "hourlyReset": "5-hour reset time",
       "descTooltip": "Current: Descending. Click to switch to ascending",
       "ascTooltip": "Current: Ascending. Click to switch to descending",
       "toggleDirection": "Toggle sort direction",
