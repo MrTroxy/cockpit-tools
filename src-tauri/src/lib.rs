@@ -202,6 +202,7 @@ pub fn run() {
             commands::codex::is_codex_oauth_port_in_use,
             commands::codex::close_codex_oauth_port,
             commands::codex::update_codex_account_tags,
+
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

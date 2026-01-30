@@ -1,8 +1,10 @@
+use std::collections::HashSet;
 use std::process::Command;
 use std::thread;
 use std::time::Duration;
 use sysinfo::System;
-use std::collections::HashSet;
+
+const OPENCODE_APP_NAME: &str = "OpenCode";
 
 /// 检查 Antigravity 是否在运行
 pub fn is_antigravity_running() -> bool {
@@ -252,11 +254,15 @@ pub fn start_antigravity() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
-        
+
         // 尝试常见安装路径
         let possible_paths = [
-            std::env::var("LOCALAPPDATA").ok().map(|p| format!("{}/Programs/Antigravity/Antigravity.exe", p)),
-            std::env::var("PROGRAMFILES").ok().map(|p| format!("{}/Antigravity/Antigravity.exe", p)),
+            std::env::var("LOCALAPPDATA")
+                .ok()
+                .map(|p| format!("{}/Programs/Antigravity/Antigravity.exe", p)),
+            std::env::var("PROGRAMFILES")
+                .ok()
+                .map(|p| format!("{}/Antigravity/Antigravity.exe", p)),
         ];
 
         for path_opt in possible_paths.iter().flatten() {
@@ -276,10 +282,7 @@ pub fn start_antigravity() -> Result<(), String> {
     #[cfg(target_os = "linux")]
     {
         // 尝试常见安装路径
-        let possible_paths = [
-            "/usr/bin/antigravity",
-            "/opt/antigravity/antigravity",
-        ];
+        let possible_paths = ["/usr/bin/antigravity", "/opt/antigravity/antigravity"];
 
         for path in possible_paths {
             if std::path::Path::new(path).exists() {
@@ -299,7 +302,255 @@ pub fn start_antigravity() -> Result<(), String> {
 
         return Err("未找到 Antigravity 可执行文件".to_string());
     }
-    
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    Err("不支持的操作系统".to_string())
+}
+
+/// 检查 OpenCode（桌面端）是否在运行
+pub fn is_opencode_running() -> bool {
+    let mut system = System::new();
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+
+    let current_pid = std::process::id();
+    let app_lower = OPENCODE_APP_NAME.to_lowercase();
+    let bundle_lower = format!("{}.app", app_lower);
+
+    for (pid, process) in system.processes() {
+        let pid_u32 = pid.as_u32();
+        if pid_u32 == current_pid {
+            continue;
+        }
+
+        let name = process.name().to_string_lossy().to_lowercase();
+        let exe_path = process
+            .exe()
+            .and_then(|p| p.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+
+        let args = process.cmd();
+        let args_str = args
+            .iter()
+            .map(|arg| arg.to_string_lossy().to_lowercase())
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        let is_helper = args_str.contains("--type=")
+            || name.contains("helper")
+            || name.contains("plugin")
+            || name.contains("renderer")
+            || name.contains("gpu")
+            || name.contains("crashpad")
+            || name.contains("utility")
+            || name.contains("audio")
+            || name.contains("sandbox")
+            || exe_path.contains("crashpad");
+
+        #[cfg(target_os = "macos")]
+        {
+            if exe_path.contains(&bundle_lower) && !is_helper {
+                return true;
+            }
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            if (name == "opencode.exe"
+                || name == "opencode"
+                || name == app_lower
+                || exe_path.contains("opencode"))
+                && !is_helper
+            {
+                return true;
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            if (name.contains("opencode") || exe_path.contains("/opencode")) && !is_helper {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+fn get_opencode_pids() -> Vec<u32> {
+    let mut system = System::new();
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+
+    let mut pids = Vec::new();
+    let current_pid = std::process::id();
+    let app_lower = OPENCODE_APP_NAME.to_lowercase();
+    let bundle_lower = format!("{}.app", app_lower);
+
+    for (pid, process) in system.processes() {
+        let pid_u32 = pid.as_u32();
+        if pid_u32 == current_pid {
+            continue;
+        }
+
+        let name = process.name().to_string_lossy().to_lowercase();
+        let exe_path = process
+            .exe()
+            .and_then(|p| p.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+
+        let args = process.cmd();
+        let args_str = args
+            .iter()
+            .map(|arg| arg.to_string_lossy().to_lowercase())
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        let is_helper = args_str.contains("--type=")
+            || name.contains("helper")
+            || name.contains("plugin")
+            || name.contains("renderer")
+            || name.contains("gpu")
+            || name.contains("crashpad")
+            || name.contains("utility")
+            || name.contains("audio")
+            || name.contains("sandbox")
+            || exe_path.contains("crashpad");
+
+        #[cfg(target_os = "macos")]
+        {
+            if exe_path.contains(&bundle_lower) && !is_helper {
+                pids.push(pid_u32);
+            }
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            if (name.contains("opencode") || exe_path.contains("opencode")) && !is_helper {
+                pids.push(pid_u32);
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            if (name.contains("opencode") || exe_path.contains("/opencode")) && !is_helper {
+                pids.push(pid_u32);
+            }
+        }
+    }
+
+    if !pids.is_empty() {
+        crate::modules::logger::log_info(&format!(
+            "找到 {} 个 OpenCode 进程: {:?}",
+            pids.len(),
+            pids
+        ));
+    }
+
+    pids
+}
+
+/// 关闭 OpenCode（桌面端）
+pub fn close_opencode(timeout_secs: u64) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    let _ = timeout_secs;
+
+    crate::modules::logger::log_info("正在关闭 OpenCode...");
+    let pids = get_opencode_pids();
+    if pids.is_empty() {
+        crate::modules::logger::log_info("OpenCode 未在运行，无需关闭");
+        return Ok(());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        for pid in &pids {
+            let _ = Command::new("taskkill")
+                .args(["/F", "/PID", &pid.to_string()])
+                .creation_flags(0x08000000)
+                .output();
+        }
+        thread::sleep(Duration::from_millis(200));
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    {
+        crate::modules::logger::log_info(&format!(
+            "向 {} 个 OpenCode 进程发送 SIGTERM...",
+            pids.len()
+        ));
+        for pid in &pids {
+            let _ = Command::new("kill")
+                .args(["-15", &pid.to_string()])
+                .output();
+        }
+
+        let graceful_timeout = (timeout_secs * 7) / 10;
+        let start = std::time::Instant::now();
+        while start.elapsed() < Duration::from_secs(graceful_timeout) {
+            if !is_opencode_running() {
+                crate::modules::logger::log_info("所有 OpenCode 进程已优雅关闭");
+                return Ok(());
+            }
+            thread::sleep(Duration::from_millis(500));
+        }
+
+        if is_opencode_running() {
+            let remaining = get_opencode_pids();
+            if !remaining.is_empty() {
+                crate::modules::logger::log_warn(&format!(
+                    "优雅关闭超时，强制杀死 {} 个残留进程 (SIGKILL)",
+                    remaining.len()
+                ));
+                for pid in &remaining {
+                    let _ = Command::new("kill").args(["-9", &pid.to_string()]).output();
+                }
+                thread::sleep(Duration::from_secs(1));
+            }
+        }
+    }
+
+    if is_opencode_running() {
+        return Err("无法关闭 OpenCode 进程，请手动关闭后重试".to_string());
+    }
+
+    crate::modules::logger::log_info("OpenCode 已成功关闭");
+    Ok(())
+}
+
+/// 启动 OpenCode（桌面端）
+pub fn start_opencode() -> Result<(), String> {
+    crate::modules::logger::log_info("正在启动 OpenCode...");
+
+    #[cfg(target_os = "macos")]
+    {
+        let output = Command::new("open")
+            .args(["-a", OPENCODE_APP_NAME])
+            .output()
+            .map_err(|e| format!("启动 OpenCode 失败: {}", e))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            if stderr.contains("Unable to find application") {
+                return Err("未找到 OpenCode 应用，请确保已安装 OpenCode Desktop".to_string());
+            }
+            return Err(format!("启动 OpenCode 失败: {}", stderr));
+        }
+        crate::modules::logger::log_info("OpenCode 启动命令已发送");
+        return Ok(());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        return Err("Windows 暂未实现 OpenCode 自动启动，请手动启动".to_string());
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        return Err("Linux 暂未实现 OpenCode 自动启动，请手动启动".to_string());
+    }
+
     #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
     Err("不支持的操作系统".to_string())
 }
@@ -311,12 +562,7 @@ pub fn find_pids_by_port(port: u16) -> Result<Vec<u32>, String> {
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
         let output = Command::new("lsof")
-            .args([
-                "-nP",
-                &format!("-iTCP:{}", port),
-                "-sTCP:LISTEN",
-                "-t",
-            ])
+            .args(["-nP", &format!("-iTCP:{}", port), "-sTCP:LISTEN", "-t"])
             .output()
             .map_err(|e| format!("执行 lsof 失败: {}", e))?;
 
@@ -402,9 +648,7 @@ pub fn kill_port_processes(port: u16) -> Result<usize, String> {
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
         for pid in &pids {
-            let output = Command::new("kill")
-                .args(["-9", &pid.to_string()])
-                .output();
+            let output = Command::new("kill").args(["-9", &pid.to_string()]).output();
             match output {
                 Ok(out) if out.status.success() => {}
                 Ok(out) => {

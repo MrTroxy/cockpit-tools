@@ -178,18 +178,18 @@ function App() {
   useEffect(() => {
     let unlisten: UnlistenFn | undefined;
 
-    listen<string>('tray:navigate', (event) => {
-      const target = String(event.payload || '');
-      switch (target) {
-        case 'overview':
-        case 'codex':
-        case 'settings':
-          setPage(target as Page);
-          break;
-        default:
-          break;
-      }
-    }).then((fn) => { unlisten = fn; });
+        listen<string>('tray:navigate', (event) => {
+          const target = String(event.payload || '');
+          switch (target) {
+            case 'overview':
+            case 'codex':
+            case 'settings':
+              setPage(target as Page);
+              break;
+            default:
+              break;
+          }
+        }).then((fn) => { unlisten = fn; });
 
     return () => {
       if (unlisten) {

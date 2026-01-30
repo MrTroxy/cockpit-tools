@@ -118,6 +118,7 @@ export function SideNav({ page, setPage }: SideNavProps) {
           <CodexIcon />
           <span className="tooltip">{t('nav.codex')}</span>
         </button>
+
         
         <button 
           className={`nav-item ${page === 'settings' ? 'active' : ''}`} 

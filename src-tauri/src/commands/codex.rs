@@ -1,6 +1,6 @@
 use tauri::AppHandle;
 use crate::models::codex::{CodexAccount, CodexQuota, CodexTokens};
-use crate::modules::{codex_account, codex_quota, codex_oauth, logger, process};
+use crate::modules::{codex_account, codex_quota, codex_oauth, logger, opencode_auth, process};
 
 /// 列出所有 Codex 账号
 #[tauri::command]
@@ -43,6 +43,23 @@ pub async fn switch_codex_account(app: AppHandle, account_id: String) -> Result<
     
     // 切换账号（写入 auth.json）
     let account = codex_account::switch_account(&account_id)?;
+
+    // 仅在 OpenCode 运行时同步并重启
+    if process::is_opencode_running() {
+        if let Err(e) = opencode_auth::replace_openai_entry_from_codex(&account) {
+            logger::log_error(&format!("OpenCode auth.json 更新失败: {}", e));
+            return Err(format!("Codex 已切换，但更新 OpenCode 失败: {}", e));
+        }
+
+        process::close_opencode(20)?;
+        if let Err(e) = process::start_opencode() {
+            logger::log_error(&format!("OpenCode 重启失败: {}", e));
+            return Err(format!("Codex 已切换，但 OpenCode 重启失败: {}", e));
+        }
+    } else {
+        logger::log_info("OpenCode 未在运行，跳过 auth.json 更新与重启");
+    }
+
     let _ = crate::modules::tray::update_tray_menu(&app);
     Ok(account)
 }
