@@ -30,7 +30,8 @@
     "settings": "설정",
     "codex": "Codex 계정",
     "dashboard": "대시보드",
-    "instances": "멀티 인스턴스"
+    "instances": "멀티 인스턴스",
+    "githubCopilot": "GitHub Copilot"
   },
   "settings": {
     "title": "앱 설정",
@@ -85,6 +86,12 @@
       "codexAppPathPlaceholder": "기본 경로",
       "codexPathSelect": "선택",
       "codexPathReset": "기본값으로 재설정",
+      "vscodeTitle": "VS Code 실행",
+      "vscodeAppPath": "VS Code 앱 경로",
+      "vscodeAppPathDesc": "비워 두면 기본 경로를 사용합니다",
+      "vscodeAppPathPlaceholder": "기본 경로",
+      "vscodePathSelect": "선택",
+      "vscodePathReset": "기본값으로 재설정",
       "antigravityAppPath": "Antigravity 앱 경로",
       "antigravityTitle": "Antigravity 실행"
     },
@@ -234,7 +241,25 @@
     "clearFilter": "필터 지우기",
     "editTags": "태그 편집",
     "groupByTag": "태그별 그룹",
-    "untagged": "태그 없음"
+    "untagged": "태그 없음",
+    "deleteTagAria": "태그 {{tag}} 삭제",
+    "tagModal": {
+      "title": "태그 편집",
+      "hint": "태그는 최대 {{max}}개까지 추가할 수 있으며, 각 태그는 최대 {{maxLength}}자입니다.",
+      "empty": "사용 가능한 태그가 없습니다",
+      "suggestionsTitle": "태그 필터",
+      "suggestionsEmpty": "사용 가능한 태그가 없습니다",
+      "inputPlaceholder": "태그 입력 ({{remaining}}개 남음)",
+      "inputDisabledPlaceholder": "태그 한도에 도달했습니다",
+      "add": "추가",
+      "save": "태그 저장",
+      "error": {
+        "empty": "태그는 비워둘 수 없습니다",
+        "tooLong": "태그는 최대 {{max}}자까지 입력할 수 있습니다",
+        "duplicate": "이미 존재하는 태그입니다",
+        "tooMany": "태그는 최대 {{max}}개까지 추가할 수 있습니다"
+      }
+    }
   },
   "overview": {
     "title": "계정 개요",
@@ -970,6 +995,129 @@
       "title": "애플리케이션 경로를 찾을 수 없음",
       "desc": "{{app}} 애플리케이션 경로를 찾을 수 없습니다. 계속하려면 지금 설정해 주세요.",
       "action": "지금 설정"
+    }
+  },
+  "githubCopilot": {
+    "title": "GitHub Copilot 계정 관리",
+    "subtitle": "GitHub Copilot 계정을 관리합니다",
+    "overview": {
+      "title": "계정 개요"
+    },
+    "instances": {
+      "title": "멀티 인스턴스",
+      "subtitle": "인스턴스별 독립 구성, 여러 계정으로 병렬 운영.",
+      "unsupported": {
+        "title": "이 시스템에서 지원되지 않음",
+        "desc": "GitHub Copilot 멀티 인스턴스는 현재 macOS에서만 사용 가능합니다."
+      },
+      "quota": {
+        "inline": "Inline Suggestions",
+        "chat": "Chat messages"
+      }
+    },
+    "addAccount": "계정 추가",
+    "refreshAll": "전체 새로고침",
+    "refreshQuota": "쿼터 새로고침",
+    "empty": {
+      "title": "계정 없음",
+      "description": "\"계정 추가\"를 눌러 GitHub Copilot 계정을 관리하세요"
+    },
+    "noMatch": {
+      "title": "일치하는 계정 없음",
+      "desc": "검색어 또는 필터를 조정해 보세요"
+    },
+    "addModal": {
+      "title": "GitHub Copilot 계정 추가",
+      "oauth": "OAuth 로그인",
+      "token": "JSON 가져오기",
+      "import": "로컬 가져오기"
+    },
+    "oauth": {
+      "desc": "아래 버튼을 클릭해 브라우저에서 GitHub Copilot 인증을 완료하세요.",
+      "preparing": "인증 링크 준비 중...",
+      "openBrowser": "브라우저에서 열기",
+      "hint": "인증이 완료되면 이 창이 자동으로 업데이트됩니다",
+      "success": "인증 성공",
+      "failed": "인증 실패",
+      "retry": "인증 정보 다시 생성",
+      "timeoutRetry": "인증 링크 새로고침",
+      "waiting": "인증 대기 중...",
+      "meta": "만료까지: {{expires}}s; 폴링 간격: {{interval}}s"
+    },
+    "token": {
+      "desc": "GitHub Copilot 액세스 토큰 또는 내보낸 JSON 데이터를 붙여넣으세요.",
+      "placeholder": "JSON 내용 붙여넣기...",
+      "import": "가져오기",
+      "importing": "가져오는 중...",
+      "importSuccessMsg": "{{count}}개 계정을 가져왔습니다",
+      "importFailedMsg": "가져오기 실패: {{error}}",
+      "empty": "Token 또는 JSON을 입력하세요"
+    },
+    "import": {
+      "label": "가져오기",
+      "localDesc": "로컬에 로그인된 세션에서 GitHub Copilot 계정을 가져오기.",
+      "importing": "로컬 계정 가져오는 중...",
+      "failedMsg": "가져오기 실패: {{error}}",
+      "pickFile": "가져올 JSON 파일 선택"
+    },
+    "quota": {
+      "hourly": "5시간 쿼터",
+      "weekly": "주간 쿼터",
+      "noData": "쿼터 데이터 없음",
+      "resetDone": "재설정됨"
+    },
+    "usage": {
+      "resetUnknown": "할당량 재설정까지 -",
+      "resetLine": "할당량은 {{dateText}}에 재설정됩니다."
+    },
+    "time": {
+      "relativeDays": "{{days}}일",
+      "relativeDaysHours": "{{days}}일 {{hours}}시간",
+      "relativeHours": "{{hours}}시간",
+      "relativeHoursMinutes": "{{hours}}시간 {{minutes}}분",
+      "relativeMinutes": "{{minutes}}분",
+      "lessThanMinute": "<1분",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "계정 검색...",
+    "view": {
+      "list": "목록 보기",
+      "grid": "카드 보기"
+    },
+    "filter": {
+      "all": "전체 ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "필터",
+    "sortLabel": "정렬",
+    "sort": {
+      "createdAt": "생성일",
+      "weekly": "주간 할당량",
+      "hourly": "5시간 할당량",
+      "weeklyReset": "주간 할당량 재설정 시간",
+      "hourlyReset": "5시간 할당량 재설정 시간",
+      "descTooltip": "내림차순 (클릭하여 오름차순으로 전환)",
+      "ascTooltip": "오름차순 (클릭하여 내림차순으로 전환)",
+      "toggleDirection": "정렬 방향 전환"
+    },
+    "columns": {
+      "email": "계정",
+      "plan": "플랜",
+      "hourly": "5시간 쿼터",
+      "weekly": "주간 쿼터",
+      "actions": "작업"
+    },
+    "export": "내보내기",
+    "flowNotice": {
+      "title": "GitHub Copilot 계정 안내(클릭하여 펼치기/접기)",
+      "desc": "현재 흐름: 새 계정 인증 -> 할당량 조회 및 표시 -> 멀티 인스턴스 화면에서 계정 바인딩.",
+      "reason": "원클릭 계정 전환이 불가능한 이유: VS Code 로그인 상태는 GitHub 세션과 확장 프로그램 SecretStorage에서 관리되며, 외부 앱이 해당 자격 증명을 대체할 수 없습니다.",
+      "storage": "로그인 데이터 위치: 주로 VS Code SecretStorage(시스템 키체인/자격 증명 관리자)와 전역 상태 데이터베이스(예: ~/Library/Application Support/Code/User/globalStorage/state.vscdb)에 저장됩니다.",
+      "alternative": "대안: 멀티 인스턴스 격리(서로 다른 --user-data-dir)를 사용하세요. 인스턴스별로 한 번만 로그인하면 이후에는 인스턴스 단위 실행으로 원하는 계정 환경으로 빠르게 전환할 수 있습니다."
     }
   }
 }

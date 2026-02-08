@@ -30,7 +30,8 @@
     "settings": "Cài đặt",
     "codex": "Tài khoản Codex",
     "dashboard": "Bảng điều khiển",
-    "instances": "Đa Phiên Bản"
+    "instances": "Đa Phiên Bản",
+    "githubCopilot": "GitHub Copilot"
   },
   "settings": {
     "title": "Cài đặt ứng dụng",
@@ -85,6 +86,12 @@
       "codexAppPathPlaceholder": "Đường dẫn mặc định",
       "codexPathSelect": "Chọn",
       "codexPathReset": "Đặt lại mặc định",
+      "vscodeTitle": "Khởi chạy VS Code",
+      "vscodeAppPath": "Đường dẫn ứng dụng VS Code",
+      "vscodeAppPathDesc": "Để trống để dùng đường dẫn mặc định",
+      "vscodeAppPathPlaceholder": "Đường dẫn mặc định",
+      "vscodePathSelect": "Chọn",
+      "vscodePathReset": "Đặt lại mặc định",
       "antigravityAppPath": "Đường dẫn ứng dụng Antigravity",
       "antigravityTitle": "Khởi chạy Antigravity"
     },
@@ -234,7 +241,25 @@
     "clearFilter": "Xóa bộ lọc",
     "editTags": "Chỉnh sửa thẻ",
     "groupByTag": "Nhóm theo thẻ",
-    "untagged": "Chưa gắn thẻ"
+    "untagged": "Chưa gắn thẻ",
+    "deleteTagAria": "Xóa thẻ {{tag}}",
+    "tagModal": {
+      "title": "Chỉnh sửa thẻ",
+      "hint": "Tối đa {{max}} thẻ. Mỗi thẻ có thể dài tối đa {{maxLength}} ký tự.",
+      "empty": "Không có thẻ nào",
+      "suggestionsTitle": "Lọc thẻ",
+      "suggestionsEmpty": "Không có thẻ nào",
+      "inputPlaceholder": "Nhập thẻ (còn {{remaining}})",
+      "inputDisabledPlaceholder": "Đã đạt giới hạn thẻ",
+      "add": "Thêm",
+      "save": "Lưu thẻ",
+      "error": {
+        "empty": "Thẻ không được để trống",
+        "tooLong": "Thẻ không được dài quá {{max}} ký tự",
+        "duplicate": "Thẻ đã tồn tại",
+        "tooMany": "Bạn chỉ có thể thêm tối đa {{max}} thẻ"
+      }
+    }
   },
   "overview": {
     "title": "Tổng quan tài khoản",
@@ -970,6 +995,129 @@
       "title": "Không tìm thấy đường dẫn ứng dụng",
       "desc": "Không tìm thấy đường dẫn ứng dụng {{app}}. Vui lòng đặt ngay để tiếp tục.",
       "action": "Đặt ngay"
+    }
+  },
+  "githubCopilot": {
+    "title": "Quản lý tài khoản GitHub Copilot",
+    "subtitle": "Quản lý các tài khoản GitHub Copilot",
+    "overview": {
+      "title": "Tổng quan tài khoản"
+    },
+    "instances": {
+      "title": "Đa Phiên Bản",
+      "subtitle": "Cấu hình độc lập cho mỗi phiên bản, vận hành song song với nhiều tài khoản.",
+      "unsupported": {
+        "title": "Không hỗ trợ trên hệ thống này",
+        "desc": "Đa phiên bản GitHub Copilot hiện chỉ khả dụng trên macOS."
+      },
+      "quota": {
+        "inline": "Inline Suggestions",
+        "chat": "Chat messages"
+      }
+    },
+    "addAccount": "Thêm tài khoản",
+    "refreshAll": "Làm mới tất cả",
+    "refreshQuota": "Làm mới hạn mức",
+    "empty": {
+      "title": "Chưa có tài khoản",
+      "description": "Nhấn \"Thêm tài khoản\" để bắt đầu"
+    },
+    "noMatch": {
+      "title": "Không có tài khoản phù hợp",
+      "desc": "Thử điều chỉnh tìm kiếm hoặc bộ lọc"
+    },
+    "addModal": {
+      "title": "Thêm tài khoản GitHub Copilot",
+      "oauth": "Đăng nhập OAuth",
+      "token": "Nhập JSON",
+      "import": "Nhập từ máy"
+    },
+    "oauth": {
+      "desc": "Nhấn nút bên dưới và hoàn tất ủy quyền GitHub Copilot trong trình duyệt.",
+      "preparing": "Đang chuẩn bị liên kết ủy quyền...",
+      "openBrowser": "Mở trong trình duyệt",
+      "hint": "Sau khi ủy quyền, cửa sổ này sẽ tự cập nhật",
+      "success": "Ủy quyền thành công",
+      "failed": "Ủy quyền thất bại",
+      "retry": "Tạo lại thông tin ủy quyền",
+      "timeoutRetry": "Làm mới liên kết ủy quyền",
+      "waiting": "Đang chờ ủy quyền...",
+      "meta": "Hết hạn sau: {{expires}}s; chu kỳ thăm dò: {{interval}}s"
+    },
+    "token": {
+      "desc": "Dán token truy cập GitHub Copilot hoặc dữ liệu JSON đã xuất.",
+      "placeholder": "Dán nội dung JSON...",
+      "import": "Nhập",
+      "importing": "Đang nhập...",
+      "importSuccessMsg": "Đã nhập {{count}} tài khoản",
+      "importFailedMsg": "Nhập thất bại: {{error}}",
+      "empty": "Vui lòng nhập Token hoặc JSON"
+    },
+    "import": {
+      "label": "Nhập",
+      "localDesc": "Nhập tài khoản GitHub Copilot từ các phiên đăng nhập cục bộ.",
+      "importing": "Đang nhập tài khoản cục bộ...",
+      "failedMsg": "Nhập thất bại: {{error}}",
+      "pickFile": "Chọn tệp JSON để nhập"
+    },
+    "quota": {
+      "hourly": "Hạn mức 5 giờ",
+      "weekly": "Hạn mức tuần",
+      "noData": "Không có dữ liệu hạn mức",
+      "resetDone": "Đã đặt lại"
+    },
+    "usage": {
+      "resetUnknown": "Hạn mức sẽ đặt lại sau -",
+      "resetLine": "Hạn mức sẽ được đặt lại {{dateText}}."
+    },
+    "time": {
+      "relativeDays": "{{days}} ngày",
+      "relativeDaysHours": "{{days}} ngày {{hours}} giờ",
+      "relativeHours": "{{hours}} giờ",
+      "relativeHoursMinutes": "{{hours}} giờ {{minutes}} phút",
+      "relativeMinutes": "{{minutes}} phút",
+      "lessThanMinute": "<1 phút",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "Tìm kiếm tài khoản...",
+    "view": {
+      "list": "Dạng danh sách",
+      "grid": "Dạng thẻ"
+    },
+    "filter": {
+      "all": "Tất cả ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "Bộ lọc",
+    "sortLabel": "Sắp xếp",
+    "sort": {
+      "createdAt": "Thời gian tạo",
+      "weekly": "Hạn mức tuần",
+      "hourly": "Hạn mức 5 giờ",
+      "weeklyReset": "Thời gian đặt lại theo tuần",
+      "hourlyReset": "Thời gian đặt lại 5 giờ",
+      "descTooltip": "Giảm dần (nhấn để chuyển Tăng dần)",
+      "ascTooltip": "Tăng dần (nhấn để chuyển Giảm dần)",
+      "toggleDirection": "Đổi hướng sắp xếp"
+    },
+    "columns": {
+      "email": "Tài khoản",
+      "plan": "Gói",
+      "hourly": "Hạn mức 5h",
+      "weekly": "Hạn mức tuần",
+      "actions": "Hành động"
+    },
+    "export": "Xuất",
+    "flowNotice": {
+      "title": "Hướng dẫn tài khoản GitHub Copilot (bấm để mở rộng/thu gọn)",
+      "desc": "Luồng hiện tại: cấp quyền tài khoản mới -> lấy và hiển thị hạn mức -> liên kết tài khoản trong chế độ đa phiên bản.",
+      "reason": "Vì sao không thể chuyển tài khoản bằng một cú nhấp: trạng thái đăng nhập VS Code được quản lý bởi phiên GitHub và SecretStorage của tiện ích, ứng dụng bên ngoài không thể thay thế các thông tin xác thực này.",
+      "storage": "Vị trí dữ liệu đăng nhập: chủ yếu trong SecretStorage của VS Code (keychain/trình quản lý thông tin xác thực hệ thống) và cơ sở dữ liệu trạng thái toàn cục (ví dụ: ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
+      "alternative": "Giải pháp thay thế: dùng cô lập đa phiên bản (khác --user-data-dir). Đăng nhập một lần cho mỗi phiên bản, sau đó khởi chạy theo phiên bản để chuyển nhanh sang môi trường tài khoản mục tiêu."
     }
   }
 }

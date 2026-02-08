@@ -1079,6 +1079,7 @@ export function WakeupTasksPage({ onNavigate }: WakeupPageProps) {
           opencodeAppPath: config.opencode_app_path ?? '',
           antigravityAppPath: config.antigravity_app_path ?? '',
           codexAppPath: config.codex_app_path ?? '',
+          vscodeAppPath: config.vscode_app_path ?? '',
           opencodeSyncOnSwitch: config.opencode_sync_on_switch ?? true,
         });
         

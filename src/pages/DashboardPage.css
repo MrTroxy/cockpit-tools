@@ -16,7 +16,7 @@
 /* Stats Row */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
@@ -50,6 +50,7 @@
 .stat-icon-bg.primary { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
 .stat-icon-bg.success { background: rgba(34, 197, 94, 0.1); color: var(--success); }
 .stat-icon-bg.info { background: rgba(14, 165, 198, 0.1); color: #0ea5c6; }
+.stat-icon-bg.github { background: var(--bg-tertiary); color: var(--text-primary); }
 
 .stat-info {
   display: flex;
@@ -71,6 +72,12 @@
 }
 
 /* Cards Split Row */
+.cards-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .cards-split-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -256,6 +263,10 @@
 .tier-tag.pro, .tier-tag.plus { background: rgba(79, 70, 229, 0.1); color: #4f46e5; }
 .tier-tag.ultra, .tier-tag.team { background: rgba(219, 39, 119, 0.1); color: #db2777; }
 .tier-tag.free { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); }
+.tier-tag.individual { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+.tier-tag.business { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.tier-tag.enterprise { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.tier-tag.unknown { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); }
 
 .account-mini-quotas {
   display: flex;
@@ -339,6 +350,7 @@
 .mini-progress-bar.high { background: var(--success); }
 .mini-progress-bar.medium { background: var(--warning); }
 .mini-progress-bar.low { background: var(--danger); }
+.mini-progress-bar.critical { background: var(--danger); }
 
 .model-pct {
   width: 40px;
@@ -350,6 +362,7 @@
 .model-pct.high { color: var(--success); }
 .model-pct.medium { color: var(--warning); }
 .model-pct.low { color: var(--danger); }
+.model-pct.critical { color: var(--danger); }
 
 /* Stacked Quota Style (compact) shared by Antigravity and Codex */
 .mini-quota-row-stacked {
@@ -378,6 +391,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.github-copilot-card .model-name {
+  width: 140px;
 }
 /* Removed dedicated Codex styles to keep unified look */
 

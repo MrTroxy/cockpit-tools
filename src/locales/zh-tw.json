@@ -30,7 +30,8 @@
     "settings": "設定",
     "codex": "Codex 帳號",
     "dashboard": "儀表板",
-    "instances": "多開實例"
+    "instances": "多開實例",
+    "githubCopilot": "GitHub Copilot"
   },
   "settings": {
     "title": "應用程式設定",
@@ -85,6 +86,12 @@
       "codexAppPathPlaceholder": "預設路徑",
       "codexPathSelect": "選擇",
       "codexPathReset": "重設預設值",
+      "vscodeTitle": "VS Code 啟動",
+      "vscodeAppPath": "VS Code 啟動路徑",
+      "vscodeAppPathDesc": "留空則使用預設路徑",
+      "vscodeAppPathPlaceholder": "預設路徑",
+      "vscodePathSelect": "選擇",
+      "vscodePathReset": "重設預設值",
       "antigravityAppPath": "Antigravity 啟動路徑",
       "antigravityTitle": "Antigravity 啟動"
     },
@@ -234,7 +241,25 @@
     "clearFilter": "清除篩選",
     "editTags": "編輯標籤",
     "groupByTag": "依標籤分組",
-    "untagged": "未標記"
+    "untagged": "未標記",
+    "deleteTagAria": "刪除標籤 {{tag}}",
+    "tagModal": {
+      "title": "編輯標籤",
+      "hint": "最多 {{max}} 個標籤，每個標籤長度不可超過 {{maxLength}} 個字元。",
+      "empty": "目前沒有可用標籤",
+      "suggestionsTitle": "標籤篩選",
+      "suggestionsEmpty": "目前沒有可用標籤",
+      "inputPlaceholder": "輸入標籤（還可新增 {{remaining}} 個）",
+      "inputDisabledPlaceholder": "已達標籤上限",
+      "add": "新增",
+      "save": "儲存標籤",
+      "error": {
+        "empty": "標籤不可為空",
+        "tooLong": "標籤長度不可超過 {{max}} 個字元",
+        "duplicate": "標籤已存在",
+        "tooMany": "最多只能新增 {{max}} 個標籤"
+      }
+    }
   },
   "overview": {
     "title": "帳號總覽",
@@ -970,6 +995,129 @@
       "title": "找不到應用程式路徑",
       "desc": "找不到 {{app}} 的應用程式路徑。請立即設定以繼續。",
       "action": "立即設定"
+    }
+  },
+  "githubCopilot": {
+    "title": "GitHub Copilot 帳號管理",
+    "subtitle": "管理您的 GitHub Copilot 帳號",
+    "overview": {
+      "title": "帳號總覽"
+    },
+    "instances": {
+      "title": "多開實例",
+      "subtitle": "多實例獨立配置，多帳號並行運行。",
+      "unsupported": {
+        "title": "暫不支援目前系統",
+        "desc": "GitHub Copilot 多開實例僅支援 macOS，請在 macOS 上使用。"
+      },
+      "quota": {
+        "inline": "Inline Suggestions",
+        "chat": "Chat messages"
+      }
+    },
+    "addAccount": "新增帳號",
+    "refreshAll": "全部刷新",
+    "refreshQuota": "刷新配額",
+    "empty": {
+      "title": "暫無帳號",
+      "description": "點擊「新增帳號」開始管理您的 GitHub Copilot 帳號"
+    },
+    "noMatch": {
+      "title": "沒有匹配的帳號",
+      "desc": "請嘗試調整搜尋或篩選條件"
+    },
+    "addModal": {
+      "title": "新增 GitHub Copilot 帳號",
+      "oauth": "OAuth 登入",
+      "token": "JSON 匯入",
+      "import": "本機匯入"
+    },
+    "oauth": {
+      "desc": "點擊下方按鈕，在瀏覽器中完成 GitHub Copilot 授權。",
+      "preparing": "正在準備授權連結...",
+      "openBrowser": "在瀏覽器中開啟",
+      "hint": "完成授權後，此視窗將自動更新",
+      "success": "授權成功",
+      "failed": "授權失敗",
+      "retry": "重新產生授權資訊",
+      "timeoutRetry": "更新授權連結",
+      "waiting": "等待授權中...",
+      "meta": "有效期限：{{expires}}s；輪詢間隔：{{interval}}s"
+    },
+    "token": {
+      "desc": "貼上 GitHub Copilot 存取權杖或匯出的 JSON 資料。",
+      "placeholder": "貼上 JSON 內容...",
+      "import": "匯入",
+      "importing": "匯入中...",
+      "importSuccessMsg": "成功匯入 {{count}} 個帳號",
+      "importFailedMsg": "匯入失敗: {{error}}",
+      "empty": "請輸入 Token 或 JSON"
+    },
+    "import": {
+      "label": "匯入",
+      "localDesc": "從本機已登入的會話匯入 GitHub Copilot 帳號。",
+      "importing": "正在匯入本地帳號...",
+      "failedMsg": "匯入失敗: {{error}}",
+      "pickFile": "選擇要匯入的 JSON 檔案"
+    },
+    "quota": {
+      "hourly": "5 小時配額",
+      "weekly": "週配額",
+      "noData": "暫無配額資料",
+      "resetDone": "已重置"
+    },
+    "usage": {
+      "resetUnknown": "額度重置倒數 -",
+      "resetLine": "額度將於 {{dateText}} 重置。"
+    },
+    "time": {
+      "relativeDays": "{{days}}天",
+      "relativeDaysHours": "{{days}}天{{hours}}小時",
+      "relativeHours": "{{hours}}小時",
+      "relativeHoursMinutes": "{{hours}}小時{{minutes}}分鐘",
+      "relativeMinutes": "{{minutes}}分鐘",
+      "lessThanMinute": "<1分鐘",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "搜尋帳號...",
+    "view": {
+      "list": "列表檢視",
+      "grid": "卡片檢視"
+    },
+    "filter": {
+      "all": "全部 ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "篩選",
+    "sortLabel": "排序",
+    "sort": {
+      "createdAt": "按建立時間",
+      "weekly": "按週配額",
+      "hourly": "按5小時配額",
+      "weeklyReset": "按週配額重置時間",
+      "hourlyReset": "按5小時配額重置時間",
+      "descTooltip": "目前：降序，點擊切換為升序",
+      "ascTooltip": "目前：升序，點擊切換為降序",
+      "toggleDirection": "切換排序方向"
+    },
+    "columns": {
+      "email": "帳號",
+      "plan": "訂閱",
+      "hourly": "5小時配額",
+      "weekly": "週配額",
+      "actions": "操作"
+    },
+    "export": "匯出",
+    "flowNotice": {
+      "title": "GitHub Copilot 帳號指南（點擊展開/收合）",
+      "desc": "目前流程：授權新帳號 -> 查詢並顯示額度 -> 在多開檢視中綁定帳號。",
+      "reason": "為何無法一鍵切換帳號：VS Code 的登入狀態由 GitHub 工作階段與擴充套件 SecretStorage 管理，外部應用無法替換這些憑證。",
+      "storage": "登入資料位置：主要在 VS Code SecretStorage（系統鑰匙圈/憑證管理器）與全域狀態資料庫（例如 ~/Library/Application Support/Code/User/globalStorage/state.vscdb）。",
+      "alternative": "替代方案：使用多開隔離（不同 --user-data-dir）。每個實例登入一次，之後按實例啟動即可快速切換到目標帳號環境。"
     }
   }
 }

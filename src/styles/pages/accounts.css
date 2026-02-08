@@ -193,6 +193,9 @@
   padding: 2px 6px;
   font-size: 10px;
   border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
 }
 
 .tier-badge::before {
@@ -223,7 +226,7 @@
 }
 
 [data-theme="dark"] .account-card .account-email {
-  background: rgba(255,255,255,0.05);
+  background: transparent;
   color: #e2e8f0;
 }
 

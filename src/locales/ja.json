@@ -30,7 +30,8 @@
     "settings": "設定",
     "codex": "Codex アカウント",
     "dashboard": "ダッシュボード",
-    "instances": "マルチインスタンス"
+    "instances": "マルチインスタンス",
+    "githubCopilot": "GitHub Copilot"
   },
   "settings": {
     "title": "アプリ設定",
@@ -85,6 +86,12 @@
       "codexAppPathPlaceholder": "既定のパス",
       "codexPathSelect": "選択",
       "codexPathReset": "既定に戻す",
+      "vscodeTitle": "VS Code 起動",
+      "vscodeAppPath": "VS Code アプリのパス",
+      "vscodeAppPathDesc": "空欄の場合は既定のパスを使用します",
+      "vscodeAppPathPlaceholder": "既定のパス",
+      "vscodePathSelect": "選択",
+      "vscodePathReset": "既定に戻す",
       "antigravityAppPath": "Antigravity アプリのパス",
       "antigravityTitle": "Antigravity 起動"
     },
@@ -234,7 +241,25 @@
     "clearFilter": "フィルターをクリア",
     "editTags": "タグを編集",
     "groupByTag": "タグでグループ化",
-    "untagged": "タグなし"
+    "untagged": "タグなし",
+    "deleteTagAria": "タグ {{tag}} を削除",
+    "tagModal": {
+      "title": "タグを編集",
+      "hint": "タグは最大{{max}}件まで。1件あたり最大{{maxLength}}文字です。",
+      "empty": "利用可能なタグはありません",
+      "suggestionsTitle": "タグで絞り込み",
+      "suggestionsEmpty": "利用可能なタグはありません",
+      "inputPlaceholder": "タグを入力（残り{{remaining}}件）",
+      "inputDisabledPlaceholder": "タグ上限に達しました",
+      "add": "追加",
+      "save": "タグを保存",
+      "error": {
+        "empty": "タグを入力してください",
+        "tooLong": "タグは{{max}}文字以内で入力してください",
+        "duplicate": "タグは既に存在します",
+        "tooMany": "タグは最大{{max}}件まで追加できます"
+      }
+    }
   },
   "overview": {
     "title": "アカウント概要",
@@ -970,6 +995,129 @@
       "title": "アプリのパスが見つかりません",
       "desc": "{{app}} のアプリパスが見つかりません。続行するには今すぐ設定してください。",
       "action": "今すぐ設定"
+    }
+  },
+  "githubCopilot": {
+    "title": "GitHub Copilot アカウント管理",
+    "subtitle": "GitHub Copilot アカウントを管理します",
+    "overview": {
+      "title": "アカウント概要"
+    },
+    "instances": {
+      "title": "マルチインスタンス",
+      "subtitle": "インスタンスごとの独立設定、複数アカウントでの並列運用。",
+      "unsupported": {
+        "title": "このシステムでは非対応",
+        "desc": "GitHub Copilotマルチインスタンスは現在macOSでのみ利用可能です。"
+      },
+      "quota": {
+        "inline": "Inline Suggestions",
+        "chat": "Chat messages"
+      }
+    },
+    "addAccount": "アカウントを追加",
+    "refreshAll": "すべて更新",
+    "refreshQuota": "クォータ更新",
+    "empty": {
+      "title": "アカウントなし",
+      "description": "「アカウントを追加」から GitHub Copilot アカウントを管理できます"
+    },
+    "noMatch": {
+      "title": "一致するアカウントなし",
+      "desc": "検索条件を変更してください"
+    },
+    "addModal": {
+      "title": "GitHub Copilot アカウントを追加",
+      "oauth": "OAuth ログイン",
+      "token": "JSON インポート",
+      "import": "ローカルインポート"
+    },
+    "oauth": {
+      "desc": "下のボタンをクリックし、ブラウザで GitHub Copilot の認可を完了してください。",
+      "preparing": "認可リンクを準備中...",
+      "openBrowser": "ブラウザで開く",
+      "hint": "認可完了後、このウィンドウは自動更新されます",
+      "success": "認可成功",
+      "failed": "認可失敗",
+      "retry": "認可情報を再生成",
+      "timeoutRetry": "認可リンクを更新",
+      "waiting": "認可待ち...",
+      "meta": "有効期限: {{expires}}s; ポーリング間隔: {{interval}}s"
+    },
+    "token": {
+      "desc": "GitHub Copilot のアクセストークン、またはエクスポートした JSON データを貼り付けてください。",
+      "placeholder": "JSON を貼り付け...",
+      "import": "インポート",
+      "importing": "インポート中...",
+      "importSuccessMsg": "{{count}} 件のアカウントをインポートしました",
+      "importFailedMsg": "インポート失敗: {{error}}",
+      "empty": "Token または JSON を入力してください"
+    },
+    "import": {
+      "label": "インポート",
+      "localDesc": "ローカルでログイン済みのセッションから GitHub Copilot アカウントをインポート。",
+      "importing": "ローカルアカウントをインポート中...",
+      "failedMsg": "インポート失敗: {{error}}",
+      "pickFile": "インポートする JSON ファイルを選択"
+    },
+    "quota": {
+      "hourly": "5 時間クォータ",
+      "weekly": "週次クォータ",
+      "noData": "クォータデータなし",
+      "resetDone": "リセット済み"
+    },
+    "usage": {
+      "resetUnknown": "利用枠のリセットまで -",
+      "resetLine": "利用枠は{{dateText}}にリセットされます。"
+    },
+    "time": {
+      "relativeDays": "{{days}}日",
+      "relativeDaysHours": "{{days}}日{{hours}}時間",
+      "relativeHours": "{{hours}}時間",
+      "relativeHoursMinutes": "{{hours}}時間{{minutes}}分",
+      "relativeMinutes": "{{minutes}}分",
+      "lessThanMinute": "<1分",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "アカウントを検索...",
+    "view": {
+      "list": "リスト表示",
+      "grid": "カード表示"
+    },
+    "filter": {
+      "all": "すべて ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "フィルター",
+    "sortLabel": "並べ替え",
+    "sort": {
+      "createdAt": "作成日時",
+      "weekly": "週間クォータ",
+      "hourly": "5時間クォータ",
+      "weeklyReset": "週間クォータのリセット時間",
+      "hourlyReset": "5時間クォータのリセット時間",
+      "descTooltip": "降順（クリックで昇順へ）",
+      "ascTooltip": "昇順（クリックで降順へ）",
+      "toggleDirection": "順序を切り替え"
+    },
+    "columns": {
+      "email": "アカウント",
+      "plan": "プラン",
+      "hourly": "5時間クォータ",
+      "weekly": "週間クォータ",
+      "actions": "操作"
+    },
+    "export": "エクスポート",
+    "flowNotice": {
+      "title": "GitHub Copilot アカウントガイド（クリックで展開/折りたたみ）",
+      "desc": "現在の流れ: 新しいアカウントを認可 -> クォータを取得して表示 -> マルチインスタンス画面でアカウントを紐付け。",
+      "reason": "ワンクリックでアカウント切り替えができない理由: VS Code のログイン状態は GitHub セッションと拡張機能の SecretStorage で管理されており、外部アプリからこれらの認証情報を置き換えることはできません。",
+      "storage": "ログイン関連データの保存先: 主に VS Code の SecretStorage（システムのキーチェーン/資格情報マネージャー）とグローバル状態データベース（例: ~/Library/Application Support/Code/User/globalStorage/state.vscdb）。",
+      "alternative": "代替案: マルチインスタンス分離（異なる --user-data-dir）を利用します。インスタンスごとに一度ログインすれば、以後はインスタンス単位で起動して目的のアカウント環境へ素早く切り替えられます。"
     }
   }
 }

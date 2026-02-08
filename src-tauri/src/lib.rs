@@ -213,6 +213,33 @@ pub fn run() {
             commands::codex::close_codex_oauth_port,
             commands::codex::update_codex_account_tags,
 
+            // GitHub Copilot Commands
+            commands::github_copilot::list_github_copilot_accounts,
+            commands::github_copilot::delete_github_copilot_account,
+            commands::github_copilot::delete_github_copilot_accounts,
+            commands::github_copilot::import_github_copilot_from_json,
+            commands::github_copilot::export_github_copilot_accounts,
+            commands::github_copilot::refresh_github_copilot_token,
+            commands::github_copilot::refresh_all_github_copilot_tokens,
+            commands::github_copilot::github_copilot_oauth_login_start,
+            commands::github_copilot::github_copilot_oauth_login_complete,
+            commands::github_copilot::github_copilot_oauth_login_cancel,
+            commands::github_copilot::add_github_copilot_account_with_token,
+            commands::github_copilot::update_github_copilot_account_tags,
+            commands::github_copilot::get_github_copilot_accounts_index_path,
+
+            // GitHub Copilot Instance Commands
+            commands::github_copilot_instance::github_copilot_get_instance_defaults,
+            commands::github_copilot_instance::github_copilot_list_instances,
+            commands::github_copilot_instance::github_copilot_create_instance,
+            commands::github_copilot_instance::github_copilot_update_instance,
+            commands::github_copilot_instance::github_copilot_delete_instance,
+            commands::github_copilot_instance::github_copilot_start_instance,
+            commands::github_copilot_instance::github_copilot_stop_instance,
+            commands::github_copilot_instance::github_copilot_open_instance_window,
+            commands::github_copilot_instance::github_copilot_force_stop_instance,
+            commands::github_copilot_instance::github_copilot_close_all_instances,
+
             // Codex Instance Commands
             commands::codex_instance::codex_get_instance_defaults,
             commands::codex_instance::codex_list_instances,

@@ -25,6 +25,9 @@ pub mod tray;
 pub mod instance_store;
 pub mod instance;
 pub mod codex_instance;
+pub mod github_copilot_oauth;
+pub mod github_copilot_account;
+pub mod github_copilot_instance;
 
 // 重新导出常用函数
 pub use account::*;

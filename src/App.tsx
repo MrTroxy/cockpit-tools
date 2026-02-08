@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { AccountsPage } from './pages/AccountsPage';
 import { CodexAccountsPage } from './pages/CodexAccountsPage';
+import { GitHubCopilotAccountsPage } from './pages/GitHubCopilotAccountsPage';
 
 import { FingerprintsPage } from './pages/FingerprintsPage';
 import { WakeupTasksPage } from './pages/WakeupTasksPage';
@@ -30,10 +31,11 @@ interface GeneralConfig extends GeneralConfigTheme {
   opencode_app_path: string;
   antigravity_app_path: string;
   codex_app_path: string;
+  vscode_app_path: string;
 }
 
 type AppPathMissingDetail = {
-  app: 'antigravity' | 'codex';
+  app: 'antigravity' | 'codex' | 'vscode';
   retry?: { kind: 'default' | 'instance'; instanceId?: string };
 };
 
@@ -129,6 +131,7 @@ function App() {
     const detectAppPathsOnStartup = async () => {
       try {
         await invoke('detect_app_path', { app: 'antigravity' });
+        await invoke('detect_app_path', { app: 'vscode' });
         const userAgent = navigator.userAgent.toLowerCase();
         if (userAgent.includes('mac')) {
           await invoke('detect_app_path', { app: 'codex' });
@@ -274,7 +277,7 @@ function App() {
     const handlePayload = (payload: unknown) => {
       if (!payload || typeof payload !== 'object') return;
       const detail = payload as AppPathMissingDetail;
-      if (detail.app !== 'antigravity' && detail.app !== 'codex') return;
+      if (detail.app !== 'antigravity' && detail.app !== 'codex' && detail.app !== 'vscode') return;
       setAppPathMissing(detail);
     };
 
@@ -308,7 +311,11 @@ function App() {
       try {
         const config = await invoke<GeneralConfig>('get_general_config');
         const currentPath =
-          appPathMissing.app === 'codex' ? config.codex_app_path : config.antigravity_app_path;
+          appPathMissing.app === 'codex'
+            ? config.codex_app_path
+            : appPathMissing.app === 'vscode'
+              ? config.vscode_app_path
+              : config.antigravity_app_path;
         if (active) {
           setAppPathDraft(currentPath || '');
         }
@@ -351,12 +358,16 @@ function App() {
       if (retry?.kind === 'instance' && retry.instanceId) {
         if (app === 'codex') {
           await invoke('codex_start_instance', { instanceId: retry.instanceId });
+        } else if (app === 'vscode') {
+          await invoke('github_copilot_start_instance', { instanceId: retry.instanceId });
         } else {
           await invoke('start_instance', { instanceId: retry.instanceId });
         }
       } else {
         if (app === 'codex') {
           await invoke('codex_start_instance', { instanceId: '__default__' });
+        } else if (app === 'vscode') {
+          await invoke('github_copilot_start_instance', { instanceId: '__default__' });
         } else {
           await invoke('start_instance', { instanceId: '__default__' });
         }
@@ -438,7 +449,12 @@ function App() {
             <div className="modal-body">
               <p style={{ margin: 0, color: 'var(--text-primary)' }}>
                 {t('appPath.missing.desc', '未找到 {{app}} 应用程序路径，请立即设置后继续启动。', {
-                  app: appPathMissing.app === 'codex' ? 'Codex' : 'Antigravity',
+                  app:
+                    appPathMissing.app === 'codex'
+                      ? 'Codex'
+                      : appPathMissing.app === 'vscode'
+                        ? 'VS Code'
+                        : 'Antigravity',
                 })}
               </p>
               <div style={{ marginTop: 16 }}>
@@ -489,6 +505,7 @@ function App() {
         {page === 'dashboard' && <DashboardPage onNavigate={setPage} />}
         {page === 'overview' && <AccountsPage onNavigate={setPage} />}
         {page === 'codex' && <CodexAccountsPage />}
+        {page === 'github-copilot' && <GitHubCopilotAccountsPage />}
         {page === 'instances' && <InstancesPage onNavigate={setPage} />}
         {page === 'fingerprints' && <FingerprintsPage onNavigate={setPage} />}
         {page === 'wakeup' && <WakeupTasksPage onNavigate={setPage} />}

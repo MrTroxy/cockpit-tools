@@ -29,6 +29,7 @@
     "fingerprints": "بصمات الجهاز",
     "settings": "الإعدادات",
     "codex": "حسابات Codex",
+    "githubCopilot": "GitHub Copilot",
     "dashboard": "لوحة التحكم",
     "instances": "مثيلات متعددة"
   },
@@ -85,6 +86,12 @@
       "codexAppPathPlaceholder": "المسار الافتراضي",
       "codexPathSelect": "اختيار",
       "codexPathReset": "إعادة التعيين إلى الافتراضي",
+      "vscodeTitle": "تشغيل VS Code",
+      "vscodeAppPath": "مسار تطبيق VS Code",
+      "vscodeAppPathDesc": "اتركه فارغًا لاستخدام المسار الافتراضي",
+      "vscodeAppPathPlaceholder": "المسار الافتراضي",
+      "vscodePathSelect": "اختيار",
+      "vscodePathReset": "إعادة التعيين إلى الافتراضي",
       "antigravityAppPath": "مسار تطبيق Antigravity",
       "antigravityTitle": "تشغيل Antigravity"
     },
@@ -234,7 +241,25 @@
     "clearFilter": "مسح التصفية",
     "editTags": "تحرير العلامات",
     "groupByTag": "تجميع حسب العلامة",
-    "untagged": "غير موسوم"
+    "untagged": "غير موسوم",
+    "deleteTagAria": "حذف العلامة {{tag}}",
+    "tagModal": {
+      "title": "علامات الحساب",
+      "hint": "حتى {{max}} علامات. يمكن أن يتكون كل وسم من {{maxLength}} حرفًا كحد أقصى.",
+      "empty": "لا توجد علامات",
+      "suggestionsTitle": "العلامات الموجودة",
+      "suggestionsEmpty": "لا توجد علامات متاحة",
+      "inputPlaceholder": "أدخل وسمًا (متبقٍ {{remaining}})",
+      "inputDisabledPlaceholder": "تم الوصول إلى حد العلامات",
+      "add": "إضافة",
+      "save": "حفظ الأوسمة",
+      "error": {
+        "empty": "لا يمكن أن تكون العلامة فارغة",
+        "tooLong": "يجب ألا يتجاوز الوسم {{max}} حرفًا",
+        "duplicate": "الوسم موجود بالفعل",
+        "tooMany": "يمكنك إضافة حتى {{max}} أوسمة"
+      }
+    }
   },
   "overview": {
     "title": "نظرة عامة على الحسابات",
@@ -742,6 +767,129 @@
           "commandWin": "Windows: taskkill /F /PID <pid> (مطابقة CODEX_HOME)"
         }
       }
+    }
+  },
+  "githubCopilot": {
+    "title": "إدارة حسابات GitHub Copilot",
+    "subtitle": "مراقبة حالة الحصة لجميع الحسابات في الوقت الفعلي.",
+    "overview": {
+      "title": "نظرة عامة على الحسابات"
+    },
+    "instances": {
+      "title": "مثيلات متعددة",
+      "subtitle": "إعدادات مستقلة لكل مثيل لتشغيل متوازٍ بعدة حسابات.",
+      "unsupported": {
+        "title": "غير مدعوم على هذا النظام",
+        "desc": "ميزة المثيلات المتعددة لـ GitHub Copilot متاحة على macOS فقط."
+      },
+      "quota": {
+        "inline": "الاقتراحات المضمنة",
+        "chat": "رسائل الدردشة"
+      }
+    },
+    "addAccount": "إضافة حساب",
+    "refreshAll": "تحديث الكل",
+    "refreshQuota": "تحديث الحصة",
+    "empty": {
+      "title": "لا توجد حسابات",
+      "description": "انقر على \"إضافة حساب\" لبدء إدارة حسابات GitHub Copilot"
+    },
+    "noMatch": {
+      "title": "لا توجد حسابات مطابقة",
+      "desc": "حاول تعديل البحث أو المرشحات"
+    },
+    "addModal": {
+      "title": "إضافة حساب GitHub Copilot",
+      "oauth": "OAuth",
+      "token": "Token / JSON",
+      "import": "استيراد محلي"
+    },
+    "oauth": {
+      "desc": "انقر الزر أدناه وأكمل تفويض GitHub Copilot في المتصفح.",
+      "preparing": "جارٍ تجهيز معلومات التفويض...",
+      "openBrowser": "فتح في المتصفح",
+      "hint": "بعد إكمال التفويض سيتم تحديث هذه النافذة تلقائيًا",
+      "success": "تم التفويض بنجاح",
+      "failed": "فشل التفويض",
+      "retry": "إعادة إنشاء معلومات التفويض",
+      "timeoutRetry": "تحديث رابط التفويض",
+      "waiting": "بانتظار التفويض...",
+      "meta": "تنتهي الصلاحية خلال: {{expires}}s؛ فاصل الاستطلاع: {{interval}}s"
+    },
+    "token": {
+      "desc": "الصق رمز وصول GitHub Copilot أو بيانات JSON المصدّرة.",
+      "placeholder": "الصق Token أو JSON...",
+      "import": "استيراد",
+      "importing": "جارٍ الاستيراد...",
+      "importSuccessMsg": "تم استيراد {{count}} حساب(ات) بنجاح",
+      "importFailedMsg": "فشل الاستيراد: {{error}}",
+      "empty": "يرجى إدخال Token أو JSON"
+    },
+    "import": {
+      "label": "استيراد",
+      "localDesc": "استيراد بيانات حسابات GitHub Copilot من ملف JSON.",
+      "importing": "جارٍ الاستيراد...",
+      "failedMsg": "فشل الاستيراد: {{error}}",
+      "pickFile": "اختر ملف JSON للاستيراد"
+    },
+    "quota": {
+      "hourly": "الاقتراحات المضمنة",
+      "weekly": "رسائل الدردشة",
+      "noData": "لا توجد بيانات حصة",
+      "resetDone": "تمت إعادة الضبط"
+    },
+    "usage": {
+      "resetUnknown": "إعادة تعيين الحصة بعد -",
+      "resetLine": "تتم إعادة تعيين الحصة {{dateText}}."
+    },
+    "time": {
+      "relativeDays": "{{days}}d",
+      "relativeDaysHours": "{{days}}d {{hours}}h",
+      "relativeHours": "{{hours}}h",
+      "relativeHoursMinutes": "{{hours}}h {{minutes}}m",
+      "relativeMinutes": "{{minutes}}m",
+      "lessThanMinute": "<1m",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "البحث في الحسابات...",
+    "view": {
+      "list": "عرض قائمة",
+      "grid": "عرض بطاقات"
+    },
+    "filter": {
+      "all": "الكل ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "تصفية",
+    "sortLabel": "ترتيب",
+    "sort": {
+      "createdAt": "وقت الإنشاء",
+      "weekly": "حسب استخدام رسائل الدردشة",
+      "hourly": "حسب استخدام الاقتراحات المضمنة",
+      "weeklyReset": "حسب وقت إعادة ضبط رسائل الدردشة",
+      "hourlyReset": "حسب وقت إعادة ضبط الاقتراحات المضمنة",
+      "descTooltip": "الحالي: تنازلي. انقر للتبديل إلى تصاعدي",
+      "ascTooltip": "الحالي: تصاعدي. انقر للتبديل إلى تنازلي",
+      "toggleDirection": "تبديل اتجاه الترتيب"
+    },
+    "columns": {
+      "email": "الحساب",
+      "plan": "الخطة",
+      "hourly": "الاقتراحات المضمنة",
+      "weekly": "رسائل الدردشة",
+      "actions": "الإجراءات"
+    },
+    "export": "تصدير",
+    "flowNotice": {
+      "title": "دليل حسابات GitHub Copilot (انقر للتوسيع/الطي)",
+      "desc": "التدفق الحالي: تفويض حساب جديد -> جلب الحصص وعرضها -> ربط الحساب في عرض المثيلات المتعددة.",
+      "reason": "سبب عدم توفر التبديل بنقرة واحدة: حالة تسجيل الدخول في VS Code تُدار عبر جلسات GitHub وSecretStorage الخاصة بالإضافة، ولا يمكن للتطبيقات الخارجية استبدال هذه الاعتمادات.",
+      "storage": "مكان بيانات تسجيل الدخول: بشكل أساسي في SecretStorage لـ VS Code (سلسلة المفاتيح/مدير الاعتمادات في النظام) وقاعدة بيانات الحالة العامة (مثل ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
+      "alternative": "بديل: استخدم العزل عبر المثيلات المتعددة (باستخدام --user-data-dir مختلف). سجّل الدخول مرة واحدة لكل مثيل، ثم شغّل حسب المثيل للتبديل السريع إلى بيئة الحساب المستهدف."
     }
   },
   "dashboard": {

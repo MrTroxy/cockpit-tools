@@ -343,6 +343,14 @@ async fn start_callback_server(
                         "codex-oauth-login-completed",
                         CodexOAuthLoginCallbackEvent { login_id },
                     );
+                    // 兼容新前端页面（GitHub Copilot 账号管理）使用的事件名。
+                    // 目前仍复用 Codex OAuth 的后端实现，因此在这里双发事件，前端可逐步迁移。
+                    let _ = app_handle.emit(
+                        "ghcp-oauth-login-completed",
+                        CodexOAuthLoginCallbackEvent {
+                            login_id: expected_login_id.clone(),
+                        },
+                    );
                     logger::log_info(&format!(
                         "Codex OAuth 回调校验通过并已通知前端: login_id={}",
                         expected_login_id
@@ -376,6 +384,14 @@ async fn start_callback_server(
         ));
         let _ = app_handle.emit(
             "codex-oauth-login-timeout",
+            CodexOAuthLoginTimeoutEvent {
+                login_id: expected_login_id.clone(),
+                callback_url: callback_url.clone(),
+                timeout_seconds: timeout.as_secs(),
+            },
+        );
+        let _ = app_handle.emit(
+            "ghcp-oauth-login-timeout",
             CodexOAuthLoginTimeoutEvent {
                 login_id: expected_login_id.clone(),
                 callback_url: callback_url.clone(),

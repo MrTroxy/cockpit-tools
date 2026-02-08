@@ -37,6 +37,8 @@ pub struct GeneralConfig {
     pub antigravity_app_path: String,
     /// Codex 启动路径（为空则使用默认路径）
     pub codex_app_path: String,
+    /// VS Code 启动路径（为空则使用默认路径）
+    pub vscode_app_path: String,
     /// 切换 Codex 时是否自动重启 OpenCode
     pub opencode_sync_on_switch: bool,
 }
@@ -122,6 +124,7 @@ pub fn save_network_config(ws_enabled: bool, ws_port: u16) -> Result<bool, Strin
         opencode_app_path: current.opencode_app_path,
         antigravity_app_path: current.antigravity_app_path,
         codex_app_path: current.codex_app_path,
+        vscode_app_path: current.vscode_app_path,
         opencode_sync_on_switch: current.opencode_sync_on_switch,
     };
     
@@ -150,6 +153,7 @@ pub fn get_general_config() -> Result<GeneralConfig, String> {
         opencode_app_path: user_config.opencode_app_path,
         antigravity_app_path: user_config.antigravity_app_path,
         codex_app_path: user_config.codex_app_path,
+        vscode_app_path: user_config.vscode_app_path,
         opencode_sync_on_switch: user_config.opencode_sync_on_switch,
     })
 }
@@ -165,12 +169,14 @@ pub fn save_general_config(
     opencode_app_path: String,
     antigravity_app_path: String,
     codex_app_path: String,
+    vscode_app_path: String,
     opencode_sync_on_switch: bool,
 ) -> Result<(), String> {
     let current = config::get_user_config();
     let normalized_opencode_path = opencode_app_path.trim().to_string();
     let normalized_antigravity_path = antigravity_app_path.trim().to_string();
     let normalized_codex_path = codex_app_path.trim().to_string();
+    let normalized_vscode_path = vscode_app_path.trim().to_string();
     // 标准化语言代码为小写，确保与插件端格式一致
     let normalized_language = language.to_lowercase();
     let language_changed = current.language != normalized_language;
@@ -196,6 +202,7 @@ pub fn save_general_config(
         opencode_app_path: normalized_opencode_path,
         antigravity_app_path: normalized_antigravity_path,
         codex_app_path: normalized_codex_path,
+        vscode_app_path: normalized_vscode_path,
         opencode_sync_on_switch,
     };
     
@@ -222,6 +229,7 @@ pub fn set_app_path(app: String, path: String) -> Result<(), String> {
     match app.as_str() {
         "antigravity" => current.antigravity_app_path = normalized_path,
         "codex" => current.codex_app_path = normalized_path,
+        "vscode" => current.vscode_app_path = normalized_path,
         "opencode" => current.opencode_app_path = normalized_path,
         _ => return Err("未知应用类型".to_string()),
     }
@@ -232,7 +240,7 @@ pub fn set_app_path(app: String, path: String) -> Result<(), String> {
 #[tauri::command]
 pub fn detect_app_path(app: String) -> Result<Option<String>, String> {
     match app.as_str() {
-        "antigravity" | "codex" | "opencode" => Ok(modules::process::detect_and_save_app_path(app.as_str())),
+        "antigravity" | "codex" | "vscode" | "opencode" => Ok(modules::process::detect_and_save_app_path(app.as_str())),
         _ => Err("未知应用类型".to_string()),
     }
 }

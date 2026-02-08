@@ -1,5 +1,6 @@
 pub mod account;
 pub mod codex;
+pub mod github_copilot;
 pub mod instance;
 pub mod quota;
 pub mod token;

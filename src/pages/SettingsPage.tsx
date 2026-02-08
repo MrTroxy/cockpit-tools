@@ -32,6 +32,7 @@ interface GeneralConfig {
   opencode_app_path: string;
   antigravity_app_path: string;
   codex_app_path: string;
+  vscode_app_path: string;
   opencode_sync_on_switch: boolean;
 }
 
@@ -67,6 +68,7 @@ export function SettingsPage() {
   const [opencodeAppPath, setOpencodeAppPath] = useState('');
   const [antigravityAppPath, setAntigravityAppPath] = useState('');
   const [codexAppPath, setCodexAppPath] = useState('');
+  const [vscodeAppPath, setVscodeAppPath] = useState('');
   const [opencodeSyncOnSwitch, setOpencodeSyncOnSwitch] = useState(true);
   const [generalLoaded, setGeneralLoaded] = useState(false);
   const generalSaveTimerRef = useRef<number | null>(null);
@@ -135,6 +137,7 @@ export function SettingsPage() {
           opencodeAppPath,
           antigravityAppPath,
           codexAppPath,
+          vscodeAppPath,
           opencodeSyncOnSwitch,
         });
         window.dispatchEvent(new Event('config-updated'));
@@ -158,6 +161,8 @@ export function SettingsPage() {
     theme,
     opencodeAppPath,
     antigravityAppPath,
+    codexAppPath,
+    vscodeAppPath,
     opencodeSyncOnSwitch,
     t,
   ]);
@@ -275,6 +280,7 @@ export function SettingsPage() {
       setOpencodeAppPath(config.opencode_app_path || '');
       setAntigravityAppPath(config.antigravity_app_path || '');
       setCodexAppPath(config.codex_app_path || '');
+      setVscodeAppPath(config.vscode_app_path || '');
       setOpencodeSyncOnSwitch(config.opencode_sync_on_switch ?? true);
       // 同步语言
       changeLanguage(config.language);
@@ -325,7 +331,7 @@ export function SettingsPage() {
     openUrl(url);
   };
 
-  const handlePickAppPath = async (target: 'antigravity' | 'codex' | 'opencode') => {
+  const handlePickAppPath = async (target: 'antigravity' | 'codex' | 'vscode' | 'opencode') => {
     try {
       const selected = await open({
         multiple: false,
@@ -339,6 +345,8 @@ export function SettingsPage() {
         setAntigravityAppPath(path);
       } else if (target === 'codex') {
         setCodexAppPath(path);
+      } else if (target === 'vscode') {
+        setVscodeAppPath(path);
       } else {
         setOpencodeAppPath(path);
       }
@@ -347,29 +355,29 @@ export function SettingsPage() {
     }
   };
 
-  const handleResetAppPath = async (target: 'antigravity' | 'codex' | 'opencode') => {
+  const handleResetAppPath = async (target: 'antigravity' | 'codex' | 'vscode' | 'opencode') => {
     try {
       const detected = await invoke<string | null>('detect_app_path', { app: target });
       const path = detected || '';
       if (target === 'antigravity') {
         setAntigravityAppPath(path);
+      } else if (target === 'codex') {
+        setCodexAppPath(path);
+      } else if (target === 'vscode') {
+        setVscodeAppPath(path);
       } else {
-        if (target === 'codex') {
-          setCodexAppPath(path);
-        } else {
-          setOpencodeAppPath(path);
-        }
+        setOpencodeAppPath(path);
       }
     } catch (err) {
       console.error('重置启动路径失败:', err);
       if (target === 'antigravity') {
         setAntigravityAppPath('');
+      } else if (target === 'codex') {
+        setCodexAppPath('');
+      } else if (target === 'vscode') {
+        setVscodeAppPath('');
       } else {
-        if (target === 'codex') {
-          setCodexAppPath('');
-        } else {
-          setOpencodeAppPath('');
-        }
+        setOpencodeAppPath('');
       }
     }
   };
@@ -662,6 +670,34 @@ export function SettingsPage() {
                     <button className="btn btn-secondary" onClick={() => handleResetAppPath('codex')}>
                       <RefreshCw size={16} />
                       {t('settings.general.codexPathReset', '恢复默认')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="group-title">{t('settings.general.vscodeTitle', 'VS Code 启动')}</div>
+            <div className="settings-group">
+              <div className="settings-row">
+                <div className="row-label">
+                  <div className="row-title">{t('settings.general.vscodeAppPath', 'VS Code 启动路径')}</div>
+                  <div className="row-desc">{t('settings.general.vscodeAppPathDesc', '留空则使用默认路径')}</div>
+                </div>
+                <div className="row-control row-control--grow">
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1 }}>
+                    <input
+                      type="text"
+                      className="settings-input settings-input--path"
+                      value={vscodeAppPath}
+                      placeholder={t('settings.general.vscodeAppPathPlaceholder', '默认路径')}
+                      onChange={(e) => setVscodeAppPath(e.target.value)}
+                    />
+                    <button className="btn btn-secondary" onClick={() => handlePickAppPath('vscode')}>
+                      {t('settings.general.vscodePathSelect', '选择')}
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => handleResetAppPath('vscode')}>
+                      <RefreshCw size={16} />
+                      {t('settings.general.vscodePathReset', '重置默认')}
                     </button>
                   </div>
                 </div>

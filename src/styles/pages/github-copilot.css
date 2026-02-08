@@ -1,8 +1,8 @@
 /* ============================================
-   Codex Accounts Page
+   GitHub Copilot Accounts Page
    ============================================ */
 
-.codex-accounts-page {
+.ghcp-accounts-page {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -11,15 +11,81 @@
 
 /* 使用通用的 page-header 样式，不再覆盖 */
 
-/* Codex 账号网格 */
-.codex-accounts-grid {
+.ghcp-flow-notice {
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  background: linear-gradient(135deg, rgba(191, 219, 254, 0.28), rgba(153, 246, 228, 0.18));
+  border-radius: 14px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ghcp-flow-notice.collapsed {
+  gap: 0;
+}
+
+.ghcp-flow-notice-toggle {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 4px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ghcp-flow-notice-arrow {
+  color: #2563eb;
+  transition: transform 0.2s ease;
+}
+
+.ghcp-flow-notice-arrow.collapsed {
+  transform: rotate(-90deg);
+}
+
+.ghcp-flow-notice-body {
+  padding: 0 6px 6px 6px;
+}
+
+.ghcp-flow-notice-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ghcp-flow-notice-desc {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.ghcp-flow-notice-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* GitHub Copilot 账号网格 */
+.ghcp-accounts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
 }
 
-/* Codex 账号卡片 */
-.codex-account-card {
+/* GitHub Copilot 账号卡片 */
+.ghcp-account-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -33,39 +99,39 @@
   min-height: 260px;
 }
 
-.codex-account-card:hover {
+.ghcp-account-card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
-.codex-account-card.current {
+.ghcp-account-card.current {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px var(--primary-light), var(--shadow-md);
 }
 
-.codex-account-card.selected {
+.ghcp-account-card.selected {
   border-color: var(--primary);
   background: var(--primary-light);
 }
 
-.codex-account-card .card-top {
+.ghcp-account-card .card-top {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.codex-account-card .card-select {
+.ghcp-account-card .card-select {
   flex-shrink: 0;
 }
 
-.codex-account-card .card-select input[type="checkbox"] {
+.ghcp-account-card .card-select input[type="checkbox"] {
   width: 18px;
   height: 18px;
   cursor: pointer;
   accent-color: var(--primary);
 }
 
-.codex-account-card .account-email {
+.ghcp-account-card .account-email {
   flex: 1;
   min-width: 0;
   font-weight: 600;
@@ -77,7 +143,7 @@
   white-space: nowrap;
 }
 
-.codex-account-card .current-tag {
+.ghcp-account-card .current-tag {
   flex-shrink: 0;
   padding: 3px 10px;
   background: var(--success);
@@ -87,8 +153,8 @@
   border-radius: var(--radius-full);
 }
 
-.codex-account-card .tier-badge,
-.codex-accounts-page .account-table .tier-badge {
+.ghcp-account-card .tier-badge,
+.ghcp-accounts-page .account-table .tier-badge {
   flex-shrink: 0;
   padding: 4px 10px;
   font-size: 11px;
@@ -98,50 +164,62 @@
   letter-spacing: 0.05em;
 }
 
-.codex-account-card .tier-badge.free,
-.codex-accounts-page .account-table .tier-badge.free {
+.ghcp-account-card .tier-badge.free,
+.ghcp-accounts-page .account-table .tier-badge.free {
   background: linear-gradient(135deg, #64748b 0%, #475569 100%);
   color: white;
 }
 
-.codex-account-card .tier-badge.plus,
-.codex-accounts-page .account-table .tier-badge.plus {
+.ghcp-account-card .tier-badge.individual,
+.ghcp-accounts-page .account-table .tier-badge.individual {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+  color: white;
+}
+
+.ghcp-account-card .tier-badge.business,
+.ghcp-accounts-page .account-table .tier-badge.business {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: white;
+}
+
+.ghcp-account-card .tier-badge.plus,
+.ghcp-accounts-page .account-table .tier-badge.plus {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
 }
 
-.codex-account-card .tier-badge.team,
-.codex-accounts-page .account-table .tier-badge.team {
+.ghcp-account-card .tier-badge.team,
+.ghcp-accounts-page .account-table .tier-badge.team {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
 }
 
-.codex-account-card .tier-badge.enterprise,
-.codex-accounts-page .account-table .tier-badge.enterprise {
+.ghcp-account-card .tier-badge.enterprise,
+.ghcp-accounts-page .account-table .tier-badge.enterprise {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
 }
 
-.codex-account-card .tier-badge.pro,
-.codex-accounts-page .account-table .tier-badge.pro {
+.ghcp-account-card .tier-badge.pro,
+.ghcp-accounts-page .account-table .tier-badge.pro {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
 }
 
 /* 配额部分 */
-.codex-quota-section {
+.ghcp-quota-section {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.codex-quota-section .quota-item {
+.ghcp-quota-section .quota-item {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.codex-quota-section .quota-header {
+.ghcp-quota-section .quota-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -149,71 +227,71 @@
   color: var(--text-secondary);
 }
 
-.codex-quota-section .quota-header svg {
+.ghcp-quota-section .quota-header svg {
   flex-shrink: 0;
   color: var(--text-secondary);
 }
 
-.codex-quota-section .quota-label {
+.ghcp-quota-section .quota-label {
   flex: 1;
 }
 
-.codex-quota-section .quota-pct {
+.ghcp-quota-section .quota-pct {
   font-weight: 700;
   font-size: 13px;
 }
 
-.codex-quota-section .quota-pct.high {
+.ghcp-quota-section .quota-pct.high {
   color: var(--success);
 }
 
-.codex-quota-section .quota-pct.medium {
+.ghcp-quota-section .quota-pct.medium {
   color: #f59e0b;
 }
 
-.codex-quota-section .quota-pct.low {
+.ghcp-quota-section .quota-pct.low {
   color: #f97316;
 }
 
-.codex-quota-section .quota-pct.critical {
+.ghcp-quota-section .quota-pct.critical {
   color: var(--danger);
 }
 
-.codex-quota-section .quota-bar-track {
+.ghcp-quota-section .quota-bar-track {
   height: 6px;
   background: var(--bg-tertiary);
   border-radius: 3px;
   overflow: hidden;
 }
 
-.codex-quota-section .quota-bar {
+.ghcp-quota-section .quota-bar {
   height: 100%;
   border-radius: 3px;
   transition: width 0.3s ease;
 }
 
-.codex-quota-section .quota-bar.high {
+.ghcp-quota-section .quota-bar.high {
   background: linear-gradient(90deg, #22c55e, #16a34a);
 }
 
-.codex-quota-section .quota-bar.medium {
+.ghcp-quota-section .quota-bar.medium {
   background: linear-gradient(90deg, #f59e0b, #d97706);
 }
 
-.codex-quota-section .quota-bar.low {
+.ghcp-quota-section .quota-bar.low {
   background: linear-gradient(90deg, #f97316, #ea580c);
 }
 
-.codex-quota-section .quota-bar.critical {
+.ghcp-quota-section .quota-bar.critical {
   background: linear-gradient(90deg, #ef4444, #dc2626);
 }
 
-.codex-quota-section .quota-reset {
+.ghcp-quota-section .quota-reset {
   font-size: 11px;
   color: var(--text-secondary);
 }
 
-.codex-quota-section .quota-empty {
+.ghcp-quota-section .quota-empty {
   font-size: 12px;
   color: var(--text-muted);
   text-align: center;
@@ -223,7 +301,7 @@
 }
 
 /* 卡片底部 */
-.codex-account-card .card-footer {
+.ghcp-account-card .card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -232,17 +310,17 @@
   margin-top: auto;
 }
 
-.codex-account-card .card-date {
+.ghcp-account-card .card-date {
   font-size: 11px;
   color: var(--text-secondary);
 }
 
-.codex-account-card .card-actions {
+.ghcp-account-card .card-actions {
   display: flex;
   gap: 6px;
 }
 
-.codex-account-card .card-action-btn {
+.ghcp-account-card .card-action-btn {
   width: 32px;
   height: 32px;
   border: none;
@@ -256,23 +334,23 @@
   transition: all 0.2s;
 }
 
-.codex-account-card .card-action-btn:hover {
+.ghcp-account-card .card-action-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
 
-.codex-account-card .card-action-btn.success:hover {
+.ghcp-account-card .card-action-btn.success:hover {
   background: var(--success);
   color: white;
 }
 
-.codex-account-card .card-action-btn.danger:hover {
+.ghcp-account-card .card-action-btn.danger:hover {
   background: var(--danger);
   color: white;
 }
 
 /* 空状态 */
-.codex-accounts-page .empty-state {
+.ghcp-accounts-page .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -285,25 +363,25 @@
   gap: 16px;
 }
 
-.codex-accounts-page .empty-state svg {
+.ghcp-accounts-page .empty-state svg {
   color: var(--text-muted);
   opacity: 0.5;
 }
 
-.codex-accounts-page .empty-state h3 {
+.ghcp-accounts-page .empty-state h3 {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.codex-accounts-page .empty-state p {
+.ghcp-accounts-page .empty-state p {
   font-size: 14px;
   color: var(--text-secondary);
   max-width: 300px;
 }
 
 /* 加载状态 */
-.codex-accounts-page .loading-container {
+.ghcp-accounts-page .loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -314,7 +392,7 @@
 }
 
 /* 消息条 */
-.codex-accounts-page .message-bar {
+.ghcp-accounts-page .message-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -324,19 +402,19 @@
   animation: fadeUp 0.3s ease;
 }
 
-.codex-accounts-page .message-bar.success {
+.ghcp-accounts-page .message-bar.success {
   background: rgba(34, 197, 94, 0.12);
   color: #15803d;
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-.codex-accounts-page .message-bar.error {
+.ghcp-accounts-page .message-bar.error {
   background: rgba(239, 68, 68, 0.12);
   color: #b91c1c;
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.codex-accounts-page .message-bar button {
+.ghcp-accounts-page .message-bar button {
   background: none;
   border: none;
   color: inherit;
@@ -345,11 +423,11 @@
   padding: 4px;
 }
 
-.codex-accounts-page .message-bar button:hover {
+.ghcp-accounts-page .message-bar button:hover {
   opacity: 1;
 }
 
-.codex-accounts-page .toolbar .btn.icon-only {
+.ghcp-accounts-page .toolbar .btn.icon-only {
   width: 32px;
   min-height: 32px;
   padding: 0;
@@ -357,17 +435,17 @@
   border-radius: 10px;
 }
 
-.codex-accounts-page .toolbar .btn.icon-only svg {
+.ghcp-accounts-page .toolbar .btn.icon-only svg {
   width: 14px;
   height: 14px;
 }
 
-.codex-accounts-page .tag-filter {
+.ghcp-accounts-page .tag-filter {
   position: relative;
   flex-shrink: 0;
 }
 
-.codex-accounts-page .tag-filter-btn {
+.ghcp-accounts-page .tag-filter-btn {
   height: 32px;
   padding: 0 12px;
   border-radius: 10px;
@@ -382,13 +460,13 @@
   cursor: pointer;
 }
 
-.codex-accounts-page .tag-filter-btn.active {
+.ghcp-accounts-page .tag-filter-btn.active {
   border-color: rgba(59, 130, 246, 0.4);
   background: linear-gradient(135deg, rgba(191, 219, 254, 0.45), rgba(153, 246, 228, 0.4));
   color: #0f172a;
 }
 
-.codex-accounts-page .tag-filter-panel {
+.ghcp-accounts-page .tag-filter-panel {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
@@ -401,13 +479,13 @@
   z-index: 20;
 }
 
-.codex-accounts-page .tag-filter-divider {
+.ghcp-accounts-page .tag-filter-divider {
   height: 1px;
   background: rgba(148, 163, 184, 0.25);
   margin: 4px 0;
 }
 
-.codex-accounts-page .tag-filter-group-toggle {
+.ghcp-accounts-page .tag-filter-group-toggle {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -415,13 +493,13 @@
   color: var(--text-secondary);
 }
 
-.codex-accounts-page .tag-filter-group-toggle input {
+.ghcp-accounts-page .tag-filter-group-toggle input {
   width: 14px;
   height: 14px;
   accent-color: var(--primary);
 }
 
-.codex-accounts-page .tag-filter-options {
+.ghcp-accounts-page .tag-filter-options {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -430,7 +508,7 @@
   padding-right: 4px;
 }
 
-.codex-accounts-page .tag-filter-option {
+.ghcp-accounts-page .tag-filter-option {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -441,7 +519,7 @@
   cursor: pointer;
 }
 
-.codex-accounts-page .tag-filter-name {
+.ghcp-accounts-page .tag-filter-name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -449,7 +527,7 @@
   white-space: nowrap;
 }
 
-.codex-accounts-page .tag-filter-delete {
+.ghcp-accounts-page .tag-filter-delete {
   width: 20px;
   height: 20px;
   border-radius: 6px;
@@ -463,30 +541,30 @@
   transition: all 0.15s ease;
 }
 
-.codex-accounts-page .tag-filter-delete:hover {
+.ghcp-accounts-page .tag-filter-delete:hover {
   color: var(--danger);
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-.codex-accounts-page .tag-filter-option input[type="checkbox"] {
+.ghcp-accounts-page .tag-filter-option input[type="checkbox"] {
   width: 14px;
   height: 14px;
   accent-color: var(--primary);
 }
 
-.codex-accounts-page .tag-filter-option.selected {
+.ghcp-accounts-page .tag-filter-option.selected {
   background: rgba(14, 165, 233, 0.12);
   color: var(--text-primary);
 }
 
-.codex-accounts-page .tag-filter-empty {
+.ghcp-accounts-page .tag-filter-empty {
   color: var(--text-muted);
   font-size: 12px;
   padding: 6px 4px;
 }
 
-.codex-accounts-page .tag-filter-clear {
+.ghcp-accounts-page .tag-filter-clear {
   margin-top: 10px;
   width: 100%;
   border: none;
@@ -498,18 +576,18 @@
   cursor: pointer;
 }
 
-.codex-accounts-page .tag-filter-clear:hover {
+.ghcp-accounts-page .tag-filter-clear:hover {
   background: rgba(15, 23, 42, 0.12);
   color: var(--text-primary);
 }
 
-.codex-accounts-page .tag-group-list {
+.ghcp-accounts-page .tag-group-list {
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
-.codex-accounts-page .tag-group-header {
+.ghcp-accounts-page .tag-group-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -523,35 +601,35 @@
   font-weight: 600;
 }
 
-.codex-accounts-page .tag-group-title {
+.ghcp-accounts-page .tag-group-title {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.codex-accounts-page .tag-group-count {
+.ghcp-accounts-page .tag-group-count {
   font-size: 11px;
   color: var(--text-muted);
 }
 
-.codex-accounts-page .tag-group-grid {
+.ghcp-accounts-page .tag-group-grid {
   margin-top: 12px;
 }
 
-.codex-accounts-page .tag-group-row td {
+.ghcp-accounts-page .tag-group-row td {
   padding: 8px 16px;
   background: rgba(15, 23, 42, 0.04);
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-.codex-accounts-page .card-tags {
+.ghcp-accounts-page .card-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: -4px;
 }
 
-.codex-accounts-page .tag-pill {
+.ghcp-accounts-page .tag-pill {
   padding: 2px 8px;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
@@ -561,19 +639,19 @@
   border: 1px solid var(--border-light);
 }
 
-.codex-accounts-page .tag-pill.more {
+.ghcp-accounts-page .tag-pill.more {
   background: transparent;
   border: 1px dashed var(--border);
 }
 
-.codex-accounts-page .account-tags-inline {
+.ghcp-accounts-page .account-tags-inline {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 6px;
 }
 
-.codex-accounts-page .view-switcher {
+.ghcp-accounts-page .view-switcher {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   padding: 2px;
@@ -582,83 +660,83 @@
   border-radius: 10px;
 }
 
-.codex-accounts-page .view-btn {
+.ghcp-accounts-page .view-btn {
   width: 26px;
   height: 26px;
   border-radius: 8px;
 }
 
-.codex-accounts-page .view-btn.active {
+.ghcp-accounts-page .view-btn.active {
   background: var(--gradient-primary);
   color: white;
   box-shadow: 0 6px 14px rgba(29, 78, 216, 0.3);
 }
 
-.codex-accounts-page .search-box {
+.ghcp-accounts-page .search-box {
   width: clamp(120px, 11vw, 160px);
   flex-shrink: 0;
 }
 
-.codex-accounts-page .account-table-container {
+.ghcp-accounts-page .account-table-container {
   background: var(--bg-card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   backdrop-filter: blur(10px);
 }
 
-[data-theme="dark"] .codex-accounts-page .account-table-container {
+[data-theme="dark"] .ghcp-accounts-page .account-table-container {
   background: rgba(8, 11, 19, 0.98);
   border-color: rgba(148, 163, 184, 0.18);
   box-shadow: 0 18px 36px rgba(2, 6, 23, 0.6);
   backdrop-filter: blur(4px);
 }
 
-[data-theme="dark"] .codex-accounts-page .account-table th {
+[data-theme="dark"] .ghcp-accounts-page .account-table th {
   background: rgba(15, 23, 42, 0.98);
   color: rgba(226, 232, 240, 0.9);
   border-bottom-color: rgba(148, 163, 184, 0.18);
 }
 
-[data-theme="dark"] .codex-accounts-page .account-table tbody tr {
+[data-theme="dark"] .ghcp-accounts-page .account-table tbody tr {
   background: rgba(15, 23, 42, 0.86);
 }
 
-[data-theme="dark"] .codex-accounts-page .account-table tbody tr:nth-child(even) {
+[data-theme="dark"] .ghcp-accounts-page .account-table tbody tr:nth-child(even) {
   background: rgba(15, 23, 42, 0.92);
 }
 
-[data-theme="dark"] .codex-accounts-page .account-table td {
+[data-theme="dark"] .ghcp-accounts-page .account-table td {
   border-bottom-color: rgba(148, 163, 184, 0.1);
   color: rgba(226, 232, 240, 0.92);
 }
 
 
-.codex-accounts-page .account-table th {
+.ghcp-accounts-page .account-table th {
   background: rgba(15, 23, 42, 0.06);
 }
 
-.codex-accounts-page .account-table tr.current {
+.ghcp-accounts-page .account-table tr.current {
   background: rgba(29, 78, 216, 0.08);
 }
 
-.codex-accounts-page .account-table .quota-item {
+.ghcp-accounts-page .account-table .quota-item {
   min-height: 52px;
 }
 
-.codex-accounts-page .account-table .quota-reset {
+.ghcp-accounts-page .account-table .quota-reset {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 140px;
 }
 
-.codex-accounts-page .filter-select {
+.ghcp-accounts-page .filter-select {
   position: relative;
   width: clamp(110px, 12vw, 150px);
   flex-shrink: 0;
 }
 
-.codex-accounts-page .filter-select select {
+.ghcp-accounts-page .filter-select select {
   width: 100%;
   height: 32px;
   padding: 0 26px 0 10px;
@@ -672,7 +750,7 @@
   cursor: pointer;
 }
 
-.codex-accounts-page .filter-select::after {
+.ghcp-accounts-page .filter-select::after {
   content: '';
   position: absolute;
   right: 10px;
@@ -685,7 +763,7 @@
   pointer-events: none;
 }
 
-.codex-accounts-page .sort-select {
+.ghcp-accounts-page .sort-select {
   position: relative;
   width: clamp(110px, 12vw, 150px);
   flex-shrink: 0;
@@ -693,7 +771,7 @@
   align-items: center;
 }
 
-.codex-accounts-page .sort-select .sort-icon {
+.ghcp-accounts-page .sort-select .sort-icon {
   position: absolute;
   left: 10px;
   color: var(--text-muted);
@@ -701,7 +779,7 @@
   z-index: 1;
 }
 
-.codex-accounts-page .sort-select select {
+.ghcp-accounts-page .sort-select select {
   width: 100%;
   height: 32px;
   padding: 0 26px 0 30px;
@@ -715,7 +793,7 @@
   cursor: pointer;
 }
 
-.codex-accounts-page .sort-select::after {
+.ghcp-accounts-page .sort-select::after {
   content: '';
   position: absolute;
   right: 10px;
@@ -728,7 +806,7 @@
   pointer-events: none;
 }
 
-.codex-accounts-page .sort-direction-btn {
+.ghcp-accounts-page .sort-direction-btn {
   width: 32px;
   height: 32px;
   margin-left: 6px;
@@ -745,14 +823,14 @@
   flex-shrink: 0;
 }
 
-.codex-accounts-page .sort-direction-btn:hover {
+.ghcp-accounts-page .sort-direction-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
   border-color: var(--border-hover);
   transform: scale(1.05);
 }
 
-.codex-accounts-page .sort-direction-btn:active {
+.ghcp-accounts-page .sort-direction-btn:active {
   transform: scale(0.95);
 }
 
@@ -779,12 +857,12 @@
 }
 
 /* 添加弹窗 */
-.codex-add-modal {
+.ghcp-add-modal {
   max-width: 480px;
   width: 100%;
 }
 
-.codex-add-modal .modal-tabs {
+.ghcp-add-modal .modal-tabs {
   display: flex;
   gap: 4px;
   padding: 4px;
@@ -793,7 +871,7 @@
   margin-bottom: 20px;
 }
 
-.codex-add-modal .modal-tab {
+.ghcp-add-modal .modal-tab {
   flex: 1;
   display: flex;
   align-items: center;
@@ -810,41 +888,41 @@
   transition: all 0.2s;
 }
 
-.codex-add-modal .modal-tab:hover {
+.ghcp-add-modal .modal-tab:hover {
   color: var(--text-primary);
   background: var(--bg-hover);
 }
 
-.codex-add-modal .modal-tab.active {
+.ghcp-add-modal .modal-tab.active {
   background: var(--bg-secondary);
   color: var(--text-primary);
   box-shadow: var(--shadow-sm);
 }
 
-.codex-add-modal .add-section {
+.ghcp-add-modal .add-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.codex-add-modal .section-desc {
+.ghcp-add-modal .section-desc {
   font-size: 14px;
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
-.codex-add-modal .oauth-url-section {
+.ghcp-add-modal .oauth-url-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.codex-add-modal .oauth-url-box {
+.ghcp-add-modal .oauth-url-box {
   display: flex;
   gap: 8px;
 }
 
-.codex-add-modal .oauth-url-box input {
+.ghcp-add-modal .oauth-url-box input {
   flex: 1;
   padding: 10px 14px;
   background: var(--bg-tertiary);
@@ -855,7 +933,7 @@
   font-family: var(--font-mono);
 }
 
-.codex-add-modal .oauth-url-box button {
+.ghcp-add-modal .oauth-url-box button {
   padding: 10px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -865,18 +943,18 @@
   transition: all 0.2s;
 }
 
-.codex-add-modal .oauth-url-box button:hover {
+.ghcp-add-modal .oauth-url-box button:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
 
-.codex-add-modal .oauth-hint {
+.ghcp-add-modal .oauth-hint {
   font-size: 12px;
   color: var(--text-muted);
   text-align: center;
 }
 
-.codex-add-modal .oauth-loading {
+.ghcp-add-modal .oauth-loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -885,7 +963,7 @@
   color: var(--text-secondary);
 }
 
-.codex-add-modal .token-input {
+.ghcp-add-modal .token-input {
   width: 100%;
   padding: 12px 14px;
   background: var(--bg-tertiary);
@@ -898,17 +976,17 @@
   min-height: 120px;
 }
 
-.codex-add-modal .token-input:focus {
+.ghcp-add-modal .token-input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-.codex-add-modal .btn-full {
+.ghcp-add-modal .btn-full {
   width: 100%;
 }
 
-.codex-add-modal .add-status {
+.ghcp-add-modal .add-status {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -919,17 +997,17 @@
   animation: fadeUp 0.3s ease;
 }
 
-.codex-add-modal .add-status.loading {
+.ghcp-add-modal .add-status.loading {
   background: var(--primary-light);
   color: var(--primary);
 }
 
-.codex-add-modal .add-status.success {
+.ghcp-add-modal .add-status.success {
   background: rgba(34, 197, 94, 0.12);
   color: #15803d;
 }
 
-.codex-add-modal .add-status.error {
+.ghcp-add-modal .add-status.error {
   background: rgba(239, 68, 68, 0.12);
   color: #b91c1c;
 }
@@ -955,26 +1033,39 @@
 }
 
 /* Dark mode */
-[data-theme="dark"] .codex-account-card {
+[data-theme="dark"] .ghcp-account-card {
   background: linear-gradient(170deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8));
 }
 
-[data-theme="dark"] .codex-accounts-page .message-bar.success {
+[data-theme="dark"] .ghcp-accounts-page .message-bar.success {
   background: rgba(34, 197, 94, 0.15);
   color: #4ade80;
 }
 
-[data-theme="dark"] .codex-accounts-page .message-bar.error {
+[data-theme="dark"] .ghcp-accounts-page .message-bar.error {
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
 }
 
-[data-theme="dark"] .codex-add-modal .add-status.success {
+[data-theme="dark"] .ghcp-add-modal .add-status.success {
   color: #4ade80;
 }
 
-[data-theme="dark"] .codex-add-modal .add-status.error {
+[data-theme="dark"] .ghcp-add-modal .add-status.error {
   color: #f87171;
+}
+
+[data-theme="dark"] .ghcp-flow-notice {
+  border-color: rgba(96, 165, 250, 0.35);
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.25), rgba(15, 118, 110, 0.2));
+}
+
+[data-theme="dark"] .ghcp-flow-notice-arrow {
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .ghcp-flow-notice-title {
+  color: #93c5fd;
 }
 
 @keyframes fadeUp {
@@ -1002,10 +1093,10 @@
 /* Dark Mode Table Overrides */
 
 /* ============================================
-   Codex Instances Content (embedded in CodexAccountsPage)
+   GitHub Copilot Instances Content (embedded in GitHub CopilotAccountsPage)
    ============================================ */
 
-.codex-instances-content .empty-state {
+.ghcp-instances-content .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1019,25 +1110,25 @@
   animation: fadeUp 0.3s ease;
 }
 
-.codex-instances-content .empty-state .empty-icon {
+.ghcp-instances-content .empty-state .empty-icon {
   color: var(--text-muted);
   opacity: 0.5;
 }
 
-.codex-instances-content .empty-state h3 {
+.ghcp-instances-content .empty-state h3 {
   font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
 
-.codex-instances-content .empty-state p {
+.ghcp-instances-content .empty-state p {
   font-size: 14px;
   color: var(--text-secondary);
   max-width: 360px;
   margin: 0;
 }
 
-.codex-instances-content .empty-state .btn {
+.ghcp-instances-content .empty-state .btn {
   margin-top: 8px;
 }

@@ -30,7 +30,8 @@
     "settings": "Nastavení",
     "codex": "Účty Codex",
     "dashboard": "Dashboard",
-    "instances": "Více instancí"
+    "instances": "Více instancí",
+    "githubCopilot": "GitHub Copilot"
   },
   "settings": {
     "title": "Nastavení aplikace",
@@ -85,6 +86,12 @@
       "codexAppPathPlaceholder": "Výchozí cesta",
       "codexPathSelect": "Vybrat",
       "codexPathReset": "Obnovit výchozí",
+      "vscodeTitle": "Spuštění VS Code",
+      "vscodeAppPath": "Cesta k aplikaci VS Code",
+      "vscodeAppPathDesc": "Ponechte prázdné pro použití výchozí cesty",
+      "vscodeAppPathPlaceholder": "Výchozí cesta",
+      "vscodePathSelect": "Vybrat",
+      "vscodePathReset": "Obnovit výchozí",
       "antigravityAppPath": "Cesta k aplikaci Antigravity",
       "antigravityTitle": "Spuštění Antigravity"
     },
@@ -234,7 +241,25 @@
     "clearFilter": "Vymazat filtr",
     "editTags": "Upravit štítky",
     "groupByTag": "Seskupit podle štítku",
-    "untagged": "Bez štítku"
+    "untagged": "Bez štítku",
+    "deleteTagAria": "Smazat štítek {{tag}}",
+    "tagModal": {
+      "title": "Upravit štítky",
+      "hint": "Maximálně {{max}} štítků. Každý štítek může mít nejvýše {{maxLength}} znaků.",
+      "empty": "Žádné dostupné štítky",
+      "suggestionsTitle": "Filtrovat štítky",
+      "suggestionsEmpty": "Žádné dostupné štítky",
+      "inputPlaceholder": "Zadejte štítek (zbývá {{remaining}})",
+      "inputDisabledPlaceholder": "Byl dosažen limit štítků",
+      "add": "Přidat",
+      "save": "Uložit štítky",
+      "error": {
+        "empty": "Štítek nesmí být prázdný",
+        "tooLong": "Štítek může mít maximálně {{max}} znaků",
+        "duplicate": "Štítek už existuje",
+        "tooMany": "Můžete přidat až {{max}} štítků"
+      }
+    }
   },
   "overview": {
     "title": "Přehled účtů",
@@ -970,6 +995,129 @@
       "title": "Cesta k aplikaci nebyla nalezena",
       "desc": "Nepodařilo se najít cestu k aplikaci {{app}}. Pro pokračování ji nyní nastavte.",
       "action": "Nastavit nyní"
+    }
+  },
+  "githubCopilot": {
+    "title": "Správa účtů GitHub Copilot",
+    "subtitle": "Spravujte své účty GitHub Copilot",
+    "overview": {
+      "title": "Přehled účtů"
+    },
+    "instances": {
+      "title": "Více instancí",
+      "subtitle": "Nezávislá konfigurace pro každou instanci, paralelní provoz s více účty.",
+      "unsupported": {
+        "title": "Na tomto systému nepodporováno",
+        "desc": "Více instancí GitHub Copilot je aktuálně dostupné pouze na macOS."
+      },
+      "quota": {
+        "inline": "Inline Suggestions",
+        "chat": "Chat messages"
+      }
+    },
+    "addAccount": "Přidat účet",
+    "refreshAll": "Obnovit vše",
+    "refreshQuota": "Obnovit kvótu",
+    "empty": {
+      "title": "Žádné účty",
+      "description": "Klikněte na „Přidat účet“"
+    },
+    "noMatch": {
+      "title": "Žádné vyhovující účty",
+      "desc": "Zkuste upravit hledání nebo filtry"
+    },
+    "addModal": {
+      "title": "Přidat účet GitHub Copilot",
+      "oauth": "OAuth přihlášení",
+      "token": "Import JSON",
+      "import": "Lokální import"
+    },
+    "oauth": {
+      "desc": "Klikněte níže a dokončete autorizaci GitHub Copilot v prohlížeči.",
+      "preparing": "Připravuje se autorizační odkaz...",
+      "openBrowser": "Otevřít v prohlížeči",
+      "hint": "Po autorizaci se toto okno automaticky aktualizuje",
+      "success": "Autorizace úspěšná",
+      "failed": "Autorizace selhala",
+      "retry": "Znovu vygenerovat autorizační údaje",
+      "timeoutRetry": "Obnovit autorizační odkaz",
+      "waiting": "Čekání na autorizaci...",
+      "meta": "Platnost vyprší za: {{expires}}s; interval dotazování: {{interval}}s"
+    },
+    "token": {
+      "desc": "Vložte access token GitHub Copilot nebo exportovaná data JSON.",
+      "placeholder": "Vložte JSON...",
+      "import": "Importovat",
+      "importing": "Importování...",
+      "importSuccessMsg": "Importováno {{count}} účtů",
+      "importFailedMsg": "Import selhal: {{error}}",
+      "empty": "Zadejte token nebo JSON"
+    },
+    "import": {
+      "label": "Importovat",
+      "localDesc": "Importovat účty GitHub Copilot z místně přihlášených relací.",
+      "importing": "Import lokálního účtu...",
+      "failedMsg": "Import se nezdařil: {{error}}",
+      "pickFile": "Vyberte soubor JSON k importu"
+    },
+    "quota": {
+      "hourly": "Kvóta 5 hodin",
+      "weekly": "Týdenní kvóta",
+      "noData": "Žádná data kvóty",
+      "resetDone": "Resetováno"
+    },
+    "usage": {
+      "resetUnknown": "Limit se obnoví -",
+      "resetLine": "Limit se obnoví {{dateText}}."
+    },
+    "time": {
+      "relativeDays": "{{days}} d",
+      "relativeDaysHours": "{{days}} d {{hours}} h",
+      "relativeHours": "{{hours}} h",
+      "relativeHoursMinutes": "{{hours}} h {{minutes}} min",
+      "relativeMinutes": "{{minutes}} min",
+      "lessThanMinute": "<1 min",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "Hledat účty...",
+    "view": {
+      "list": "Seznam",
+      "grid": "Karty"
+    },
+    "filter": {
+      "all": "Vše ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "Filtr",
+    "sortLabel": "Seřadit",
+    "sort": {
+      "createdAt": "Datum vytvoření",
+      "weekly": "Týdenní kvóta",
+      "hourly": "5hodinová kvóta",
+      "weeklyReset": "Čas týdenního resetu",
+      "hourlyReset": "Čas resetu 5 hodin",
+      "descTooltip": "Sestupně (kliknutím přepnete na vzestupně)",
+      "ascTooltip": "Vzestupně (kliknutím přepnete na sestupně)",
+      "toggleDirection": "Přepnout směr"
+    },
+    "columns": {
+      "email": "Účet",
+      "plan": "Plán",
+      "hourly": "Kvóta 5h",
+      "weekly": "Kvóta týdn.",
+      "actions": "Akce"
+    },
+    "export": "Exportovat",
+    "flowNotice": {
+      "title": "Průvodce účty GitHub Copilot (kliknutím rozbalit/sbalit)",
+      "desc": "Aktuální postup: autorizovat nový účet -> načíst a zobrazit kvóty -> propojit účet v zobrazení více instancí.",
+      "reason": "Proč nelze přepnout účet jedním kliknutím: stav přihlášení ve VS Code je spravován relacemi GitHub a SecretStorage rozšíření, externí aplikace tyto přihlašovací údaje nemohou nahradit.",
+      "storage": "Umístění přihlašovacích dat: hlavně ve VS Code SecretStorage (systémová klíčenka/správce přihlašovacích údajů) a v databázi globálního stavu (např. ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
+      "alternative": "Alternativa: použijte izolaci více instancí (odlišné --user-data-dir). V každé instanci se přihlaste jednou a poté spouštějte podle instance pro rychlé přepnutí na cílové prostředí účtu."
     }
   }
 }

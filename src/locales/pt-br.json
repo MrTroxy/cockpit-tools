@@ -29,6 +29,7 @@
     "fingerprints": "Impressões",
     "settings": "Configurações",
     "codex": "Contas Codex",
+    "githubCopilot": "GitHub Copilot",
     "dashboard": "Painel",
     "instances": "Multi-Instância"
   },
@@ -85,6 +86,12 @@
       "codexAppPathPlaceholder": "Caminho padrão",
       "codexPathSelect": "Selecionar",
       "codexPathReset": "Redefinir padrão",
+      "vscodeTitle": "Inicialização do VS Code",
+      "vscodeAppPath": "Caminho do app VS Code",
+      "vscodeAppPathDesc": "Deixe vazio para usar o caminho padrão",
+      "vscodeAppPathPlaceholder": "Caminho padrão",
+      "vscodePathSelect": "Selecionar",
+      "vscodePathReset": "Redefinir padrão",
       "antigravityAppPath": "Caminho do app Antigravity",
       "antigravityTitle": "Inicialização do Antigravity"
     },
@@ -234,7 +241,25 @@
     "clearFilter": "Limpar filtro",
     "editTags": "Editar tags",
     "groupByTag": "Agrupar por tag",
-    "untagged": "Sem tag"
+    "untagged": "Sem tag",
+    "deleteTagAria": "Excluir tag {{tag}}",
+    "tagModal": {
+      "title": "Tags da conta",
+      "hint": "Até {{max}} tags. Cada tag pode ter no máximo {{maxLength}} caracteres.",
+      "empty": "Sem tags",
+      "suggestionsTitle": "Tags existentes",
+      "suggestionsEmpty": "Nenhuma tag disponível",
+      "inputPlaceholder": "Digite uma tag (restam {{remaining}})",
+      "inputDisabledPlaceholder": "Limite de tags atingido",
+      "add": "Adicionar",
+      "save": "Salvar tags",
+      "error": {
+        "empty": "A tag não pode estar vazia",
+        "tooLong": "A tag não pode ter mais de {{max}} caracteres",
+        "duplicate": "A tag já existe",
+        "tooMany": "Você pode adicionar até {{max}} tags"
+      }
+    }
   },
   "overview": {
     "title": "Visão Geral das Contas",
@@ -742,6 +767,129 @@
           "commandWin": "Windows: taskkill /F /PID <pid> (correspondência com CODEX_HOME)"
         }
       }
+    }
+  },
+  "githubCopilot": {
+    "title": "Gerenciamento de contas do GitHub Copilot",
+    "subtitle": "Monitore em tempo real o status de cota de todas as contas.",
+    "overview": {
+      "title": "Visão geral das contas"
+    },
+    "instances": {
+      "title": "Multi-Instância",
+      "subtitle": "Configurações independentes por instância para execução paralela com múltiplas contas.",
+      "unsupported": {
+        "title": "Não suportado neste sistema",
+        "desc": "A multi-instância do GitHub Copilot está disponível apenas no macOS."
+      },
+      "quota": {
+        "inline": "Sugestões inline",
+        "chat": "Mensagens de chat"
+      }
+    },
+    "addAccount": "Adicionar conta",
+    "refreshAll": "Atualizar tudo",
+    "refreshQuota": "Atualizar cota",
+    "empty": {
+      "title": "Sem contas",
+      "description": "Clique em \"Adicionar conta\" para começar a gerenciar suas contas do GitHub Copilot"
+    },
+    "noMatch": {
+      "title": "Nenhuma conta correspondente",
+      "desc": "Tente ajustar sua busca ou filtros"
+    },
+    "addModal": {
+      "title": "Adicionar conta do GitHub Copilot",
+      "oauth": "OAuth",
+      "token": "Token / JSON",
+      "import": "Importação local"
+    },
+    "oauth": {
+      "desc": "Clique no botão abaixo e conclua a autorização do GitHub Copilot no navegador.",
+      "preparing": "Preparando informações de autorização...",
+      "openBrowser": "Abrir no navegador",
+      "hint": "Depois da autorização, esta janela será atualizada automaticamente",
+      "success": "Autorização concluída",
+      "failed": "Falha na autorização",
+      "retry": "Gerar novamente as informações de autorização",
+      "timeoutRetry": "Atualizar link de autorização",
+      "waiting": "Aguardando autorização...",
+      "meta": "Expira em: {{expires}}s; Intervalo de polling: {{interval}}s"
+    },
+    "token": {
+      "desc": "Cole seu token de acesso do GitHub Copilot ou dados JSON exportados.",
+      "placeholder": "Cole o token ou JSON...",
+      "import": "Importar",
+      "importing": "Importando...",
+      "importSuccessMsg": "{{count}} conta(s) importada(s) com sucesso",
+      "importFailedMsg": "Falha na importação: {{error}}",
+      "empty": "Digite um token ou JSON"
+    },
+    "import": {
+      "label": "Importar",
+      "localDesc": "Importe dados de contas do GitHub Copilot de um arquivo JSON.",
+      "importing": "Importando...",
+      "failedMsg": "Falha na importação: {{error}}",
+      "pickFile": "Selecionar arquivo JSON para importar"
+    },
+    "quota": {
+      "hourly": "Sugestões inline",
+      "weekly": "Mensagens de chat",
+      "noData": "Sem dados de cota",
+      "resetDone": "Redefinido"
+    },
+    "usage": {
+      "resetUnknown": "A franquia será redefinida em -",
+      "resetLine": "A franquia será redefinida {{dateText}}."
+    },
+    "time": {
+      "relativeDays": "{{days}}d",
+      "relativeDaysHours": "{{days}}d {{hours}}h",
+      "relativeHours": "{{hours}}h",
+      "relativeHoursMinutes": "{{hours}}h {{minutes}}m",
+      "relativeMinutes": "{{minutes}}m",
+      "lessThanMinute": "<1m",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "Pesquisar contas...",
+    "view": {
+      "list": "Visualização em lista",
+      "grid": "Visualização em cartões"
+    },
+    "filter": {
+      "all": "Todas ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "Filtrar",
+    "sortLabel": "Ordenar",
+    "sort": {
+      "createdAt": "Data de criação",
+      "weekly": "Por uso de mensagens de chat",
+      "hourly": "Por uso de sugestões inline",
+      "weeklyReset": "Por horário de redefinição de mensagens de chat",
+      "hourlyReset": "Por horário de redefinição de sugestões inline",
+      "descTooltip": "Atual: decrescente. Clique para mudar para crescente",
+      "ascTooltip": "Atual: crescente. Clique para mudar para decrescente",
+      "toggleDirection": "Alternar direção da ordenação"
+    },
+    "columns": {
+      "email": "Conta",
+      "plan": "Plano",
+      "hourly": "Sugestões inline",
+      "weekly": "Mensagens de chat",
+      "actions": "Ações"
+    },
+    "export": "Exportar",
+    "flowNotice": {
+      "title": "Guia de contas do GitHub Copilot (clique para expandir/recolher)",
+      "desc": "Fluxo atual: autorizar nova conta -> consultar e exibir cotas -> vincular conta na visualização multi-instância.",
+      "reason": "Por que não há troca de conta com um clique: o estado de login do VS Code é gerenciado por sessões do GitHub e SecretStorage da extensão, e apps externas não podem substituir essas credenciais.",
+      "storage": "Local dos dados de login: principalmente no SecretStorage do VS Code (chaveiro/gerenciador de credenciais do sistema) e no banco de estado global (por exemplo, ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
+      "alternative": "Alternativa: usar isolamento por multi-instância (diferente --user-data-dir). Faça login uma vez por instância e depois inicie por instância para alternar rapidamente para o ambiente da conta desejada."
     }
   },
   "dashboard": {

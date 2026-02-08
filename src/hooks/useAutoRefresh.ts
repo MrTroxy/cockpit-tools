@@ -12,6 +12,7 @@ interface GeneralConfig {
   opencode_app_path?: string;
   antigravity_app_path?: string;
   codex_app_path?: string;
+  vscode_app_path?: string;
   opencode_sync_on_switch?: boolean;
 }
 
@@ -48,6 +49,7 @@ export function useAutoRefresh() {
                 opencodeAppPath: config.opencode_app_path ?? '',
                 antigravityAppPath: config.antigravity_app_path ?? '',
                 codexAppPath: config.codex_app_path ?? '',
+                vscodeAppPath: config.vscode_app_path ?? '',
                 opencodeSyncOnSwitch: config.opencode_sync_on_switch ?? true,
               });
               config.auto_refresh_minutes = 2;

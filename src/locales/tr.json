@@ -30,7 +30,8 @@
     "settings": "Ayarlar",
     "codex": "Codex Hesapları",
     "dashboard": "Gösterge Paneli",
-    "instances": "Çoklu Örnek"
+    "instances": "Çoklu Örnek",
+    "githubCopilot": "GitHub Copilot"
   },
   "settings": {
     "title": "Uygulama Ayarları",
@@ -85,6 +86,12 @@
       "codexAppPathPlaceholder": "Varsayılan yol",
       "codexPathSelect": "Seç",
       "codexPathReset": "Varsayılana sıfırla",
+      "vscodeTitle": "VS Code Başlatma",
+      "vscodeAppPath": "VS Code Uygulama Yolu",
+      "vscodeAppPathDesc": "Varsayılan yolu kullanmak için boş bırakın",
+      "vscodeAppPathPlaceholder": "Varsayılan yol",
+      "vscodePathSelect": "Seç",
+      "vscodePathReset": "Varsayılana sıfırla",
       "antigravityAppPath": "Antigravity Uygulama Yolu",
       "antigravityTitle": "Antigravity Başlatma"
     },
@@ -234,7 +241,25 @@
     "clearFilter": "Filtreyi temizle",
     "editTags": "Etiketleri düzenle",
     "groupByTag": "Etikete göre grupla",
-    "untagged": "Etiketsiz"
+    "untagged": "Etiketsiz",
+    "deleteTagAria": "{{tag}} etiketini sil",
+    "tagModal": {
+      "title": "Etiketleri düzenle",
+      "hint": "En fazla {{max}} etiket. Her etiket en fazla {{maxLength}} karakter olabilir.",
+      "empty": "Kullanılabilir etiket yok",
+      "suggestionsTitle": "Etiketleri filtrele",
+      "suggestionsEmpty": "Kullanılabilir etiket yok",
+      "inputPlaceholder": "Etiket girin ({{remaining}} kaldı)",
+      "inputDisabledPlaceholder": "Etiket limitine ulaşıldı",
+      "add": "Ekle",
+      "save": "Etiketleri kaydet",
+      "error": {
+        "empty": "Etiket boş olamaz",
+        "tooLong": "Etiket en fazla {{max}} karakter olabilir",
+        "duplicate": "Etiket zaten mevcut",
+        "tooMany": "En fazla {{max}} etiket ekleyebilirsiniz"
+      }
+    }
   },
   "overview": {
     "title": "Hesap Genel Bakışı",
@@ -970,6 +995,129 @@
       "title": "Uygulama yolu bulunamadı",
       "desc": "{{app}} uygulama yolu bulunamadı. Devam etmek için şimdi ayarlayın.",
       "action": "Şimdi ayarla"
+    }
+  },
+  "githubCopilot": {
+    "title": "GitHub Copilot Hesap Yönetimi",
+    "subtitle": "GitHub Copilot hesaplarınızı yönetin",
+    "overview": {
+      "title": "Hesap Genel Bakışı"
+    },
+    "instances": {
+      "title": "Çoklu Örnek",
+      "subtitle": "Örnek başına bağımsız yapılandırma, birden fazla hesapla paralel çalışma.",
+      "unsupported": {
+        "title": "Bu sistemde desteklenmiyor",
+        "desc": "GitHub Copilot çoklu örnek şu anda yalnızca macOS'ta kullanılabilir."
+      },
+      "quota": {
+        "inline": "Inline Suggestions",
+        "chat": "Chat messages"
+      }
+    },
+    "addAccount": "Hesap ekle",
+    "refreshAll": "Tümünü yenile",
+    "refreshQuota": "Kotayı yenile",
+    "empty": {
+      "title": "Hesap yok",
+      "description": "\"Hesap ekle\"ye tıklayın"
+    },
+    "noMatch": {
+      "title": "Eşleşen hesap yok",
+      "desc": "Aramanızı veya filtrelerinizi ayarlamayı deneyin"
+    },
+    "addModal": {
+      "title": "GitHub Copilot hesabı ekle",
+      "oauth": "OAuth girişi",
+      "token": "JSON içe aktar",
+      "import": "Yerel içe aktar"
+    },
+    "oauth": {
+      "desc": "Aşağıdaki düğmeye tıklayın ve tarayıcıda GitHub Copilot yetkilendirmesini tamamlayın.",
+      "preparing": "Yetkilendirme bağlantısı hazırlanıyor...",
+      "openBrowser": "Tarayıcıda aç",
+      "hint": "Yetkilendirme tamamlanınca bu pencere otomatik güncellenir",
+      "success": "Yetkilendirme başarılı",
+      "failed": "Yetkilendirme başarısız",
+      "retry": "Yetkilendirme bilgisini yeniden oluştur",
+      "timeoutRetry": "Yetkilendirme bağlantısını yenile",
+      "waiting": "Yetkilendirme bekleniyor...",
+      "meta": "Süre bitimine: {{expires}}s; yoklama aralığı: {{interval}}s"
+    },
+    "token": {
+      "desc": "GitHub Copilot erişim belirtecini veya dışa aktarılan JSON verisini yapıştırın.",
+      "placeholder": "JSON içeriğini yapıştırın...",
+      "import": "İçe aktar",
+      "importing": "İçe aktarılıyor...",
+      "importSuccessMsg": "{{count}} hesap içe aktarıldı",
+      "importFailedMsg": "İçe aktarma başarısız: {{error}}",
+      "empty": "Token veya JSON girin"
+    },
+    "import": {
+      "label": "İçe aktar",
+      "localDesc": "Yerelde oturum açılmış oturumlardan GitHub Copilot hesaplarını içe aktar.",
+      "importing": "Yerel hesap içe aktarılıyor...",
+      "failedMsg": "İçe aktarma başarısız: {{error}}",
+      "pickFile": "İçe aktarılacak JSON dosyasını seçin"
+    },
+    "quota": {
+      "hourly": "5 saatlik kota",
+      "weekly": "Haftalık kota",
+      "noData": "Kota verisi yok",
+      "resetDone": "Sıfırlandı"
+    },
+    "usage": {
+      "resetUnknown": "Kota sıfırlanmasına kalan -",
+      "resetLine": "Kota {{dateText}} tarihinde sıfırlanır."
+    },
+    "time": {
+      "relativeDays": "{{days}} g",
+      "relativeDaysHours": "{{days}} g {{hours}} sa",
+      "relativeHours": "{{hours}} sa",
+      "relativeHoursMinutes": "{{hours}} sa {{minutes}} dk",
+      "relativeMinutes": "{{minutes}} dk",
+      "lessThanMinute": "<1 dk",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "Hesap ara...",
+    "view": {
+      "list": "Liste görünümü",
+      "grid": "Kart görünümü"
+    },
+    "filter": {
+      "all": "Tümü ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "Filtre",
+    "sortLabel": "Sırala",
+    "sort": {
+      "createdAt": "Oluşturulma tarihi",
+      "weekly": "Haftalık kota",
+      "hourly": "5 saatlik kota",
+      "weeklyReset": "Haftalık sıfırlama zamanı",
+      "hourlyReset": "5 saatlik sıfırlama zamanı",
+      "descTooltip": "Azalan (Artan için tıkla)",
+      "ascTooltip": "Artan (Azalan için tıkla)",
+      "toggleDirection": "Sıralama yönünü değiştir"
+    },
+    "columns": {
+      "email": "Hesap",
+      "plan": "Paket",
+      "hourly": "5 saatlik kota",
+      "weekly": "Haftalık kota",
+      "actions": "İşlemler"
+    },
+    "export": "Dışa aktar",
+    "flowNotice": {
+      "title": "GitHub Copilot hesap kılavuzu (genişletmek/daraltmak için tıklayın)",
+      "desc": "Mevcut akış: yeni hesabı yetkilendir -> kotaları çekip göster -> çoklu örnek görünümünde hesabı bağla.",
+      "reason": "Neden tek tıkla hesap değişimi yok: VS Code oturum durumu GitHub oturumları ve eklenti SecretStorage tarafından yönetilir; harici uygulamalar bu kimlik bilgilerini değiştiremez.",
+      "storage": "Oturum verilerinin konumu: ağırlıklı olarak VS Code SecretStorage (sistem anahtar zinciri/kimlik bilgisi yöneticisi) ve genel durum veritabanı (ör. ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
+      "alternative": "Alternatif: çoklu örnek izolasyonunu kullanın (farklı --user-data-dir). Her örnek için bir kez giriş yapın, ardından hedef hesap ortamına hızlı geçiş için örnek bazında başlatın."
     }
   }
 }

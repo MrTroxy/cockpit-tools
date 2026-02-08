@@ -11,6 +11,8 @@ const OPENCODE_APP_NAME: &str = "OpenCode";
 const CODEX_APP_PATH: &str = "/Applications/Codex.app/Contents/MacOS/Codex";
 #[cfg(target_os = "macos")]
 const ANTIGRAVITY_APP_PATH: &str = "/Applications/Antigravity.app/Contents/MacOS/Electron";
+#[cfg(target_os = "macos")]
+const VSCODE_APP_PATH: &str = "/Applications/Visual Studio Code.app/Contents/MacOS/Electron";
 
 #[cfg(target_os = "windows")]
 const CREATE_NEW_PROCESS_GROUP: u32 = 0x0000_0200;
@@ -132,6 +134,13 @@ fn update_app_path_in_config(app: &str, path: &Path) {
                 return;
             }
         }
+        "vscode" => {
+            if current.vscode_app_path != normalized {
+                current.vscode_app_path = normalized;
+            } else {
+                return;
+            }
+        }
         "opencode" => {
             if current.opencode_app_path != normalized {
                 current.opencode_app_path = normalized;
@@ -150,6 +159,7 @@ fn resolve_macos_app_root_from_config(app: &str) -> Option<String> {
     let raw = match app {
         "antigravity" => current.antigravity_app_path,
         "codex" => current.codex_app_path,
+        "vscode" => current.vscode_app_path,
         _ => String::new(),
     };
     let trimmed = raw.trim();
@@ -228,6 +238,58 @@ fn find_antigravity_process_exe() -> Option<std::path::PathBuf> {
             && !exe_path.contains("tools");
 
         if is_antigravity && !is_helper {
+            if let Some(exe) = process.exe() {
+                return Some(exe.to_path_buf());
+            }
+        }
+    }
+
+    None
+}
+
+fn find_vscode_process_exe() -> Option<std::path::PathBuf> {
+    let mut system = System::new();
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+
+    let current_pid = std::process::id();
+
+    for (pid, process) in system.processes() {
+        let pid_u32 = pid.as_u32();
+        if pid_u32 == current_pid {
+            continue;
+        }
+
+        let name = process.name().to_string_lossy().to_lowercase();
+        let exe_path = process
+            .exe()
+            .and_then(|p| p.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+
+        let args = process.cmd();
+        let args_str = args
+            .iter()
+            .map(|arg| arg.to_string_lossy().to_lowercase())
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        let is_helper = args_str.contains("--type=")
+            || name.contains("helper")
+            || name.contains("renderer")
+            || name.contains("gpu")
+            || name.contains("crashpad")
+            || name.contains("utility")
+            || name.contains("audio")
+            || name.contains("sandbox");
+
+        #[cfg(target_os = "macos")]
+        let is_vscode = exe_path.contains("visual studio code.app/contents/") && !is_helper;
+        #[cfg(target_os = "windows")]
+        let is_vscode = (name == "code.exe" || exe_path.ends_with("\\code.exe")) && !is_helper;
+        #[cfg(target_os = "linux")]
+        let is_vscode = (name == "code" || exe_path.ends_with("/code")) && !is_helper;
+
+        if is_vscode {
             if let Some(exe) = process.exe() {
                 return Some(exe.to_path_buf());
             }
@@ -354,6 +416,82 @@ fn detect_antigravity_exec_path() -> Option<std::path::PathBuf> {
     None
 }
 
+fn detect_vscode_exec_path() -> Option<std::path::PathBuf> {
+    if let Some(path) = find_vscode_process_exe() {
+        return Some(path);
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let path = std::path::PathBuf::from(VSCODE_APP_PATH);
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let mut candidates: Vec<std::path::PathBuf> = Vec::new();
+        if let Ok(local_appdata) = std::env::var("LOCALAPPDATA") {
+            candidates.push(
+                std::path::PathBuf::from(&local_appdata)
+                    .join("Programs")
+                    .join("Microsoft VS Code")
+                    .join("Code.exe"),
+            );
+            candidates.push(
+                std::path::PathBuf::from(local_appdata)
+                    .join("Programs")
+                    .join("VSCode")
+                    .join("Code.exe"),
+            );
+        }
+        if let Ok(program_files) = std::env::var("PROGRAMFILES") {
+            candidates.push(
+                std::path::PathBuf::from(program_files)
+                    .join("Microsoft VS Code")
+                    .join("Code.exe"),
+            );
+        }
+        if let Ok(program_files_x86) = std::env::var("PROGRAMFILES(X86)") {
+            candidates.push(
+                std::path::PathBuf::from(program_files_x86)
+                    .join("Microsoft VS Code")
+                    .join("Code.exe"),
+            );
+        }
+        for candidate in candidates {
+            if candidate.exists() {
+                return Some(candidate);
+            }
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let candidates = [
+            "/usr/bin/code",
+            "/snap/bin/code",
+            "/var/lib/flatpak/exports/bin/com.visualstudio.code",
+            "/usr/local/bin/code",
+        ];
+        for candidate in candidates {
+            let path = std::path::PathBuf::from(candidate);
+            if path.exists() {
+                return Some(path);
+            }
+        }
+        if let Some(home) = dirs::home_dir() {
+            let user_local = home.join(".local/bin/code");
+            if user_local.exists() {
+                return Some(user_local);
+            }
+        }
+    }
+
+    None
+}
+
 fn detect_codex_exec_path() -> Option<std::path::PathBuf> {
     #[cfg(target_os = "macos")]
     {
@@ -435,6 +573,30 @@ fn resolve_antigravity_launch_path() -> Result<std::path::PathBuf, String> {
     Err(app_path_missing_error("antigravity"))
 }
 
+fn resolve_vscode_launch_path() -> Result<std::path::PathBuf, String> {
+    if let Some(custom) = normalize_custom_path(Some(&config::get_user_config().vscode_app_path)) {
+        #[cfg(target_os = "macos")]
+        {
+            if let Some(exec) = resolve_macos_exec_path(&custom, "Electron") {
+                return Ok(exec);
+            }
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            if let Some(exec) = resolve_macos_exec_path(&custom, "Electron") {
+                return Ok(exec);
+            }
+        }
+    }
+
+    if let Some(detected) = detect_vscode_exec_path() {
+        update_app_path_in_config("vscode", &detected);
+        return Ok(detected);
+    }
+
+    Err(app_path_missing_error("vscode"))
+}
+
 fn resolve_codex_launch_path() -> Result<std::path::PathBuf, String> {
     if let Some(custom) = normalize_custom_path(Some(&config::get_user_config().codex_app_path)) {
         if let Some(exec) = resolve_macos_exec_path(&custom, "Codex") {
@@ -469,6 +631,15 @@ pub fn detect_and_save_app_path(app: &str) -> Option<String> {
             if let Some(detected) = detect_codex_exec_path() {
                 update_app_path_in_config("codex", &detected);
                 return Some(config::get_user_config().codex_app_path);
+            }
+        }
+        "vscode" => {
+            if !current.vscode_app_path.trim().is_empty() {
+                return Some(current.vscode_app_path);
+            }
+            if let Some(detected) = detect_vscode_exec_path() {
+                update_app_path_in_config("vscode", &detected);
+                return Some(config::get_user_config().vscode_app_path);
             }
         }
         "opencode" => {
@@ -1142,6 +1313,48 @@ fn collect_antigravity_pids_by_user_data_dir(user_data_dir: &str) -> Vec<u32> {
         }
     }
 
+    #[cfg(target_os = "linux")]
+    {
+        let entries = match std::fs::read_dir("/proc") {
+            Ok(value) => value,
+            Err(_) => return result,
+        };
+        for entry in entries.flatten() {
+            let file_name = entry.file_name();
+            let pid_str = file_name.to_string_lossy();
+            if !pid_str.chars().all(|ch| ch.is_ascii_digit()) {
+                continue;
+            }
+            let pid = match pid_str.parse::<u32>() {
+                Ok(value) => value,
+                Err(_) => continue,
+            };
+            let cmdline_path = format!("/proc/{}/cmdline", pid);
+            let cmdline = match std::fs::read(&cmdline_path) {
+                Ok(value) => value,
+                Err(_) => continue,
+            };
+            if cmdline.is_empty() {
+                continue;
+            }
+            let cmdline_str = String::from_utf8_lossy(&cmdline).replace('\0', " ");
+            let cmd_lower = cmdline_str.to_lowercase();
+            let exe_path = std::fs::read_link(format!("/proc/{}/exe", pid))
+                .ok()
+                .and_then(|p| p.to_str().map(|s| s.to_lowercase()))
+                .unwrap_or_default();
+            if !cmd_lower.contains("code") && !exe_path.contains("/code") {
+                continue;
+            }
+            if let Some(dir) = extract_user_data_dir_from_command_line(&cmdline_str) {
+                let normalized = normalize_path_for_compare(&dir);
+                if normalized == target {
+                    result.push(pid);
+                }
+            }
+        }
+    }
+
     result.sort();
     result.dedup();
     result
@@ -1617,6 +1830,7 @@ pub fn start_antigravity_with_args(user_data_dir: &str, extra_args: &[String]) -
                 cmd.arg("--user-data-dir");
                 cmd.arg(user_data_dir.trim());
             }
+            cmd.arg("--reuse-window");
             for arg in extra_args {
                 if !arg.trim().is_empty() {
                     cmd.arg(arg);
@@ -1634,6 +1848,7 @@ pub fn start_antigravity_with_args(user_data_dir: &str, extra_args: &[String]) -
                             args.push("--user-data-dir".to_string());
                             args.push(user_data_dir.trim().to_string());
                         }
+                        args.push("--reuse-window".to_string());
                         for arg in extra_args {
                             if !arg.trim().is_empty() {
                                 args.push(arg.to_string());
@@ -1654,6 +1869,7 @@ pub fn start_antigravity_with_args(user_data_dir: &str, extra_args: &[String]) -
                 args.push("--user-data-dir".to_string());
                 args.push(user_data_dir.trim().to_string());
             }
+            args.push("--reuse-window".to_string());
             for arg in extra_args {
                 if !arg.trim().is_empty() {
                     args.push(arg.to_string());
@@ -1684,6 +1900,7 @@ pub fn start_antigravity_with_args(user_data_dir: &str, extra_args: &[String]) -
             cmd.arg("--user-data-dir");
             cmd.arg(user_data_dir.trim());
         }
+        cmd.arg("--reuse-window");
         for arg in extra_args {
             if !arg.trim().is_empty() {
                 cmd.arg(arg);
@@ -1711,6 +1928,7 @@ pub fn start_antigravity_with_args(user_data_dir: &str, extra_args: &[String]) -
             cmd.arg("--user-data-dir");
             cmd.arg(user_data_dir.trim());
         }
+        cmd.arg("--reuse-window");
         for arg in extra_args {
             if !arg.trim().is_empty() {
                 cmd.arg(arg);
@@ -2569,4 +2787,390 @@ pub fn kill_port_processes(port: u16) -> Result<usize, String> {
     }
 
     Ok(pids.len())
+}
+
+fn collect_vscode_pids_by_user_data_dir(user_data_dir: &str) -> Vec<u32> {
+    let target = normalize_path_for_compare(user_data_dir);
+    if target.is_empty() {
+        return Vec::new();
+    }
+
+    let mut result = Vec::new();
+    let mut system = System::new();
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+
+    let current_pid = std::process::id();
+
+    for (pid, process) in system.processes() {
+        let pid_u32 = pid.as_u32();
+        if pid_u32 == current_pid {
+            continue;
+        }
+
+        #[cfg(any(target_os = "windows", target_os = "linux"))]
+        let name = process.name().to_string_lossy().to_lowercase();
+        let exe_path = process
+            .exe()
+            .and_then(|p| p.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+
+        #[cfg(target_os = "macos")]
+        let is_vscode = exe_path.contains("visual studio code.app");
+        #[cfg(target_os = "windows")]
+        let is_vscode = name == "code.exe" || exe_path.ends_with("\\code.exe");
+        #[cfg(target_os = "linux")]
+        let is_vscode = name == "code" || exe_path.ends_with("/code");
+
+        if !is_vscode {
+            continue;
+        }
+
+        let args = process.cmd();
+        if let Some(dir) = extract_user_data_dir(&args) {
+            let normalized = normalize_path_for_compare(&dir);
+            if normalized == target {
+                result.push(pid_u32);
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        // sysinfo 在 macOS 上偶尔拿不到完整 cmdline，这里补一个 ps 兜底。
+        let output = Command::new("ps").args(["-axo", "pid,command"]).output();
+        if let Ok(output) = output {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines().skip(1) {
+                let line = line.trim();
+                if line.is_empty() {
+                    continue;
+                }
+                let mut parts = line.splitn(2, |ch: char| ch.is_whitespace());
+                let pid_str = parts.next().unwrap_or("").trim();
+                let cmdline = parts.next().unwrap_or("").trim();
+                let pid = match pid_str.parse::<u32>() {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                let lower = cmdline.to_lowercase();
+                if !lower.contains("visual studio code.app/contents/") {
+                    continue;
+                }
+                if let Some(dir) = extract_user_data_dir_from_command_line(cmdline) {
+                    let normalized = normalize_path_for_compare(&dir);
+                    if normalized == target {
+                        result.push(pid);
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("powershell")
+            .args([
+                "-NoProfile",
+                "-Command",
+                "Get-CimInstance Win32_Process -Filter \"Name='Code.exe'\" | ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }",
+            ])
+            .output();
+        if let Ok(output) = output {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                let line = line.trim();
+                if line.is_empty() {
+                    continue;
+                }
+                let mut parts = line.splitn(2, '|');
+                let pid_str = parts.next().unwrap_or("").trim();
+                let cmdline = parts.next().unwrap_or("").trim();
+                let pid = match pid_str.parse::<u32>() {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                if let Some(dir) = extract_user_data_dir_from_command_line(cmdline) {
+                    let normalized = normalize_path_for_compare(&dir);
+                    if normalized == target {
+                        result.push(pid);
+                    }
+                }
+            }
+        }
+    }
+
+    result.sort();
+    result.dedup();
+    result
+}
+
+pub fn start_vscode_with_args_with_new_window(
+    user_data_dir: &str,
+    extra_args: &[String],
+    use_new_window: bool,
+) -> Result<u32, String> {
+    #[cfg(target_os = "macos")]
+    {
+        let target = user_data_dir.trim();
+        if target.is_empty() {
+            return Err("实例目录为空，无法启动".to_string());
+        }
+        let launch_path = resolve_vscode_launch_path()?;
+
+        let mut cmd = Command::new(&launch_path);
+        cmd.arg("--user-data-dir").arg(target);
+        if use_new_window {
+            cmd.arg("--new-window");
+        } else {
+            cmd.arg("--reuse-window");
+        }
+        for arg in extra_args {
+            let trimmed = arg.trim();
+            if !trimmed.is_empty() {
+                cmd.arg(trimmed);
+            }
+        }
+
+        let child = spawn_detached_unix(&mut cmd).map_err(|e| format!("启动 VS Code 失败: {}", e))?;
+        crate::modules::logger::log_info("VS Code 启动命令已发送");
+        return Ok(child.id());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+
+        let target = user_data_dir.trim();
+        if target.is_empty() {
+            return Err("实例目录为空，无法启动".to_string());
+        }
+        let launch_path = resolve_vscode_launch_path()?;
+
+        let mut cmd = Command::new(&launch_path);
+        if should_detach_child() {
+            cmd.creation_flags(0x08000000 | CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS);
+            cmd.stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
+        } else {
+            cmd.creation_flags(0x08000000);
+        }
+        cmd.arg("--user-data-dir").arg(target);
+        if use_new_window {
+            cmd.arg("--new-window");
+        } else {
+            cmd.arg("--reuse-window");
+        }
+        for arg in extra_args {
+            let trimmed = arg.trim();
+            if !trimmed.is_empty() {
+                cmd.arg(trimmed);
+            }
+        }
+
+        let child = cmd
+            .spawn()
+            .map_err(|e| format!("启动 VS Code 失败: {}", e))?;
+        crate::modules::logger::log_info("VS Code 启动命令已发送");
+        return Ok(child.id());
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let target = user_data_dir.trim();
+        if target.is_empty() {
+            return Err("实例目录为空，无法启动".to_string());
+        }
+        let launch_path = resolve_vscode_launch_path()?;
+
+        let mut cmd = Command::new(&launch_path);
+        if should_detach_child() {
+            cmd.stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
+        }
+        cmd.arg("--user-data-dir").arg(target);
+        if use_new_window {
+            cmd.arg("--new-window");
+        } else {
+            cmd.arg("--reuse-window");
+        }
+        for arg in extra_args {
+            let trimmed = arg.trim();
+            if !trimmed.is_empty() {
+                cmd.arg(trimmed);
+            }
+        }
+
+        let child = spawn_detached_unix(&mut cmd).map_err(|e| format!("启动 VS Code 失败: {}", e))?;
+        crate::modules::logger::log_info("VS Code 启动命令已发送");
+        return Ok(child.id());
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    {
+        let _ = (user_data_dir, extra_args, use_new_window);
+        Err("GitHub Copilot 多开实例仅支持 macOS、Windows 和 Linux".to_string())
+    }
+}
+
+pub fn start_vscode_with_args(user_data_dir: &str, extra_args: &[String]) -> Result<u32, String> {
+    start_vscode_with_args_with_new_window(user_data_dir, extra_args, false)
+}
+
+pub fn close_vscode_instance(user_data_dir: &str, timeout_secs: u64) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    let _ = timeout_secs;
+    let target = normalize_path_for_compare(user_data_dir);
+    if target.is_empty() {
+        return Err("实例目录为空，无法关闭".to_string());
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
+    let mut pids = collect_vscode_pids_by_user_data_dir(user_data_dir);
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    let mut pids: Vec<u32> = Vec::new();
+
+    if pids.is_empty() {
+        return Ok(());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        for pid in &pids {
+            let _ = Command::new("taskkill")
+                .args(["/F", "/T", "/PID", &pid.to_string()])
+                .output();
+        }
+        thread::sleep(Duration::from_millis(200));
+        if !collect_vscode_pids_by_user_data_dir(user_data_dir).is_empty() {
+            return Err("无法关闭实例进程，请手动关闭后重试".to_string());
+        }
+        return Ok(());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        for pid in &pids {
+            let _ = Command::new("kill").args(["-15", &pid.to_string()]).output();
+        }
+
+        let graceful_timeout = (timeout_secs * 7) / 10;
+        let start = std::time::Instant::now();
+        while start.elapsed() < Duration::from_secs(graceful_timeout) {
+            if collect_vscode_pids_by_user_data_dir(user_data_dir).is_empty() {
+                return Ok(());
+            }
+            thread::sleep(Duration::from_millis(400));
+        }
+
+        pids = collect_vscode_pids_by_user_data_dir(user_data_dir);
+        if !pids.is_empty() {
+            for pid in &pids {
+                let _ = Command::new("kill").args(["-9", &pid.to_string()]).output();
+            }
+            thread::sleep(Duration::from_millis(800));
+        }
+
+        if !collect_vscode_pids_by_user_data_dir(user_data_dir).is_empty() {
+            return Err("无法关闭实例进程，请手动关闭后重试".to_string());
+        }
+        return Ok(());
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        for pid in &pids {
+            let _ = Command::new("kill").args(["-15", &pid.to_string()]).output();
+        }
+
+        let graceful_timeout = (timeout_secs * 7) / 10;
+        let start = std::time::Instant::now();
+        while start.elapsed() < Duration::from_secs(graceful_timeout) {
+            if collect_vscode_pids_by_user_data_dir(user_data_dir).is_empty() {
+                return Ok(());
+            }
+            thread::sleep(Duration::from_millis(400));
+        }
+
+        pids = collect_vscode_pids_by_user_data_dir(user_data_dir);
+        if !pids.is_empty() {
+            for pid in &pids {
+                let _ = Command::new("kill").args(["-9", &pid.to_string()]).output();
+            }
+            thread::sleep(Duration::from_millis(800));
+        }
+
+        if !collect_vscode_pids_by_user_data_dir(user_data_dir).is_empty() {
+            return Err("无法关闭实例进程，请手动关闭后重试".to_string());
+        }
+        return Ok(());
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    {
+        let _ = user_data_dir;
+        Err("GitHub Copilot 多开实例仅支持 macOS、Windows 和 Linux".to_string())
+    }
+}
+
+pub fn force_kill_vscode_instance(user_data_dir: &str) -> Result<(), String> {
+    let target = normalize_path_for_compare(user_data_dir);
+    if target.is_empty() {
+        return Err("实例目录为空，无法关闭".to_string());
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
+    let pids = collect_vscode_pids_by_user_data_dir(user_data_dir);
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    let pids: Vec<u32> = Vec::new();
+
+    if pids.is_empty() {
+        return Ok(());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        for pid in &pids {
+            let _ = Command::new("taskkill")
+                .args(["/F", "/T", "/PID", &pid.to_string()])
+                .output();
+        }
+        thread::sleep(Duration::from_millis(200));
+        if !collect_vscode_pids_by_user_data_dir(user_data_dir).is_empty() {
+            return Err("无法强制关闭实例进程，请手动关闭后重试".to_string());
+        }
+        return Ok(());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        for pid in &pids {
+            let _ = Command::new("kill").args(["-9", &pid.to_string()]).output();
+        }
+        thread::sleep(Duration::from_millis(500));
+        if !collect_vscode_pids_by_user_data_dir(user_data_dir).is_empty() {
+            return Err("无法强制关闭实例进程，请手动关闭后重试".to_string());
+        }
+        return Ok(());
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        for pid in &pids {
+            let _ = Command::new("kill").args(["-9", &pid.to_string()]).output();
+        }
+        thread::sleep(Duration::from_millis(500));
+        if !collect_vscode_pids_by_user_data_dir(user_data_dir).is_empty() {
+            return Err("无法强制关闭实例进程，请手动关闭后重试".to_string());
+        }
+        return Ok(());
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    {
+        let _ = user_data_dir;
+        Err("GitHub Copilot 多开实例仅支持 macOS、Windows 和 Linux".to_string())
+    }
 }

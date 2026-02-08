@@ -2,12 +2,19 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAccountStore } from '../stores/useAccountStore';
 import { useCodexAccountStore } from '../stores/useCodexAccountStore';
+import { useGitHubCopilotAccountStore } from '../stores/useGitHubCopilotAccountStore';
 import { Page } from '../types/navigation';
-import { Users, CheckCircle2, Sparkles, RotateCw, Play } from 'lucide-react';
+import { Users, CheckCircle2, Sparkles, RotateCw, Play, Github } from 'lucide-react';
 import { getSubscriptionTier, getDisplayModels, getModelShortName, formatResetTimeDisplay } from '../utils/account';
 import { getCodexPlanDisplayName, getCodexQuotaClass, formatCodexResetTime } from '../types/codex';
 import { Account } from '../types/account';
 import { CodexAccount } from '../types/codex';
+import {
+  GitHubCopilotAccount,
+  getGitHubCopilotPlanDisplayName,
+  getGitHubCopilotQuotaClass,
+  formatGitHubCopilotResetTime,
+} from '../types/githubCopilot';
 import './DashboardPage.css';
 import { RobotIcon } from '../components/icons/RobotIcon';
 import { CodexIcon } from '../components/icons/CodexIcon';
@@ -38,6 +45,12 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     fetchCurrentAccount: fetchCodexCurrent
   } = useCodexAccountStore();
 
+  // GitHub Copilot Data
+  const {
+    accounts: githubCopilotAccounts,
+    fetchAccounts: fetchGitHubCopilotAccounts,
+  } = useGitHubCopilotAccountStore();
+
   const agCurrentId = agCurrent?.id;
   const codexCurrentId = codexCurrent?.id;
 
@@ -56,20 +69,26 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     fetchAgCurrent();
     fetchCodexAccounts();
     fetchCodexCurrent();
+    fetchGitHubCopilotAccounts();
   }, []);
 
   // Statistics
   const stats = useMemo(() => {
     return {
-      total: agAccounts.length + codexAccounts.length,
+      total: agAccounts.length + codexAccounts.length + githubCopilotAccounts.length,
       antigravity: agAccounts.length,
-      codex: codexAccounts.length
+      codex: codexAccounts.length,
+      githubCopilot: githubCopilotAccounts.length,
     };
-  }, [agAccounts, codexAccounts]);
+  }, [agAccounts, codexAccounts, githubCopilotAccounts]);
 
   // Refresh States
   const [refreshing, setRefreshing] = React.useState<Set<string>>(new Set());
-  const [cardRefreshing, setCardRefreshing] = React.useState<{ag: boolean, codex: boolean}>({ ag: false, codex: false });
+  const [cardRefreshing, setCardRefreshing] = React.useState<{ag: boolean, codex: boolean, githubCopilot: boolean}>({
+    ag: false,
+    codex: false,
+    githubCopilot: false,
+  });
 
   // Refresh Handlers
   const handleRefreshAg = async (accountId: string) => {
@@ -93,6 +112,22 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     setRefreshing(prev => new Set(prev).add(accountId));
     try {
       await useCodexAccountStore.getState().refreshQuota(accountId);
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    } finally {
+      setRefreshing(prev => {
+        const next = new Set(prev);
+        next.delete(accountId);
+        return next;
+      });
+    }
+  };
+
+  const handleRefreshGitHubCopilot = async (accountId: string) => {
+    if (refreshing.has(accountId)) return;
+    setRefreshing(prev => new Set(prev).add(accountId));
+    try {
+      await useGitHubCopilotAccountStore.getState().refreshToken(accountId);
     } catch (error) {
       console.error('Refresh failed:', error);
     } finally {
@@ -131,6 +166,21 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       console.error('Card refresh failed:', error);
     } finally {
       setCardRefreshing(prev => ({ ...prev, codex: false }));
+    }
+  };
+
+  const handleRefreshGitHubCopilotCard = async () => {
+    if (cardRefreshing.githubCopilot) return;
+    setCardRefreshing(prev => ({ ...prev, githubCopilot: true }));
+    const idsToRefresh = [githubCopilotCurrent?.id, githubCopilotRecommended?.id].filter(Boolean) as string[];
+    try {
+      for (const id of idsToRefresh) {
+        await useGitHubCopilotAccountStore.getState().refreshToken(id);
+      }
+    } catch (error) {
+      console.error('Card refresh failed:', error);
+    } finally {
+      setCardRefreshing(prev => ({ ...prev, githubCopilot: false }));
     }
   };
 
@@ -180,6 +230,32 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       return getScore(curr) > getScore(prev) ? curr : prev;
     });
   }, [codexAccounts, codexCurrentId]);
+
+  const githubCopilotCurrent = useMemo(() => {
+    if (githubCopilotAccounts.length === 0) return null;
+    return githubCopilotAccounts.reduce((prev, curr) => {
+      const prevScore = prev.last_used || prev.created_at || 0;
+      const currScore = curr.last_used || curr.created_at || 0;
+      return currScore > prevScore ? curr : prev;
+    });
+  }, [githubCopilotAccounts]);
+
+  const githubCopilotRecommended = useMemo(() => {
+    if (githubCopilotAccounts.length <= 1) return null;
+    const currentId = githubCopilotCurrent?.id;
+    const others = githubCopilotAccounts.filter((a) => a.id !== currentId);
+    if (others.length === 0) return null;
+
+    const getScore = (acc: GitHubCopilotAccount) => {
+      const scores = [acc.quota?.hourly_percentage, acc.quota?.weekly_percentage].filter(
+        (value): value is number => typeof value === 'number',
+      );
+      if (scores.length === 0) return 101;
+      return scores.reduce((sum, value) => sum + value, 0) / scores.length;
+    };
+
+    return others.reduce((prev, curr) => (getScore(curr) < getScore(prev) ? curr : prev));
+  }, [githubCopilotAccounts, githubCopilotCurrent?.id]);
 
   // Render Helpers
   const renderAgAccountContent = (account: Account | null) => {
@@ -320,6 +396,87 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     );
   };
 
+  const renderGitHubCopilotAccountContent = (account: GitHubCopilotAccount | null) => {
+    if (!account) return <div className="empty-slot">{t('dashboard.noAccount', '无账号')}</div>;
+
+    const planName = getGitHubCopilotPlanDisplayName(account.plan_type);
+    const planLabel = t(`githubCopilot.plan.${planName.toLowerCase()}`, planName);
+    const hourly = account.quota?.hourly_percentage ?? null;
+    const weekly = account.quota?.weekly_percentage ?? null;
+    const hasQuota = hourly != null || weekly != null;
+
+    return (
+      <div className="account-mini-card">
+        <div className="account-mini-header">
+          <div className="account-info-row">
+            <span className="account-email" title={account.email ?? account.github_email ?? account.github_login}>
+              {account.email ?? account.github_email ?? account.github_login}
+            </span>
+            <span className={`tier-tag ${planName.toLowerCase()}`}>{planLabel}</span>
+          </div>
+        </div>
+
+        <div className="account-mini-quotas">
+          {!hasQuota && <span className="no-data-text">{t('dashboard.noData', '暂无数据')}</span>}
+          {hasQuota && (
+            <>
+              <div className="mini-quota-row-stacked">
+                <div className="mini-quota-header">
+                  <span className="model-name">{t('githubCopilot.quota.hourly', 'Inline Suggestions')}</span>
+                  <span className={`model-pct ${getGitHubCopilotQuotaClass(hourly ?? 0)}`}>
+                    {hourly ?? 0}%
+                  </span>
+                </div>
+                <div className="mini-progress-track">
+                  <div
+                    className={`mini-progress-bar ${getGitHubCopilotQuotaClass(hourly ?? 0)}`}
+                    style={{ width: `${hourly ?? 0}%` }}
+                  />
+                </div>
+                {account.quota?.hourly_reset_time && (
+                  <div className="mini-reset-time">
+                    {formatGitHubCopilotResetTime(account.quota.hourly_reset_time, t)}
+                  </div>
+                )}
+              </div>
+
+              <div className="mini-quota-row-stacked">
+                <div className="mini-quota-header">
+                  <span className="model-name">{t('githubCopilot.quota.weekly', 'Chat messages')}</span>
+                  <span className={`model-pct ${getGitHubCopilotQuotaClass(weekly ?? 0)}`}>
+                    {weekly ?? 0}%
+                  </span>
+                </div>
+                <div className="mini-progress-track">
+                  <div
+                    className={`mini-progress-bar ${getGitHubCopilotQuotaClass(weekly ?? 0)}`}
+                    style={{ width: `${weekly ?? 0}%` }}
+                  />
+                </div>
+                {account.quota?.weekly_reset_time && (
+                  <div className="mini-reset-time">
+                    {formatGitHubCopilotResetTime(account.quota.weekly_reset_time, t)}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="account-mini-actions icon-only-row">
+          <button
+            className="mini-icon-btn"
+            onClick={() => handleRefreshGitHubCopilot(account.id)}
+            title={t('common.refresh', '刷新')}
+            disabled={refreshing.has(account.id)}
+          >
+            <RotateCw size={14} className={refreshing.has(account.id) ? 'loading-spinner' : ''} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // Helper for Quota Class (duplicated from Account utils roughly)
   function getQuotaClass(percentage: number): string {
     if (percentage > 80) return 'high';
@@ -361,13 +518,22 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
              <span className="stat-value">{stats.codex}</span>
           </div>
         </div>
+        <div className="stat-card">
+          <div className="stat-icon-bg github">
+            <Github size={24} />
+          </div>
+          <div className="stat-info">
+             <span className="stat-label">{t('dashboard.panels.githubCopilot', 'GitHub Copilot')}</span>
+             <span className="stat-value">{stats.githubCopilot}</span>
+          </div>
+        </div>
       </div>
 
       {/* Main Comparison Section */}
-      <div className="cards-split-row">
-        
-        {/* Antigravity Card */}
-        <div className="main-card antigravity-card">
+      <div className="cards-section">
+        <div className="cards-split-row">
+          {/* Antigravity Card */}
+          <div className="main-card antigravity-card">
            <div className="main-card-header">
               <div className="header-title">
                 <RobotIcon className="" style={{ width: 18, height: 18 }} />
@@ -409,8 +575,8 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
            </button>
         </div>
 
-        {/* Codex Card */}
-        <div className="main-card codex-card">
+          {/* Codex Card */}
+          <div className="main-card codex-card">
            <div className="main-card-header">
               <div className="header-title">
                 <CodexIcon size={18} />
@@ -451,7 +617,51 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
               {t('dashboard.viewAllAccounts', '查看所有账号')}
            </button>
         </div>
+        </div>
 
+        <div className="cards-split-row">
+          {/* GitHub Copilot Card */}
+          <div className="main-card github-copilot-card">
+          <div className="main-card-header">
+            <div className="header-title">
+              <Github size={18} />
+              <h3>{t('dashboard.panels.githubCopilot', 'GitHub Copilot')}</h3>
+            </div>
+            <button
+              className="header-action-btn"
+              onClick={handleRefreshGitHubCopilotCard}
+              disabled={cardRefreshing.githubCopilot}
+              title={t('common.refresh', '刷新')}
+            >
+              <RotateCw size={14} className={cardRefreshing.githubCopilot ? 'loading-spinner' : ''} />
+              <span>{t('common.refresh', '刷新')}</span>
+            </button>
+          </div>
+
+          <div className="split-content">
+            <div className="split-half current-half">
+              <span className="half-label"><CheckCircle2 size={12}/> {t('dashboard.current', '当前账户')}</span>
+              {renderGitHubCopilotAccountContent(githubCopilotCurrent)}
+            </div>
+
+            <div className="split-divider"></div>
+
+            <div className="split-half recommend-half">
+              <span className="half-label"><Sparkles size={12}/> {t('dashboard.recommended', '推荐账号')}</span>
+              {githubCopilotRecommended ? (
+                renderGitHubCopilotAccountContent(githubCopilotRecommended)
+              ) : (
+                <div className="empty-slot-text">{t('dashboard.noRecommendation', '暂无更好推荐')}</div>
+              )}
+            </div>
+          </div>
+
+          <button className="card-footer-action" onClick={() => onNavigate('github-copilot')}>
+            {t('dashboard.viewAllAccounts', '查看所有账号')}
+          </button>
+        </div>
+
+        </div>
       </div>
 
     </main>

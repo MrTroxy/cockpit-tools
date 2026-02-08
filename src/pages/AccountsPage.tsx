@@ -2165,7 +2165,10 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
                               e.stopPropagation()
                               requestDeleteTag(tag)
                             }}
-                            aria-label={`删除标签 ${tag}`}
+                            aria-label={t('accounts.deleteTagAria', {
+                              tag,
+                              defaultValue: '删除标签 {{tag}}',
+                            })}
                           >
                             <X size={12} />
                           </button>
@@ -2599,7 +2602,11 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
             </div>
             <div className="modal-body">
               <p>
-                {`确认删除标签 “${tagDeleteConfirm.tag}” 吗？该标签将从 ${tagDeleteConfirm.count} 个账号中移除。`}
+                {t('accounts.confirmDeleteTag', {
+                  tag: tagDeleteConfirm.tag,
+                  count: tagDeleteConfirm.count,
+                  defaultValue: '确认删除标签 "{{tag}}" 吗？该标签将从 {{count}} 个账号中移除。',
+                })}
               </p>
             </div>
             <div className="modal-footer">

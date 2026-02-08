@@ -1,1 +1,11 @@
-export type Page = 'dashboard' | 'overview' | 'codex' | 'codex-instances' | 'instances' | 'accounts' | 'fingerprints' | 'wakeup' | 'settings';
+export type Page =
+  | 'dashboard'
+  | 'overview'
+  | 'codex'
+  | 'github-copilot'
+  | 'codex-instances'
+  | 'instances'
+  | 'accounts'
+  | 'fingerprints'
+  | 'wakeup'
+  | 'settings';

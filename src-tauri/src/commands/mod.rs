@@ -9,3 +9,5 @@ pub mod group;
 pub mod codex;
 pub mod instance;
 pub mod codex_instance;
+pub mod github_copilot;
+pub mod github_copilot_instance;

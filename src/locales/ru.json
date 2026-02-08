@@ -30,7 +30,8 @@
     "settings": "Настройки",
     "codex": "Аккаунты Codex",
     "dashboard": "Панель",
-    "instances": "Мульти-инстанс"
+    "instances": "Мульти-инстанс",
+    "githubCopilot": "GitHub Copilot"
   },
   "settings": {
     "title": "Настройки приложения",
@@ -85,6 +86,12 @@
       "codexAppPathPlaceholder": "Путь по умолчанию",
       "codexPathSelect": "Выбрать",
       "codexPathReset": "Сбросить по умолчанию",
+      "vscodeTitle": "Запуск VS Code",
+      "vscodeAppPath": "Путь к приложению VS Code",
+      "vscodeAppPathDesc": "Оставьте пустым, чтобы использовать путь по умолчанию",
+      "vscodeAppPathPlaceholder": "Путь по умолчанию",
+      "vscodePathSelect": "Выбрать",
+      "vscodePathReset": "Сбросить по умолчанию",
       "antigravityAppPath": "Путь к приложению Antigravity",
       "antigravityTitle": "Запуск Antigravity"
     },
@@ -234,7 +241,25 @@
     "clearFilter": "Очистить фильтр",
     "editTags": "Редактировать теги",
     "groupByTag": "Группировать по тегу",
-    "untagged": "Без тега"
+    "untagged": "Без тега",
+    "deleteTagAria": "Удалить тег {{tag}}",
+    "tagModal": {
+      "title": "Редактировать теги",
+      "hint": "До {{max}} тегов. Каждый тег может содержать не более {{maxLength}} символов.",
+      "empty": "Нет доступных тегов",
+      "suggestionsTitle": "Фильтр по тегам",
+      "suggestionsEmpty": "Нет доступных тегов",
+      "inputPlaceholder": "Введите тег (осталось {{remaining}})",
+      "inputDisabledPlaceholder": "Достигнут лимит тегов",
+      "add": "Добавить",
+      "save": "Сохранить теги",
+      "error": {
+        "empty": "Тег не может быть пустым",
+        "tooLong": "Тег не может быть длиннее {{max}} символов",
+        "duplicate": "Тег уже существует",
+        "tooMany": "Можно добавить не более {{max}} тегов"
+      }
+    }
   },
   "overview": {
     "title": "Обзор аккаунтов",
@@ -970,6 +995,129 @@
       "title": "Путь к приложению не найден",
       "desc": "Не удалось найти путь к приложению {{app}}. Установите его сейчас, чтобы продолжить.",
       "action": "Установить сейчас"
+    }
+  },
+  "githubCopilot": {
+    "title": "Управление аккаунтами GitHub Copilot",
+    "subtitle": "Управляйте аккаунтами GitHub Copilot",
+    "overview": {
+      "title": "Обзор аккаунтов"
+    },
+    "instances": {
+      "title": "Мульти-инстанс",
+      "subtitle": "Независимая конфигурация для каждого экземпляра, параллельная работа с несколькими аккаунтами.",
+      "unsupported": {
+        "title": "Не поддерживается на этой системе",
+        "desc": "Мульти-инстанс GitHub Copilot в настоящее время доступен только на macOS."
+      },
+      "quota": {
+        "inline": "Inline Suggestions",
+        "chat": "Chat messages"
+      }
+    },
+    "addAccount": "Добавить аккаунт",
+    "refreshAll": "Обновить все",
+    "refreshQuota": "Обновить квоту",
+    "empty": {
+      "title": "Нет аккаунтов",
+      "description": "Нажмите «Добавить аккаунт», чтобы начать"
+    },
+    "noMatch": {
+      "title": "Нет подходящих аккаунтов",
+      "desc": "Попробуйте изменить поиск или фильтры"
+    },
+    "addModal": {
+      "title": "Добавить аккаунт GitHub Copilot",
+      "oauth": "Вход OAuth",
+      "token": "Импорт JSON",
+      "import": "Локальный импорт"
+    },
+    "oauth": {
+      "desc": "Нажмите ниже и завершите авторизацию GitHub Copilot в браузере.",
+      "preparing": "Подготовка ссылки авторизации...",
+      "openBrowser": "Открыть в браузере",
+      "hint": "После авторизации это окно обновится автоматически",
+      "success": "Авторизация успешна",
+      "failed": "Ошибка авторизации",
+      "retry": "Сгенерировать данные авторизации заново",
+      "timeoutRetry": "Обновить ссылку авторизации",
+      "waiting": "Ожидание авторизации...",
+      "meta": "Истекает через: {{expires}}с; интервал опроса: {{interval}}с"
+    },
+    "token": {
+      "desc": "Вставьте токен доступа GitHub Copilot или экспортированные данные JSON.",
+      "placeholder": "Вставьте JSON...",
+      "import": "Импортировать",
+      "importing": "Импорт...",
+      "importSuccessMsg": "Импортировано аккаунтов: {{count}}",
+      "importFailedMsg": "Импорт не удался: {{error}}",
+      "empty": "Введите token или JSON"
+    },
+    "import": {
+      "label": "Импорт",
+      "localDesc": "Импортировать аккаунты GitHub Copilot из локальных вошедших сессий.",
+      "importing": "Импорт локального аккаунта...",
+      "failedMsg": "Ошибка импорта: {{error}}",
+      "pickFile": "Выберите JSON-файл для импорта"
+    },
+    "quota": {
+      "hourly": "Квота 5 часов",
+      "weekly": "Недельная квота",
+      "noData": "Нет данных квоты",
+      "resetDone": "Сброшено"
+    },
+    "usage": {
+      "resetUnknown": "Лимит сбрасывается через -",
+      "resetLine": "Лимит будет сброшен {{dateText}}."
+    },
+    "time": {
+      "relativeDays": "{{days}} д",
+      "relativeDaysHours": "{{days}} д {{hours}} ч",
+      "relativeHours": "{{hours}} ч",
+      "relativeHoursMinutes": "{{hours}} ч {{minutes}} мин",
+      "relativeMinutes": "{{minutes}} мин",
+      "lessThanMinute": "<1 мин",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "Поиск аккаунтов...",
+    "view": {
+      "list": "Список",
+      "grid": "Карточки"
+    },
+    "filter": {
+      "all": "Все ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "Фильтр",
+    "sortLabel": "Сортировка",
+    "sort": {
+      "createdAt": "Дата создания",
+      "weekly": "Недельная квота",
+      "hourly": "5-часовая квота",
+      "weeklyReset": "Время еженедельного сброса",
+      "hourlyReset": "Время сброса 5-часовой квоты",
+      "descTooltip": "По убыванию (нажмите для возрастания)",
+      "ascTooltip": "По возрастанию (нажмите для убывания)",
+      "toggleDirection": "Изменить порядок"
+    },
+    "columns": {
+      "email": "Аккаунт",
+      "plan": "План",
+      "hourly": "Квота 5ч",
+      "weekly": "Квота нед",
+      "actions": "Действия"
+    },
+    "export": "Экспорт",
+    "flowNotice": {
+      "title": "Руководство по аккаунтам GitHub Copilot (нажмите, чтобы развернуть/свернуть)",
+      "desc": "Текущий процесс: авторизовать новый аккаунт -> получить и показать лимиты -> привязать аккаунт в режиме мульти-инстансов.",
+      "reason": "Почему недоступно переключение аккаунта в один клик: состояние входа VS Code управляется сессиями GitHub и SecretStorage расширения, и внешние приложения не могут подменить эти учетные данные.",
+      "storage": "Где хранятся данные входа: в основном в SecretStorage VS Code (системная связка ключей/менеджер учетных данных) и в глобальной базе состояния (например, ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
+      "alternative": "Альтернатива: использовать изоляцию мульти-инстансов (разные --user-data-dir). Войдите один раз для каждого инстанса, затем запускайте нужный инстанс для быстрого переключения на целевую среду аккаунта."
     }
   }
 }

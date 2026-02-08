@@ -11,7 +11,6 @@ import {
   Database,
   Copy,
   Check,
-  Play,
   RotateCw,
   CircleAlert,
   LayoutGrid,
@@ -21,43 +20,41 @@ import {
   Clock,
   Calendar,
   Tag,
+  ChevronDown,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useCodexAccountStore } from '../stores/useCodexAccountStore';
-import * as codexService from '../services/codexService';
+import { useGitHubCopilotAccountStore } from '../stores/useGitHubCopilotAccountStore';
+import * as githubCopilotService from '../services/githubCopilotService';
 import { TagEditModal } from '../components/TagEditModal';
 import {
-  getCodexPlanDisplayName,
-  getCodexQuotaClass,
-  formatCodexResetTime,
-} from '../types/codex';
+  getGitHubCopilotPlanDisplayName,
+  getGitHubCopilotQuotaClass,
+  formatGitHubCopilotResetTime,
+} from '../types/githubCopilot';
 
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import { confirm as confirmDialog } from '@tauri-apps/plugin-dialog';
 import { save } from '@tauri-apps/plugin-dialog';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { invoke } from '@tauri-apps/api/core';
-import { CodexOverviewTabsHeader, CodexTab } from '../components/CodexOverviewTabsHeader';
-import { CodexInstancesContent } from './CodexInstancesPage';
+import { GitHubCopilotOverviewTabsHeader, GitHubCopilotTab } from '../components/GitHubCopilotOverviewTabsHeader';
+import { GitHubCopilotInstancesContent } from './GitHubCopilotInstancesPage';
 
-export function CodexAccountsPage() {
+const GHCP_FLOW_NOTICE_COLLAPSED_KEY = 'agtools.github_copilot.flow_notice_collapsed';
+
+export function GitHubCopilotAccountsPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language || 'zh-CN';
   const untaggedKey = '__untagged__';
-  const [activeTab, setActiveTab] = useState<CodexTab>('overview');
+  const [activeTab, setActiveTab] = useState<GitHubCopilotTab>('overview');
 
   const {
     accounts,
-    currentAccount,
     loading,
     fetchAccounts,
-    fetchCurrentAccount,
     deleteAccounts,
-    refreshQuota,
-    refreshAllQuotas,
-    switchAccount,
+    refreshToken,
+    refreshAllTokens,
     updateAccountTags,
-  } = useCodexAccountStore();
+  } = useGitHubCopilotAccountStore();
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showAddModal, setShowAddModal] = useState(false);
@@ -66,7 +63,7 @@ export function CodexAccountsPage() {
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'FREE' | 'PLUS' | 'PRO' | 'TEAM' | 'ENTERPRISE'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'FREE' | 'INDIVIDUAL' | 'PRO' | 'BUSINESS' | 'ENTERPRISE'>('all');
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [groupByTag, setGroupByTag] = useState(false);
   const [showTagFilter, setShowTagFilter] = useState(false);
@@ -78,17 +75,27 @@ export function CodexAccountsPage() {
   const [addStatus, setAddStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [oauthUrl, setOauthUrl] = useState<string | null>(null);
   const [oauthUrlCopied, setOauthUrlCopied] = useState(false);
+  const [oauthUserCode, setOauthUserCode] = useState<string | null>(null);
+  const [oauthUserCodeCopied, setOauthUserCodeCopied] = useState(false);
+  const [oauthMeta, setOauthMeta] = useState<{ expiresIn: number; intervalSeconds: number } | null>(null);
   const [oauthPrepareError, setOauthPrepareError] = useState<string | null>(null);
-  const [oauthPortInUse, setOauthPortInUse] = useState<number | null>(null);
-  const [oauthTimeoutInfo, setOauthTimeoutInfo] = useState<{ loginId?: string; callbackUrl?: string; timeoutSeconds?: number } | null>(null);
+  const [oauthCompleteError, setOauthCompleteError] = useState<string | null>(null);
+  const [oauthPolling, setOauthPolling] = useState(false);
+  const [oauthTimedOut, setOauthTimedOut] = useState(false);
   const [tokenInput, setTokenInput] = useState('');
   const [importing, setImporting] = useState(false);
-  const [switching, setSwitching] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; tone?: 'error' } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ ids: string[]; message: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [tagDeleteConfirm, setTagDeleteConfirm] = useState<{ tag: string; count: number } | null>(null);
   const [deletingTag, setDeletingTag] = useState(false);
+  const [isFlowNoticeCollapsed, setIsFlowNoticeCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(GHCP_FLOW_NOTICE_COLLAPSED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
 
   const showAddModalRef = useRef(showAddModal);
   const addTabRef = useRef(addTab);
@@ -96,11 +103,10 @@ export function CodexAccountsPage() {
   const oauthActiveRef = useRef(false);
   const oauthLoginIdRef = useRef<string | null>(null);
   const oauthCompletingRef = useRef(false);
-  const oauthEventSeqRef = useRef(0);
-  const oauthAttemptSeqRef = useRef(0);
   const tagFilterRef = useRef<HTMLDivElement | null>(null);
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const oauthLog = useCallback((...args: unknown[]) => {
-    console.info('[CodexOAuth]', ...args);
+    console.info('[GitHubCopilotOAuth]', ...args);
   }, []);
 
   useEffect(() => {
@@ -123,22 +129,23 @@ export function CodexAccountsPage() {
 
   useEffect(() => {
     fetchAccounts();
-    fetchCurrentAccount();
-  }, [fetchAccounts, fetchCurrentAccount]);
+  }, [fetchAccounts]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(GHCP_FLOW_NOTICE_COLLAPSED_KEY, isFlowNoticeCollapsed ? '1' : '0');
+    } catch {
+      // ignore persistence failures
+    }
+  }, [isFlowNoticeCollapsed]);
 
   const handleOauthPrepareError = useCallback((e: unknown) => {
-    console.error('[CodexOAuth] 准备授权链接失败', { error: String(e) });
+    const msg = String(e).replace(/^Error:\s*/, '');
+    console.error('[GitHubCopilotOAuth] 准备授权信息失败', { error: msg });
     oauthActiveRef.current = false;
-    setOauthTimeoutInfo(null);
-    const match = String(e).match(/CODEX_OAUTH_PORT_IN_USE:(\d+)/);
-    if (match) {
-      const port = Number(match[1]);
-      setOauthPortInUse(Number.isNaN(port) ? null : port);
-      setOauthPrepareError(t('codex.oauth.portInUse', { port: match[1] }));
-      return;
-    }
-    setOauthPrepareError(t('codex.oauth.failed', '授权失败') + ': ' + String(e));
-    console.error('准备 Codex OAuth 链接失败:', e);
+    oauthCompletingRef.current = false;
+    setOauthPolling(false);
+    setOauthPrepareError(t('githubCopilot.oauth.failed', '授权失败') + ': ' + msg);
   }, [t]);
 
   const completeOauthSuccess = useCallback(async () => {
@@ -146,233 +153,111 @@ export function CodexAccountsPage() {
       loginId: oauthLoginIdRef.current,
     });
     await fetchAccounts();
-    await fetchCurrentAccount();
     setAddStatus('success');
-    setAddMessage(t('codex.oauth.success', '授权成功'));
+    setAddMessage(t('githubCopilot.oauth.success', '授权成功'));
     setTimeout(() => {
       setShowAddModal(false);
       resetAddModalState();
     }, 1200);
-  }, [fetchAccounts, fetchCurrentAccount, t]);
+  }, [fetchAccounts, t, oauthLog]);
 
-  const completeOauthError = useCallback((e: unknown) => {
-    console.error('[CodexOAuth] 授权完成失败', {
-      loginId: oauthLoginIdRef.current,
-      error: String(e),
-    });
-    setAddStatus('error');
-    setAddMessage(t('codex.oauth.failed', '授权失败') + ': ' + String(e));
-  }, [t]);
-
-  const getCallbackUrlFromAuthUrl = useCallback((authUrl: string): string | null => {
-    try {
-      return new URL(authUrl).searchParams.get('redirect_uri');
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const isOauthTimeoutState = useMemo(() => !!oauthTimeoutInfo, [oauthTimeoutInfo]);
-
-  useEffect(() => {
-    let unlistenExtension: UnlistenFn | undefined;
-    let unlistenTimeout: UnlistenFn | undefined;
-    let disposed = false;
-    oauthLog('OAuth 事件监听 effect 挂载');
-
-    listen<{ loginId?: string }>('codex-oauth-login-completed', async (event) => {
-      const eventSeq = ++oauthEventSeqRef.current;
-      oauthLog('收到 OAuth 回调事件', {
-        eventSeq,
-        payload: event.payload,
-        showAddModal: showAddModalRef.current,
-        addTab: addTabRef.current,
-        addStatus: addStatusRef.current,
-        completing: oauthCompletingRef.current,
-        expectedLoginId: oauthLoginIdRef.current,
-      });
-      if (!showAddModalRef.current) {
-        oauthLog('OAuth 回调事件被忽略：弹框已关闭', { eventSeq });
-        return;
-      }
-      if (addTabRef.current !== 'oauth') {
-        oauthLog('OAuth 回调事件被忽略：当前不在 OAuth Tab', { eventSeq, addTab: addTabRef.current });
-        return;
-      }
-      if (addStatusRef.current === 'loading') {
-        oauthLog('OAuth 回调事件被忽略：UI 已是 loading', { eventSeq });
-        return;
-      }
-      if (oauthCompletingRef.current) {
-        oauthLog('OAuth 回调事件被忽略：complete 正在进行中', { eventSeq });
-        return;
-      }
-
-      const loginId = event.payload?.loginId;
-      if (!loginId) {
-        oauthLog('OAuth 回调事件被忽略：payload 没有 loginId', { eventSeq });
-        return;
-      }
-      if (oauthLoginIdRef.current && oauthLoginIdRef.current !== loginId) {
-        console.warn('[CodexOAuth] 收到非当前登录会话的完成事件，已忽略', {
-          eventSeq,
-          expectedLoginId: oauthLoginIdRef.current,
-          receivedLoginId: loginId,
-          payload: event.payload,
-        });
-        return;
-      }
-      const attemptId = ++oauthAttemptSeqRef.current;
-      const startedAt = Date.now();
-      oauthLog('收到 OAuth 回调事件，开始完成登录', {
-        eventSeq,
-        attemptId,
-        loginId,
-        payload: event.payload,
-      });
-
-      setAddStatus('loading');
-      setAddMessage(t('codex.oauth.exchanging', '正在交换令牌...'));
-      oauthCompletingRef.current = true;
-
-      try {
-        const account = await codexService.completeCodexOAuthLogin(loginId);
-        oauthLog('completeCodexOAuthLogin 成功', {
-          eventSeq,
-          attemptId,
-          durationMs: Date.now() - startedAt,
-          account,
-        });
-        await completeOauthSuccess();
-      } catch (e) {
-        oauthLog('completeCodexOAuthLogin 失败', {
-          eventSeq,
-          attemptId,
-          durationMs: Date.now() - startedAt,
-          error: String(e),
-        });
-        completeOauthError(e);
-      } finally {
-        oauthCompletingRef.current = false;
-        oauthLog('OAuth complete 收尾', { eventSeq, attemptId });
-      }
-    }).then((fn) => {
-      if (disposed) {
-        fn();
-      } else {
-        unlistenExtension = fn;
-        oauthLog('已注册监听: codex-oauth-login-completed');
-      }
-    });
-
-    listen<{ loginId?: string; callbackUrl?: string; timeoutSeconds?: number }>('codex-oauth-login-timeout', async (event) => {
-      if (!showAddModalRef.current) {
-        oauthLog('收到超时事件，但弹框已关闭，忽略', event.payload);
-        return;
-      }
-      if (addTabRef.current !== 'oauth') return;
-
-      const payload = event.payload ?? {};
-      const loginId = payload.loginId;
-      if (oauthLoginIdRef.current && loginId && oauthLoginIdRef.current !== loginId) {
-        console.warn('[CodexOAuth] 收到非当前登录会话的超时事件，已忽略', {
-          expectedLoginId: oauthLoginIdRef.current,
-          receivedLoginId: loginId,
-          payload,
-        });
-        return;
-      }
-
-      oauthActiveRef.current = false;
-      setOauthUrlCopied(false);
-      setOauthPortInUse(null);
-      setOauthTimeoutInfo(payload);
-      // 超时场景保持 oauthUrl 区域可见，通过主按钮切换为“刷新授权链接”来重试
-      setOauthPrepareError(null);
-      setAddStatus('idle');
-      setAddMessage('');
-      oauthLog('收到授权超时事件，已展示重试入口', payload);
-    }).then((fn) => {
-      if (disposed) {
-        fn();
-      } else {
-        unlistenTimeout = fn;
-        oauthLog('已注册监听: codex-oauth-login-timeout');
-      }
-    });
-
-    return () => {
-      disposed = true;
-      oauthLog('OAuth 事件监听 effect 卸载，准备取消监听');
-      if (unlistenExtension) unlistenExtension();
-      if (unlistenTimeout) unlistenTimeout();
-    };
-  }, [completeOauthError, completeOauthSuccess, t, oauthLog]);
+  const handleOauthCompleteError = useCallback((e: unknown) => {
+    const msg = String(e).replace(/^Error:\s*/, '');
+    setOauthCompleteError(msg);
+    setOauthTimedOut(/超时|过期|expired|timeout/i.test(msg));
+    setOauthPolling(false);
+    oauthCompletingRef.current = false;
+    oauthActiveRef.current = false;
+    oauthLog('Device Flow 授权失败', { loginId: oauthLoginIdRef.current, error: msg });
+  }, [oauthLog]);
 
   const prepareOauthUrl = useCallback(() => {
     if (!showAddModalRef.current || addTabRef.current !== 'oauth') return;
     if (oauthActiveRef.current) return;
+    if (oauthCompletingRef.current) return;
     oauthActiveRef.current = true;
     setOauthPrepareError(null);
-    setOauthPortInUse(null);
-    setOauthTimeoutInfo(null);
-    oauthLog('开始准备授权链接');
+    setOauthCompleteError(null);
+    setOauthTimedOut(false);
+    setOauthPolling(false);
+    setOauthUrlCopied(false);
+    setOauthUserCodeCopied(false);
+    setOauthMeta(null);
+    setOauthUserCode(null);
+    oauthLog('开始准备 GitHub Device Flow 授权信息');
 
-    const openPreparedUrl = (url: string) => {
-      if (typeof url === 'string' && url.length > 0 && showAddModalRef.current && addTabRef.current === 'oauth') {
+    let started = false;
+
+    githubCopilotService
+      .startGitHubCopilotOAuthLogin()
+      .then((resp) => {
+        started = true;
+        oauthLoginIdRef.current = resp.loginId ?? null;
+
+        const url = resp.verificationUriComplete || resp.verificationUri;
         setOauthUrl(url);
-        oauthLog('授权链接已就绪并展示在弹框', {
-          loginId: oauthLoginIdRef.current,
-          authUrl: url,
-          callbackUrl: getCallbackUrlFromAuthUrl(url),
-        });
-        return true;
-      }
-      console.warn('[CodexOAuth] 授权链接返回后界面状态已变化，放弃展示');
-      oauthActiveRef.current = false;
-      return false;
-    };
+        setOauthUserCode(resp.userCode);
+        setOauthMeta({ expiresIn: resp.expiresIn, intervalSeconds: resp.intervalSeconds });
 
-    codexService.startCodexOAuthLogin()
-      .then(({ loginId, authUrl }) => {
-        oauthLoginIdRef.current = loginId ?? null;
-        oauthLog('OAuth start 成功', {
-          loginId: oauthLoginIdRef.current,
-          authUrl,
-          callbackUrl: getCallbackUrlFromAuthUrl(authUrl),
+        oauthLog('授权信息已就绪并展示在弹框', {
+          loginId: resp.loginId,
+          url,
+          expiresIn: resp.expiresIn,
+          intervalSeconds: resp.intervalSeconds,
         });
-        const opened = openPreparedUrl(authUrl);
-        if (!opened) {
-          oauthLoginIdRef.current = null;
-        }
+
+        // 后台开始轮询 GitHub 授权结果
+        setOauthPolling(true);
+        oauthCompletingRef.current = true;
+        oauthActiveRef.current = false;
+        return githubCopilotService.completeGitHubCopilotOAuthLogin(resp.loginId);
+      })
+      .then(async () => {
+        setOauthPolling(false);
+        oauthCompletingRef.current = false;
+        await completeOauthSuccess();
       })
       .catch((e) => {
-        handleOauthPrepareError(e);
+        if (!started) {
+          handleOauthPrepareError(e);
+          return;
+        }
+        handleOauthCompleteError(e);
+      })
+      .finally(() => {
+        oauthActiveRef.current = false;
       });
-  }, [getCallbackUrlFromAuthUrl, handleOauthPrepareError]);
+  }, [completeOauthSuccess, handleOauthCompleteError, handleOauthPrepareError, oauthLog]);
 
   useEffect(() => {
-    if (!showAddModal || addTab !== 'oauth' || oauthUrl || oauthTimeoutInfo) return;
+    if (!showAddModal || addTab !== 'oauth' || oauthUrl) return;
     prepareOauthUrl();
-  }, [showAddModal, addTab, oauthUrl, oauthTimeoutInfo, prepareOauthUrl]);
+  }, [showAddModal, addTab, oauthUrl, prepareOauthUrl]);
 
   useEffect(() => {
     if (showAddModal && addTab === 'oauth') return;
-    if (!oauthActiveRef.current) return;
     const loginId = oauthLoginIdRef.current ?? undefined;
+    if (!loginId) return;
     oauthLog('弹框关闭或切换标签，准备取消授权流程', { loginId });
-    codexService.cancelCodexOAuthLogin(loginId).catch(() => {});
+    githubCopilotService.cancelGitHubCopilotOAuthLogin(loginId).catch(() => {});
     oauthActiveRef.current = false;
     oauthLoginIdRef.current = null;
-    setOauthUrl('');
+    oauthCompletingRef.current = false;
+    setOauthUrl(null);
     setOauthUrlCopied(false);
-    setOauthTimeoutInfo(null);
-  }, [showAddModal, addTab]);
+    setOauthUserCode(null);
+    setOauthUserCodeCopied(false);
+    setOauthMeta(null);
+    setOauthPrepareError(null);
+    setOauthCompleteError(null);
+    setOauthTimedOut(false);
+    setOauthPolling(false);
+  }, [showAddModal, addTab, oauthLog]);
 
   const handleRefresh = async (accountId: string) => {
     setRefreshing(accountId);
     try {
-      await refreshQuota(accountId);
+      await refreshToken(accountId);
     } catch (e) {
       console.error(e);
     }
@@ -382,7 +267,7 @@ export function CodexAccountsPage() {
   const handleRefreshAll = async () => {
     setRefreshingAll(true);
     try {
-      await refreshAllQuotas();
+      await refreshAllTokens();
     } catch (e) {
       console.error(e);
     }
@@ -424,13 +309,16 @@ export function CodexAccountsPage() {
     setAddStatus('idle');
     setAddMessage('');
     setTokenInput('');
-    setOauthUrl('');
+    setOauthUrl(null);
     setOauthUrlCopied(false);
+    setOauthUserCode(null);
+    setOauthUserCodeCopied(false);
+    setOauthMeta(null);
     setOauthPrepareError(null);
-    setOauthPortInUse(null);
-    setOauthTimeoutInfo(null);
-    oauthLoginIdRef.current = null;
-    oauthCompletingRef.current = false;
+    setOauthCompleteError(null);
+    setOauthTimedOut(false);
+    setOauthPolling(false);
+    oauthActiveRef.current = false;
   };
 
   const openAddModal = (tab: 'oauth' | 'token' | 'import') => {
@@ -444,35 +332,27 @@ export function CodexAccountsPage() {
     resetAddModalState();
   };
 
-  const handleSwitch = async (accountId: string) => {
-    setMessage(null);
-    setSwitching(accountId);
-    try {
-      const account = await switchAccount(accountId);
-      setMessage({ text: t('codex.switched', { email: account.email }) });
-    } catch (e) {
-      setMessage({ text: t('codex.switchFailed', { error: String(e) }), tone: 'error' });
-    }
-    setSwitching(null);
+  const handlePickImportFile = () => {
+    importFileInputRef.current?.click();
   };
 
-  const handleImportFromLocal = async () => {
+  const handleImportJsonFile = async (file: File) => {
     setImporting(true);
     setAddStatus('loading');
-    setAddMessage(t('codex.import.importing', '正在导入本地账号...'));
+    setAddMessage(t('githubCopilot.import.importing', '正在导入...'));
+
     try {
-      const account = await codexService.importCodexFromLocal();
+      const content = await file.text();
+      const imported = await githubCopilotService.importGitHubCopilotFromJson(content);
       await fetchAccounts();
-      
-      try {
-        await refreshQuota(account.id);
-        await fetchAccounts();
-      } catch (quotaErr) {
-        console.warn('配额刷新失败（可稍后重试）:', quotaErr);
-      }
-      
+
       setAddStatus('success');
-      setAddMessage(t('codex.import.successMsg', '导入成功: {{email}}').replace('{{email}}', account.email));
+      setAddMessage(
+        t('githubCopilot.token.importSuccessMsg', {
+          count: imported.length,
+          defaultValue: '成功导入 {{count}} 个账号',
+        })
+      );
       setTimeout(() => {
         setShowAddModal(false);
         resetAddModalState();
@@ -480,8 +360,14 @@ export function CodexAccountsPage() {
     } catch (e) {
       setAddStatus('error');
       const errorMsg = String(e).replace(/^Error:\s*/, '');
-      setAddMessage(t('codex.import.failedMsg', '导入失败: {{error}}').replace('{{error}}', errorMsg));
+      setAddMessage(
+        t('githubCopilot.import.failedMsg', {
+          error: errorMsg,
+          defaultValue: '导入失败: {{error}}',
+        })
+      );
     }
+
     setImporting(false);
   };
 
@@ -489,23 +375,31 @@ export function CodexAccountsPage() {
     const trimmed = tokenInput.trim();
     if (!trimmed) {
       setAddStatus('error');
-      setAddMessage(t('codex.token.empty', '请输入 Token 或 JSON'));
+      setAddMessage(t('githubCopilot.token.empty', '请输入 Token 或 JSON'));
       return;
     }
 
     setImporting(true);
     setAddStatus('loading');
-    setAddMessage(t('codex.token.importing', '正在导入...'));
+    setAddMessage(t('githubCopilot.token.importing', '正在导入...'));
 
     try {
-      const accounts = await codexService.importCodexFromJson(trimmed);
-      await fetchAccounts();
-      for (const acc of accounts) {
-        await refreshQuota(acc.id).catch(() => {});
+      let importedCount = 0;
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        const accounts = await githubCopilotService.importGitHubCopilotFromJson(trimmed);
+        importedCount = accounts.length;
+      } else {
+        await githubCopilotService.addGitHubCopilotAccountWithToken(trimmed);
+        importedCount = 1;
       }
       await fetchAccounts();
       setAddStatus('success');
-      setAddMessage(t('codex.token.importSuccessMsg', '成功导入 {{count}} 个账号').replace('{{count}}', String(accounts.length)));
+      setAddMessage(
+        t('githubCopilot.token.importSuccessMsg', {
+          count: importedCount,
+          defaultValue: '成功导入 {{count}} 个账号',
+        })
+      );
       setTimeout(() => {
         setShowAddModal(false);
         resetAddModalState();
@@ -513,7 +407,12 @@ export function CodexAccountsPage() {
     } catch (e) {
       setAddStatus('error');
       const errorMsg = String(e).replace(/^Error:\s*/, '');
-      setAddMessage(t('codex.token.importFailedMsg', '导入失败: {{error}}').replace('{{error}}', errorMsg));
+      setAddMessage(
+        t('githubCopilot.token.importFailedMsg', {
+          error: errorMsg,
+          defaultValue: '导入失败: {{error}}',
+        })
+      );
     }
     setImporting(false);
   };
@@ -533,43 +432,36 @@ export function CodexAccountsPage() {
     }
   };
 
-  const handleReleaseOauthPort = async () => {
-    const port = oauthPortInUse;
-    if (!port) return;
-    const confirmed = await confirmDialog(
-      t('codex.oauth.portInUseConfirm', { port }),
-      {
-        title: t('codex.oauth.portInUseTitle'),
-        kind: 'warning',
-        okLabel: t('common.confirm'),
-        cancelLabel: t('common.cancel'),
-      }
-    );
-    if (!confirmed) return;
-
-    setOauthPrepareError(null);
+  const handleCopyOauthUserCode = async () => {
+    if (!oauthUserCode) return;
     try {
-      await codexService.closeCodexOAuthPort();
+      await navigator.clipboard.writeText(oauthUserCode);
+      oauthLog('已复制 user_code', { loginId: oauthLoginIdRef.current });
+      setOauthUserCodeCopied(true);
+      window.setTimeout(() => setOauthUserCodeCopied(false), 1200);
     } catch (e) {
-      setOauthPrepareError(t('codex.oauth.portCloseFailed', { error: String(e) }));
-      setOauthPortInUse(port);
-      return;
+      console.error('复制失败:', e);
     }
-
-    prepareOauthUrl();
   };
 
-  const handleRetryOauthAfterTimeout = () => {
-    oauthLog('用户点击刷新授权链接', {
-      lastTimeout: oauthTimeoutInfo,
+  const handleRetryOauth = () => {
+    oauthLog('用户点击刷新授权信息', {
+      loginId: oauthLoginIdRef.current,
+      error: oauthCompleteError,
+      timedOut: oauthTimedOut,
     });
     oauthActiveRef.current = false;
     oauthLoginIdRef.current = null;
-    setOauthTimeoutInfo(null);
+    oauthCompletingRef.current = false;
     setOauthPrepareError(null);
-    setOauthPortInUse(null);
-    setOauthUrl('');
+    setOauthCompleteError(null);
+    setOauthTimedOut(false);
+    setOauthPolling(false);
+    setOauthMeta(null);
+    setOauthUrl(null);
     setOauthUrlCopied(false);
+    setOauthUserCode(null);
+    setOauthUserCodeCopied(false);
     prepareOauthUrl();
   };
 
@@ -578,7 +470,6 @@ export function CodexAccountsPage() {
     oauthLog('用户点击在浏览器打开授权链接', {
       loginId: oauthLoginIdRef.current,
       authUrl: oauthUrl,
-      callbackUrl: getCallbackUrlFromAuthUrl(oauthUrl),
     });
     try {
       await openUrl(oauthUrl);
@@ -619,8 +510,8 @@ export function CodexAccountsPage() {
     setExporting(true);
     try {
       const ids = selected.size > 0 ? Array.from(selected) : accounts.map((a) => a.id);
-      const json = await codexService.exportCodexAccounts(ids);
-      const defaultName = `codex_accounts_${new Date().toISOString().slice(0, 10)}.json`;
+      const json = await githubCopilotService.exportGitHubCopilotAccounts(ids);
+      const defaultName = `github_copilot_accounts_${new Date().toISOString().slice(0, 10)}.json`;
       const savedPath = await saveJsonFile(json, defaultName);
       if (savedPath) {
         setMessage({ text: `${t('common.success')}: ${savedPath}` });
@@ -653,7 +544,7 @@ export function CodexAccountsPage() {
     setSelected(allSelected ? new Set() : new Set(allIds));
   };
 
-  const normalizePlan = (planType?: string) => getCodexPlanDisplayName(planType);
+  const normalizePlan = (planType?: string) => getGitHubCopilotPlanDisplayName(planType);
 
   const normalizeTag = (tag: string) => tag.trim().toLowerCase();
 
@@ -672,9 +563,9 @@ export function CodexAccountsPage() {
     const counts = {
       all: accounts.length,
       FREE: 0,
-      PLUS: 0,
+      INDIVIDUAL: 0,
       PRO: 0,
-      TEAM: 0,
+      BUSINESS: 0,
       ENTERPRISE: 0,
     };
     accounts.forEach((account) => {
@@ -691,7 +582,10 @@ export function CodexAccountsPage() {
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter((account) => account.email.toLowerCase().includes(query));
+      result = result.filter((account) => {
+        const email = account.email ?? account.github_email ?? account.github_login;
+        return email.toLowerCase().includes(query);
+      });
     }
 
     if (filterType !== 'all') {
@@ -801,7 +695,7 @@ export function CodexAccountsPage() {
           const nextTags = (account.tags || []).filter(
             (item) => normalizeTag(item) !== target
           );
-          return codexService.updateCodexAccountTags(account.id, nextTags);
+          return githubCopilotService.updateGitHubCopilotAccountTags(account.id, nextTags);
         })
       );
       setTagFilter((prev) => prev.filter((item) => normalizeTag(item) !== target));
@@ -828,15 +722,15 @@ export function CodexAccountsPage() {
 
   const renderGridCards = (items: typeof filteredAccounts, groupKey?: string) =>
     items.map((account) => {
-      const isCurrent = currentAccount?.id === account.id;
-      const planKey = getCodexPlanDisplayName(account.plan_type);
-      const planLabel = t(`codex.plan.${planKey.toLowerCase()}`, planKey);
+      const displayEmail = account.email ?? account.github_email ?? account.github_login;
+      const planKey = getGitHubCopilotPlanDisplayName(account.plan_type);
+      const planLabel = t(`githubCopilot.plan.${planKey.toLowerCase()}`, planKey);
       const isSelected = selected.has(account.id);
 
       return (
         <div
           key={groupKey ? `${groupKey}-${account.id}` : account.id}
-          className={`codex-account-card ${isCurrent ? 'current' : ''} ${isSelected ? 'selected' : ''}`}
+          className={`ghcp-account-card ${isSelected ? 'selected' : ''}`}
         >
           <div className="card-top">
             <div className="card-select">
@@ -846,31 +740,30 @@ export function CodexAccountsPage() {
                 onChange={() => toggleSelect(account.id)}
               />
             </div>
-            <span className="account-email" title={account.email}>
-              {account.email}
+            <span className="account-email" title={displayEmail}>
+              {displayEmail}
             </span>
-            {isCurrent && <span className="current-tag">{t('codex.current', '当前')}</span>}
             <span className={`tier-badge ${planKey.toLowerCase()}`}>{planLabel}</span>
           </div>
 
-          <div className="codex-quota-section">
+          <div className="ghcp-quota-section">
             <div className="quota-item">
               <div className="quota-header">
                 <Clock size={14} />
-                <span className="quota-label">{t('codex.quota.hourly', '5小时配额')}</span>
-                <span className={`quota-pct ${getCodexQuotaClass(account.quota?.hourly_percentage ?? 100)}`}>
+                <span className="quota-label">{t('githubCopilot.quota.hourly', 'Inline Suggestions')}</span>
+                <span className={`quota-pct ${getGitHubCopilotQuotaClass(account.quota?.hourly_percentage ?? 100)}`}>
                   {account.quota?.hourly_percentage ?? 100}%
                 </span>
               </div>
               <div className="quota-bar-track">
                 <div
-                  className={`quota-bar ${getCodexQuotaClass(account.quota?.hourly_percentage ?? 100)}`}
+                  className={`quota-bar ${getGitHubCopilotQuotaClass(account.quota?.hourly_percentage ?? 100)}`}
                   style={{ width: `${account.quota?.hourly_percentage ?? 100}%` }}
                 />
               </div>
               {account.quota?.hourly_reset_time && (
                 <span className="quota-reset">
-                  {formatCodexResetTime(account.quota.hourly_reset_time, t)}
+                  {formatGitHubCopilotResetTime(account.quota.hourly_reset_time, t)}
                 </span>
               )}
             </div>
@@ -878,26 +771,26 @@ export function CodexAccountsPage() {
             <div className="quota-item">
               <div className="quota-header">
                 <Calendar size={14} />
-                <span className="quota-label">{t('codex.quota.weekly', '周配额')}</span>
-                <span className={`quota-pct ${getCodexQuotaClass(account.quota?.weekly_percentage ?? 100)}`}>
+                <span className="quota-label">{t('githubCopilot.quota.weekly', 'Chat messages')}</span>
+                <span className={`quota-pct ${getGitHubCopilotQuotaClass(account.quota?.weekly_percentage ?? 100)}`}>
                   {account.quota?.weekly_percentage ?? 100}%
                 </span>
               </div>
               <div className="quota-bar-track">
                 <div
-                  className={`quota-bar ${getCodexQuotaClass(account.quota?.weekly_percentage ?? 100)}`}
+                  className={`quota-bar ${getGitHubCopilotQuotaClass(account.quota?.weekly_percentage ?? 100)}`}
                   style={{ width: `${account.quota?.weekly_percentage ?? 100}%` }}
                 />
               </div>
               {account.quota?.weekly_reset_time && (
                 <span className="quota-reset">
-                  {formatCodexResetTime(account.quota.weekly_reset_time, t)}
+                  {formatGitHubCopilotResetTime(account.quota.weekly_reset_time, t)}
                 </span>
               )}
             </div>
 
             {!account.quota && (
-              <div className="quota-empty">{t('codex.quota.noData', '暂无配额数据')}</div>
+              <div className="quota-empty">{t('githubCopilot.quota.noData', '暂无配额数据')}</div>
             )}
           </div>
 
@@ -912,22 +805,10 @@ export function CodexAccountsPage() {
                 <Tag size={14} />
               </button>
               <button
-                className={`card-action-btn ${!isCurrent ? 'success' : ''}`}
-                onClick={() => handleSwitch(account.id)}
-                disabled={!!switching}
-                title={t('codex.switch', '切换')}
-              >
-                {switching === account.id ? (
-                  <RefreshCw size={14} className="loading-spinner" />
-                ) : (
-                  <Play size={14} />
-                )}
-              </button>
-              <button
                 className="card-action-btn"
                 onClick={() => handleRefresh(account.id)}
                 disabled={refreshing === account.id}
-                title={t('codex.refreshQuota', '刷新配额')}
+                title={t('githubCopilot.refreshQuota', '刷新配额')}
               >
                 <RotateCw
                   size={14}
@@ -949,11 +830,11 @@ export function CodexAccountsPage() {
 
   const renderTableRows = (items: typeof filteredAccounts, groupKey?: string) =>
     items.map((account) => {
-      const isCurrent = currentAccount?.id === account.id;
-      const planKey = getCodexPlanDisplayName(account.plan_type);
-      const planLabel = t(`codex.plan.${planKey.toLowerCase()}`, planKey);
+      const displayEmail = account.email ?? account.github_email ?? account.github_login;
+      const planKey = getGitHubCopilotPlanDisplayName(account.plan_type);
+      const planLabel = t(`githubCopilot.plan.${planKey.toLowerCase()}`, planKey);
       return (
-        <tr key={groupKey ? `${groupKey}-${account.id}` : account.id} className={isCurrent ? 'current' : ''}>
+        <tr key={groupKey ? `${groupKey}-${account.id}` : account.id}>
           <td>
             <input
               type="checkbox"
@@ -964,8 +845,7 @@ export function CodexAccountsPage() {
           <td>
             <div className="account-cell">
               <div className="account-main-line">
-                <span className="account-email-text" title={account.email}>{account.email}</span>
-                {isCurrent && <span className="mini-tag current">{t('codex.current', '当前')}</span>}
+                <span className="account-email-text" title={displayEmail}>{displayEmail}</span>
               </div>
             </div>
           </td>
@@ -975,21 +855,21 @@ export function CodexAccountsPage() {
           <td>
             <div className="quota-item">
               <div className="quota-header">
-                <span className="quota-name">{t('codex.quota.hourly', '5小时配额')}</span>
-                <span className={`quota-value ${getCodexQuotaClass(account.quota?.hourly_percentage ?? 100)}`}>
+                <span className="quota-name">{t('githubCopilot.quota.hourly', 'Inline Suggestions')}</span>
+                <span className={`quota-value ${getGitHubCopilotQuotaClass(account.quota?.hourly_percentage ?? 100)}`}>
                   {account.quota?.hourly_percentage ?? 100}%
                 </span>
               </div>
               <div className="quota-progress-track">
                 <div
-                  className={`quota-progress-bar ${getCodexQuotaClass(account.quota?.hourly_percentage ?? 100)}`}
+                  className={`quota-progress-bar ${getGitHubCopilotQuotaClass(account.quota?.hourly_percentage ?? 100)}`}
                   style={{ width: `${account.quota?.hourly_percentage ?? 100}%` }}
                 />
               </div>
               {account.quota?.hourly_reset_time && (
                 <div className="quota-footer">
                   <span className="quota-reset">
-                    {formatCodexResetTime(account.quota.hourly_reset_time, t)}
+                    {formatGitHubCopilotResetTime(account.quota.hourly_reset_time, t)}
                   </span>
                 </div>
               )}
@@ -998,21 +878,21 @@ export function CodexAccountsPage() {
           <td>
             <div className="quota-item">
               <div className="quota-header">
-                <span className="quota-name">{t('codex.quota.weekly', '周配额')}</span>
-                <span className={`quota-value ${getCodexQuotaClass(account.quota?.weekly_percentage ?? 100)}`}>
+                <span className="quota-name">{t('githubCopilot.quota.weekly', 'Chat messages')}</span>
+                <span className={`quota-value ${getGitHubCopilotQuotaClass(account.quota?.weekly_percentage ?? 100)}`}>
                   {account.quota?.weekly_percentage ?? 100}%
                 </span>
               </div>
               <div className="quota-progress-track">
                 <div
-                  className={`quota-progress-bar ${getCodexQuotaClass(account.quota?.weekly_percentage ?? 100)}`}
+                  className={`quota-progress-bar ${getGitHubCopilotQuotaClass(account.quota?.weekly_percentage ?? 100)}`}
                   style={{ width: `${account.quota?.weekly_percentage ?? 100}%` }}
                 />
               </div>
               {account.quota?.weekly_reset_time && (
                 <div className="quota-footer">
                   <span className="quota-reset">
-                    {formatCodexResetTime(account.quota.weekly_reset_time, t)}
+                    {formatGitHubCopilotResetTime(account.quota.weekly_reset_time, t)}
                   </span>
                 </div>
               )}
@@ -1028,18 +908,10 @@ export function CodexAccountsPage() {
                 <Tag size={14} />
               </button>
               <button
-                className={`action-btn ${!isCurrent ? 'success' : ''}`}
-                onClick={() => handleSwitch(account.id)}
-                disabled={!!switching}
-                title={t('codex.switch', '切换')}
-              >
-                {switching === account.id ? <RefreshCw size={14} className="loading-spinner" /> : <Play size={14} />}
-              </button>
-              <button
                 className="action-btn"
                 onClick={() => handleRefresh(account.id)}
                 disabled={refreshing === account.id}
-                title={t('codex.refreshQuota', '刷新配额')}
+                title={t('githubCopilot.refreshQuota', '刷新配额')}
               >
                 <RotateCw size={14} className={refreshing === account.id ? 'loading-spinner' : ''} />
               </button>
@@ -1057,8 +929,52 @@ export function CodexAccountsPage() {
     });
 
   return (
-    <div className="codex-accounts-page">
-      <CodexOverviewTabsHeader active={activeTab} onTabChange={setActiveTab} />
+    <div className="ghcp-accounts-page">
+      <GitHubCopilotOverviewTabsHeader active={activeTab} onTabChange={setActiveTab} />
+      <div className={`ghcp-flow-notice ${isFlowNoticeCollapsed ? 'collapsed' : ''}`} role="note" aria-live="polite">
+        <button
+          type="button"
+          className="ghcp-flow-notice-toggle"
+          onClick={() => setIsFlowNoticeCollapsed((prev) => !prev)}
+          aria-expanded={!isFlowNoticeCollapsed}
+        >
+          <div className="ghcp-flow-notice-title">
+            <CircleAlert size={16} />
+            <span>{t('githubCopilot.flowNotice.title', 'GitHub Copilot 账号管理说明（点击展开/收起）')}</span>
+          </div>
+          <ChevronDown size={16} className={`ghcp-flow-notice-arrow ${isFlowNoticeCollapsed ? 'collapsed' : ''}`} />
+        </button>
+        {!isFlowNoticeCollapsed && (
+          <div className="ghcp-flow-notice-body">
+            <div className="ghcp-flow-notice-desc">
+              {t(
+                'githubCopilot.flowNotice.desc',
+                '当前流程：新增账号授权 → 查询并展示配额 → 在多开实例中绑定账号用于展示。',
+              )}
+            </div>
+            <ul className="ghcp-flow-notice-list">
+              <li>
+                {t(
+                  'githubCopilot.flowNotice.reason',
+                  '为什么不能一键切号：VS Code 的登录态由 GitHub 登录会话和扩展 SecretStorage 管理，外部应用无法替换登录凭证。',
+                )}
+              </li>
+              <li>
+                {t(
+                  'githubCopilot.flowNotice.storage',
+                  '登录相关数据位置：主要在 VS Code SecretStorage（系统钥匙串/凭据管理器）与全局状态数据库（例如 ~/Library/Application Support/Code/User/globalStorage/state.vscdb）。',
+                )}
+              </li>
+              <li>
+                {t(
+                  'githubCopilot.flowNotice.alternative',
+                  '可替代方案：使用多开实例（不同 --user-data-dir）做账号隔离；每个实例登录一次，后续按实例启动即可实现“快速切换到对应账号环境”。',
+                )}
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
 
       {activeTab === 'overview' && (
         <>
@@ -1078,7 +994,7 @@ export function CodexAccountsPage() {
             <Search size={16} className="search-icon" />
             <input
               type="text"
-              placeholder={t('codex.search', '搜索账号...')}
+              placeholder={t('githubCopilot.search', '搜索账号...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -1088,14 +1004,14 @@ export function CodexAccountsPage() {
             <button
               className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode('list')}
-              title={t('codex.view.list', '列表视图')}
+              title={t('githubCopilot.view.list', '列表视图')}
             >
               <List size={16} />
             </button>
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
               onClick={() => setViewMode('grid')}
-              title={t('codex.view.grid', '卡片视图')}
+              title={t('githubCopilot.view.grid', '卡片视图')}
             >
               <LayoutGrid size={16} />
             </button>
@@ -1105,14 +1021,35 @@ export function CodexAccountsPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as typeof filterType)}
-              aria-label={t('codex.filterLabel', '筛选')}
+              aria-label={t('githubCopilot.filterLabel', '筛选')}
             >
-              <option value="all">{t('codex.filter.all', { count: tierCounts.all })}</option>
-              <option value="FREE">{t('codex.filter.free', { count: tierCounts.FREE })}</option>
-              <option value="PLUS">{t('codex.filter.plus', { count: tierCounts.PLUS })}</option>
-              <option value="PRO">{t('codex.filter.pro', { count: tierCounts.PRO })}</option>
-              <option value="TEAM">{t('codex.filter.team', { count: tierCounts.TEAM })}</option>
-              <option value="ENTERPRISE">{t('codex.filter.enterprise', { count: tierCounts.ENTERPRISE })}</option>
+              <option value="all">
+                {t('githubCopilot.filter.all', { count: tierCounts.all, defaultValue: 'All ({{count}})' })}
+              </option>
+              <option value="FREE">
+                {t('githubCopilot.filter.free', { count: tierCounts.FREE, defaultValue: 'FREE ({{count}})' })}
+              </option>
+              <option value="INDIVIDUAL">
+                {t('githubCopilot.filter.individual', {
+                  count: tierCounts.INDIVIDUAL,
+                  defaultValue: 'INDIVIDUAL ({{count}})',
+                })}
+              </option>
+              <option value="PRO">
+                {t('githubCopilot.filter.pro', { count: tierCounts.PRO, defaultValue: 'PRO ({{count}})' })}
+              </option>
+              <option value="BUSINESS">
+                {t('githubCopilot.filter.business', {
+                  count: tierCounts.BUSINESS,
+                  defaultValue: 'BUSINESS ({{count}})',
+                })}
+              </option>
+              <option value="ENTERPRISE">
+                {t('githubCopilot.filter.enterprise', {
+                  count: tierCounts.ENTERPRISE,
+                  defaultValue: 'ENTERPRISE ({{count}})',
+                })}
+              </option>
             </select>
           </div>
 
@@ -1182,13 +1119,13 @@ export function CodexAccountsPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              aria-label={t('codex.sortLabel', '排序')}
+              aria-label={t('githubCopilot.sortLabel', '排序')}
             >
-              <option value="created_at">{t('codex.sort.createdAt', '按创建时间')}</option>
-              <option value="weekly">{t('codex.sort.weekly', '按周配额')}</option>
-              <option value="hourly">{t('codex.sort.hourly', '按5小时配额')}</option>
-              <option value="weekly_reset">{t('codex.sort.weeklyReset', '按周配额重置时间')}</option>
-              <option value="hourly_reset">{t('codex.sort.hourlyReset', '按5小时配额重置时间')}</option>
+              <option value="created_at">{t('githubCopilot.sort.createdAt', '按创建时间')}</option>
+              <option value="weekly">{t('githubCopilot.sort.weekly', '按 Chat messages 使用量')}</option>
+              <option value="hourly">{t('githubCopilot.sort.hourly', '按 Inline Suggestions 使用量')}</option>
+              <option value="weekly_reset">{t('githubCopilot.sort.weeklyReset', '按 Chat messages 重置时间')}</option>
+              <option value="hourly_reset">{t('githubCopilot.sort.hourlyReset', '按 Inline Suggestions 重置时间')}</option>
             </select>
           </div>
 
@@ -1197,10 +1134,10 @@ export function CodexAccountsPage() {
             onClick={() => setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
             title={
               sortDirection === 'desc'
-                ? t('codex.sort.descTooltip', '当前：降序，点击切换为升序')
-                : t('codex.sort.ascTooltip', '当前：升序，点击切换为降序')
+                ? t('githubCopilot.sort.descTooltip', '当前：降序，点击切换为升序')
+                : t('githubCopilot.sort.ascTooltip', '当前：升序，点击切换为降序')
             }
-            aria-label={t('codex.sort.toggleDirection', '切换排序方向')}
+            aria-label={t('githubCopilot.sort.toggleDirection', '切换排序方向')}
           >
             {sortDirection === 'desc' ? '⬇' : '⬆'}
           </button>
@@ -1209,8 +1146,8 @@ export function CodexAccountsPage() {
           <button
             className="btn btn-primary icon-only"
             onClick={() => openAddModal('oauth')}
-            title={t('codex.addAccount', '添加账号')}
-            aria-label={t('codex.addAccount', '添加账号')}
+            title={t('githubCopilot.addAccount', '添加账号')}
+            aria-label={t('githubCopilot.addAccount', '添加账号')}
           >
             <Plus size={14} />
           </button>
@@ -1218,8 +1155,8 @@ export function CodexAccountsPage() {
             className="btn btn-secondary icon-only"
             onClick={handleRefreshAll}
             disabled={refreshingAll || accounts.length === 0}
-            title={t('codex.refreshAll', '刷新全部')}
-            aria-label={t('codex.refreshAll', '刷新全部')}
+            title={t('githubCopilot.refreshAll', '刷新全部')}
+            aria-label={t('githubCopilot.refreshAll', '刷新全部')}
           >
             <RefreshCw size={14} className={refreshingAll ? 'loading-spinner' : ''} />
           </button>
@@ -1227,8 +1164,8 @@ export function CodexAccountsPage() {
             className="btn btn-secondary icon-only"
             onClick={() => openAddModal('token')}
             disabled={importing}
-            title={t('codex.import.label', '导入')}
-            aria-label={t('codex.import.label', '导入')}
+            title={t('githubCopilot.import.label', '导入')}
+            aria-label={t('githubCopilot.import.label', '导入')}
           >
             <Download size={14} />
           </button>
@@ -1236,8 +1173,8 @@ export function CodexAccountsPage() {
             className="btn btn-secondary export-btn icon-only"
             onClick={handleExport}
             disabled={exporting}
-            title={selected.size > 0 ? `${t('codex.export', '导出')} (${selected.size})` : t('codex.export', '导出')}
-            aria-label={selected.size > 0 ? `${t('codex.export', '导出')} (${selected.size})` : t('codex.export', '导出')}
+            title={selected.size > 0 ? `${t('githubCopilot.export', '导出')} (${selected.size})` : t('githubCopilot.export', '导出')}
+            aria-label={selected.size > 0 ? `${t('githubCopilot.export', '导出')} (${selected.size})` : t('githubCopilot.export', '导出')}
           >
             <Upload size={14} />
           </button>
@@ -1262,17 +1199,17 @@ export function CodexAccountsPage() {
       ) : accounts.length === 0 ? (
         <div className="empty-state">
           <Globe size={48} />
-          <h3>{t('codex.empty.title', '暂无账号')}</h3>
-          <p>{t('codex.empty.description', '点击"添加账号"开始管理您的 Codex 账号')}</p>
+          <h3>{t('githubCopilot.empty.title', '暂无账号')}</h3>
+          <p>{t('githubCopilot.empty.description', '点击"添加账号"开始管理您的 GitHub Copilot 账号')}</p>
           <button className="btn btn-primary" onClick={() => openAddModal('oauth')}>
             <Plus size={16} />
-            {t('codex.addAccount', '添加账号')}
+            {t('githubCopilot.addAccount', '添加账号')}
           </button>
         </div>
       ) : filteredAccounts.length === 0 ? (
         <div className="empty-state">
-          <h3>{t('codex.noMatch.title', '没有匹配的账号')}</h3>
-          <p>{t('codex.noMatch.desc', '请尝试调整搜索或筛选条件')}</p>
+          <h3>{t('githubCopilot.noMatch.title', '没有匹配的账号')}</h3>
+          <p>{t('githubCopilot.noMatch.desc', '请尝试调整搜索或筛选条件')}</p>
         </div>
       ) : viewMode === 'grid' ? (
         groupByTag ? (
@@ -1283,14 +1220,14 @@ export function CodexAccountsPage() {
                   <span className="tag-group-title">{resolveGroupLabel(groupKey)}</span>
                   <span className="tag-group-count">{groupAccounts.length}</span>
                 </div>
-                <div className="tag-group-grid codex-accounts-grid">
+                <div className="tag-group-grid ghcp-accounts-grid">
                   {renderGridCards(groupAccounts, groupKey)}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="codex-accounts-grid">
+          <div className="ghcp-accounts-grid">
             {renderGridCards(filteredAccounts)}
           </div>
         )
@@ -1306,11 +1243,11 @@ export function CodexAccountsPage() {
                     onChange={toggleSelectAll}
                   />
                 </th>
-                <th style={{ width: 260 }}>{t('codex.columns.email', '账号')}</th>
-                <th style={{ width: 140 }}>{t('codex.columns.plan', '订阅')}</th>
-                <th>{t('codex.columns.hourly', '5小时配额')}</th>
-                <th>{t('codex.columns.weekly', '周配额')}</th>
-                <th className="sticky-action-header table-action-header">{t('codex.columns.actions', '操作')}</th>
+                <th style={{ width: 260 }}>{t('githubCopilot.columns.email', '账号')}</th>
+                <th style={{ width: 140 }}>{t('githubCopilot.columns.plan', '订阅')}</th>
+                <th>{t('githubCopilot.columns.hourly', 'Inline Suggestions')}</th>
+                <th>{t('githubCopilot.columns.weekly', 'Chat messages')}</th>
+                <th className="sticky-action-header table-action-header">{t('githubCopilot.columns.actions', '操作')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1342,11 +1279,11 @@ export function CodexAccountsPage() {
                     onChange={toggleSelectAll}
                   />
                 </th>
-                <th style={{ width: 260 }}>{t('codex.columns.email', '账号')}</th>
-                <th style={{ width: 140 }}>{t('codex.columns.plan', '订阅')}</th>
-                <th>{t('codex.columns.hourly', '5小时配额')}</th>
-                <th>{t('codex.columns.weekly', '周配额')}</th>
-                <th className="sticky-action-header table-action-header">{t('codex.columns.actions', '操作')}</th>
+                <th style={{ width: 260 }}>{t('githubCopilot.columns.email', '账号')}</th>
+                <th style={{ width: 140 }}>{t('githubCopilot.columns.plan', '订阅')}</th>
+                <th>{t('githubCopilot.columns.hourly', 'Inline Suggestions')}</th>
+                <th>{t('githubCopilot.columns.weekly', 'Chat messages')}</th>
+                <th className="sticky-action-header table-action-header">{t('githubCopilot.columns.actions', '操作')}</th>
               </tr>
             </thead>
             <tbody>
@@ -1358,9 +1295,9 @@ export function CodexAccountsPage() {
 
       {showAddModal && (
         <div className="modal-overlay" onClick={closeAddModal}>
-          <div className="modal-content codex-add-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content ghcp-add-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{t('codex.addModal.title', '添加 Codex 账号')}</h2>
+              <h2>{t('githubCopilot.addModal.title', '添加 GitHub Copilot 账号')}</h2>
               <button className="modal-close" onClick={closeAddModal} aria-label={t('common.close', '关闭')}>
                 <X />
               </button>
@@ -1372,21 +1309,21 @@ export function CodexAccountsPage() {
                 onClick={() => openAddModal('oauth')}
               >
                 <Globe size={14} />
-                OAuth
+                {t('githubCopilot.addModal.oauth', 'OAuth')}
               </button>
               <button
                 className={`modal-tab ${addTab === 'token' ? 'active' : ''}`}
                 onClick={() => openAddModal('token')}
               >
                 <KeyRound size={14} />
-                Token / JSON
+                {t('githubCopilot.addModal.token', 'Token / JSON')}
               </button>
               <button
                 className={`modal-tab ${addTab === 'import' ? 'active' : ''}`}
                 onClick={() => openAddModal('import')}
               >
                 <Database size={14} />
-                {t('accounts.tabs.import', '本地导入')}
+                {t('githubCopilot.addModal.import', '本地导入')}
               </button>
             </div>
 
@@ -1394,23 +1331,16 @@ export function CodexAccountsPage() {
               {addTab === 'oauth' && (
                 <div className="add-section">
                   <p className="section-desc">
-                    {t('codex.oauth.desc', '通过 OpenAI 官方 OAuth 授权登录您的 Codex 账号。')}
+                    {t('githubCopilot.oauth.desc', '点击下方按钮，在浏览器中完成 GitHub Copilot 授权登录。')}
                   </p>
 
                   {oauthPrepareError ? (
                     <div className="add-status error">
                       <CircleAlert size={16} />
                       <span>{oauthPrepareError}</span>
-                      {oauthPortInUse && (
-                        <button className="btn btn-sm btn-outline" onClick={handleReleaseOauthPort}>
-                          {t('codex.oauth.portInUseAction', 'Close port and retry')}
-                        </button>
-                      )}
-                      {!oauthPortInUse && oauthTimeoutInfo && (
-                        <button className="btn btn-sm btn-outline" onClick={handleRetryOauthAfterTimeout}>
-                          {t('codex.oauth.timeoutRetry', '刷新授权链接')}
-                        </button>
-                      )}
+                      <button className="btn btn-sm btn-outline" onClick={handleRetryOauth}>
+                        {t('githubCopilot.oauth.retry', '重新生成授权信息')}
+                      </button>
                     </div>
                   ) : oauthUrl ? (
                     <div className="oauth-url-section">
@@ -1420,29 +1350,54 @@ export function CodexAccountsPage() {
                           {oauthUrlCopied ? <Check size={16} /> : <Copy size={16} />}
                         </button>
                       </div>
+                      {!oauthUrl.includes('user_code=') && oauthUserCode && (
+                        <div className="oauth-url-box">
+                          <input type="text" value={oauthUserCode} readOnly />
+                          <button onClick={handleCopyOauthUserCode}>
+                            {oauthUserCodeCopied ? <Check size={16} /> : <Copy size={16} />}
+                          </button>
+                        </div>
+                      )}
+                      {oauthMeta && (
+                        <p className="oauth-hint">
+                          {t('githubCopilot.oauth.meta', '授权有效期：{{expires}}s；轮询间隔：{{interval}}s', {
+                            expires: oauthMeta.expiresIn,
+                            interval: oauthMeta.intervalSeconds,
+                          })}
+                        </p>
+                      )}
                       <button
                         className="btn btn-primary btn-full"
-                        onClick={isOauthTimeoutState ? handleRetryOauthAfterTimeout : handleOpenOauthUrl}
+                        onClick={handleOpenOauthUrl}
                       >
-                        {isOauthTimeoutState ? <RefreshCw size={16} /> : <Globe size={16} />}
-                        {isOauthTimeoutState
-                          ? t('codex.oauth.timeoutRetry', '刷新授权链接')
-                          : t('codex.oauth.openBrowser', 'Open in Browser')}
+                        <Globe size={16} />
+                        {t('githubCopilot.oauth.openBrowser', '在浏览器中打开')}
                       </button>
-                      {isOauthTimeoutState && (
+                      {oauthPolling && (
+                        <div className="add-status loading">
+                          <RefreshCw size={16} className="loading-spinner" />
+                          <span>{t('githubCopilot.oauth.waiting', '等待授权完成...')}</span>
+                        </div>
+                      )}
+                      {oauthCompleteError && (
                         <div className="add-status error">
                           <CircleAlert size={16} />
-                          <span>{t('codex.oauth.timeout', '授权超时，请点击“刷新授权链接”后重试。')}</span>
+                          <span>{oauthCompleteError}</span>
+                          {oauthTimedOut && (
+                            <button className="btn btn-sm btn-outline" onClick={handleRetryOauth}>
+                              {t('githubCopilot.oauth.timeoutRetry', '刷新授权链接')}
+                            </button>
+                          )}
                         </div>
                       )}
                       <p className="oauth-hint">
-                        {t('codex.oauth.hint', 'Once authorized, this window will update automatically')}
+                        {t('githubCopilot.oauth.hint', 'Once authorized, this window will update automatically')}
                       </p>
                     </div>
                   ) : (
                     <div className="oauth-loading">
                       <RefreshCw size={24} className="loading-spinner" />
-                      <span>{t('codex.oauth.preparing', '正在准备授权链接...')}</span>
+                      <span>{t('githubCopilot.oauth.preparing', '正在准备授权信息...')}</span>
                     </div>
                   )}
                 </div>
@@ -1451,13 +1406,13 @@ export function CodexAccountsPage() {
               {addTab === 'token' && (
                 <div className="add-section">
                   <p className="section-desc">
-                    {t('codex.token.desc', '粘贴您的 Codex Access Token 或导出的 JSON 数据。')}
+                    {t('githubCopilot.token.desc', '粘贴您的 GitHub Copilot Access Token 或导出的 JSON 数据。')}
                   </p>
                   <textarea
                     className="token-input"
                     value={tokenInput}
                     onChange={(e) => setTokenInput(e.target.value)}
-                    placeholder={t('codex.token.placeholder', '粘贴 Token 或 JSON...')}
+                    placeholder={t('githubCopilot.token.placeholder', '粘贴 Token 或 JSON...')}
                   />
                   <button
                     className="btn btn-primary btn-full"
@@ -1465,7 +1420,7 @@ export function CodexAccountsPage() {
                     disabled={importing || !tokenInput.trim()}
                   >
                     {importing ? <RefreshCw size={16} className="loading-spinner" /> : <Download size={16} />}
-                    {t('codex.token.import', 'Import')}
+                    {t('githubCopilot.token.import', 'Import')}
                   </button>
                 </div>
               )}
@@ -1473,11 +1428,24 @@ export function CodexAccountsPage() {
               {addTab === 'import' && (
                 <div className="add-section">
                   <p className="section-desc">
-                    {t('codex.import.localDesc', '从本地已登录的会话中导入 Codex 账号。')}
+                    {t('githubCopilot.import.localDesc', '从 JSON 文件导入 GitHub Copilot 账号数据。')}
                   </p>
-                  <button className="btn btn-primary btn-full" onClick={handleImportFromLocal} disabled={importing}>
+                  <input
+                    ref={importFileInputRef}
+                    type="file"
+                    accept="application/json"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      // reset immediately so selecting the same file will trigger change again
+                      e.target.value = '';
+                      if (!file) return;
+                      void handleImportJsonFile(file);
+                    }}
+                  />
+                  <button className="btn btn-primary btn-full" onClick={handlePickImportFile} disabled={importing}>
                     {importing ? <RefreshCw size={16} className="loading-spinner" /> : <Database size={16} />}
-                    {t('codex.local.import', 'Get Local Account')}
+                    {t('githubCopilot.import.pickFile', '选择 JSON 文件导入')}
                   </button>
                 </div>
               )}
@@ -1562,7 +1530,7 @@ export function CodexAccountsPage() {
       )}
 
       {activeTab === 'instances' && (
-        <CodexInstancesContent />
+        <GitHubCopilotInstancesContent />
       )}
     </div>
   );

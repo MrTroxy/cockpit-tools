@@ -36,6 +36,8 @@ interface InstancesManagerProps<TAccount extends AccountLike> {
   restartStrategyMode?: 'antigravity' | 'codex';
 }
 
+const INSTANCE_AUTO_REFRESH_INTERVAL_MS = 10_000;
+
 const hashDirName = (name: string) => {
   const trimmed = name.trim();
   if (!trimmed) return '';
@@ -116,6 +118,23 @@ export function InstancesManager<TAccount extends AccountLike>({
     fetchInstances();
     fetchAccounts();
   }, [fetchDefaults, fetchInstances, fetchAccounts]);
+
+  useEffect(() => {
+    let inFlight = false;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      if (inFlight) return;
+      inFlight = true;
+      Promise.all([refreshInstances(), fetchAccounts()])
+        .catch(() => {
+          // ignore periodic refresh errors; manual refresh still exposes errors
+        })
+        .finally(() => {
+          inFlight = false;
+        });
+    }, INSTANCE_AUTO_REFRESH_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [fetchAccounts, refreshInstances]);
 
   useEffect(() => {
     if (!error) return;
@@ -373,7 +392,10 @@ export function InstancesManager<TAccount extends AccountLike>({
       return false;
     }
     const rawApp = message.slice('APP_PATH_NOT_FOUND:'.length);
-    const app = rawApp === 'codex' || rawApp === 'antigravity' ? rawApp : appType;
+    const app =
+      rawApp === 'codex' || rawApp === 'antigravity' || rawApp === 'vscode'
+        ? rawApp
+        : appType;
     const retry = instanceId
       ? { kind: 'instance' as const, instanceId }
       : { kind: 'default' as const };

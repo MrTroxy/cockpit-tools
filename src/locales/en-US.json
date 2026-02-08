@@ -29,6 +29,7 @@
     "fingerprints": "Fingerprints",
     "settings": "Settings",
     "codex": "Codex Accounts",
+    "githubCopilot": "GitHub Copilot",
     "dashboard": "Dashboard",
     "instances": "Multi-Instance"
   },
@@ -221,31 +222,37 @@
       "every30min": "Every 30 minutes",
       "every1hour": "Every hour",
       "minutes": "min",
-      "refreshIntervalLimited": "Quota reset wakeup is enabled, so the minimum refresh interval is 2 minutes.",
+      "refreshIntervalLimited": "Quota reset wakeup enabled, minimum refresh interval is 2 minutes",
+      "closeBehavior": "Close behavior",
+      "closeBehaviorDesc": "Choose the default action when closing the window",
+      "closeBehaviorAsk": "Ask every time",
+      "closeBehaviorMinimize": "Minimize to tray",
+      "closeBehaviorQuit": "Quit application",
       "storageTitle": "Directories & Storage",
       "dataDir": "Data Directory",
       "dataDirDesc": "Storage location for accounts and configuration files.",
       "fpDir": "Antigravity Storage",
       "fpDirDesc": "Storage location for Antigravity data files.",
-      "closeBehavior": "Close Behavior",
-      "closeBehaviorDesc": "Choose action when closing window",
-      "closeBehaviorAsk": "Ask every time",
-      "closeBehaviorMinimize": "Minimize to tray",
-      "closeBehaviorQuit": "Quit application",
-      "opencodeAppPathDesc": "Leave blank to use the default path",
       "opencodeTitle": "OpenCode Integration",
       "opencodeRestart": "Restart OpenCode when switching Codex",
       "opencodeRestartDesc": "Sync Codex account info in OpenCode",
       "opencodeAppPath": "OpenCode launch path",
+      "opencodeAppPathDesc": "Leave blank to use the default path",
       "opencodeAppPathPlaceholder": "Default path",
-      "opencodePathReset": "Reset default",
+      "opencodePathReset": "Reset to default",
       "opencodePathSelect": "Select",
       "codexTitle": "Codex Launch",
       "codexAppPath": "Codex App Path",
       "codexAppPathDesc": "Leave empty to use default path",
       "codexAppPathPlaceholder": "Default path",
       "codexPathSelect": "Select",
-      "codexPathReset": "Reset default",
+      "codexPathReset": "Reset to default",
+      "vscodeTitle": "VS Code Launch",
+      "vscodeAppPath": "VS Code App Path",
+      "vscodeAppPathDesc": "Leave empty to use default path",
+      "vscodeAppPathPlaceholder": "Default path",
+      "vscodePathSelect": "Select",
+      "vscodePathReset": "Reset to default",
       "antigravityAppPath": "Antigravity App Path",
       "antigravityTitle": "Antigravity Launch"
     },
@@ -361,6 +368,33 @@
       "ascTooltip": "Asc, click to switch to Desc",
       "toggleDirection": "Toggle sort direction"
     },
+    "filterTags": "Filter Tags",
+    "filterTagsCount": "Tags",
+    "noAvailableTags": "No tags available",
+    "clearFilter": "Clear Filter",
+    "editTags": "Edit Tags",
+    "tagModal": {
+      "title": "Account Tags",
+      "hint": "Up to {{max}} tags. Each tag can be at most {{maxLength}} characters.",
+      "empty": "No tags",
+      "suggestionsTitle": "Existing tags",
+      "suggestionsEmpty": "No available tags",
+      "inputPlaceholder": "Enter a tag ({{remaining}} left)",
+      "inputDisabledPlaceholder": "Tag limit reached",
+      "add": "Add",
+      "save": "Save Tags",
+      "error": {
+        "empty": "Tag cannot be empty",
+        "tooLong": "Tag must be no longer than {{max}} characters",
+        "duplicate": "Tag already exists",
+        "tooMany": "You can add up to {{max}} tags"
+      }
+    },
+    "groupByTag": "Group by tags",
+    "untagged": "Untagged",
+    "deleteTagAria": "Delete tag {{tag}}",
+    "confirmDeleteTag": "Delete tag \"{{tag}}\"? This tag will be removed from {{count}} accounts.",
+    "defaultGroup": "Default Group",
     "actions": {
       "viewDetails": "View details",
       "viewError": "View error",
@@ -393,16 +427,7 @@
       "importSuccess": "Imported {{count}} accounts",
       "importPartial": "Imported {{success}} accounts, failed {{fail}}",
       "importFailed": "Import failed, please check refresh_token"
-    },
-    "confirmDeleteTag": "Delete tag \"{{tag}}\"? This tag will be removed from {{count}} accounts.",
-    "defaultGroup": "Default Group",
-    "filterTags": "Filter Tags",
-    "filterTagsCount": "Tags",
-    "noAvailableTags": "No available tags",
-    "clearFilter": "Clear filter",
-    "editTags": "Edit tags",
-    "groupByTag": "Group by tag",
-    "untagged": "Untagged"
+    }
   },
   "overview": {
     "title": "Account Overview",
@@ -761,7 +786,7 @@
   },
   "codex": {
     "title": "Codex Account Management",
-    "subtitle": "Manage your OpenAI Codex accounts",
+    "subtitle": "Real-time monitoring of all Codex account model quotas.",
     "instances": {
       "subtitle": "Independent configuration per instance, parallel operation with multiple accounts.",
       "comingSoon": "Multi-Instance Coming Soon",
@@ -834,10 +859,10 @@
     },
     "import": {
       "label": "Import",
+      "localDesc": "Import Codex accounts from locally signed-in sessions.",
       "importing": "Importing local account...",
       "successMsg": "Import successful: {{email}}",
-      "failedMsg": "Import failed: {{error}}",
-      "localDesc": "Import Codex accounts from locally signed-in sessions."
+      "failedMsg": "Import failed: {{error}}"
     },
     "quota": {
       "hourly": "5-hour quota",
@@ -891,6 +916,9 @@
       "toggleDirection": "Toggle sort direction",
       "createdAt": "Created time"
     },
+    "opencodeSwitch": "OpenCode switch toggle",
+    "opencodeSwitchDesc": "Sync Codex account info in OpenCode",
+    "opencodeSwitchFailed": "Failed to update OpenCode toggle: {{error}}",
     "export": "Export",
     "noMatch": {
       "title": "No matching accounts",
@@ -903,14 +931,134 @@
       "weekly": "Weekly quota",
       "actions": "Actions"
     },
-    "opencodeSwitch": "OpenCode switch toggle",
-    "opencodeSwitchDesc": "Sync Codex account info in OpenCode",
-    "opencodeSwitchFailed": "Failed to update OpenCode toggle: {{error}}",
     "filterTags": "Filter Tags",
     "filterTagsCount": "Tags",
-    "noAvailableTags": "No available tags",
-    "clearFilter": "Clear filter",
-    "editTags": "Edit tags"
+    "noAvailableTags": "No tags available",
+    "clearFilter": "Clear Filter",
+    "editTags": "Edit Tags"
+  },
+  "githubCopilot": {
+    "title": "GitHub Copilot Account Management",
+    "subtitle": "Monitor quota status for all accounts in real time.",
+    "overview": {
+      "title": "Account Overview"
+    },
+    "instances": {
+      "title": "Multi-Instance",
+      "subtitle": "Independent configs per instance for parallel multi-account runs.",
+      "unsupported": {
+        "title": "Unsupported on this system",
+        "desc": "GitHub Copilot multi-instance is available only on macOS."
+      },
+      "quota": {
+        "inline": "Inline Suggestions",
+        "chat": "Chat messages"
+      }
+    },
+    "addAccount": "Add Account",
+    "refreshAll": "Refresh All",
+    "refreshQuota": "Refresh Quota",
+    "empty": {
+      "title": "No Accounts",
+      "description": "Click \"Add Account\" to start managing your GitHub Copilot accounts"
+    },
+    "noMatch": {
+      "title": "No matching accounts",
+      "desc": "Try adjusting your search or filters"
+    },
+    "addModal": {
+      "title": "Add GitHub Copilot Account",
+      "oauth": "OAuth",
+      "token": "Token / JSON",
+      "import": "Local Import"
+    },
+    "oauth": {
+      "desc": "Click the button below and complete GitHub Copilot authorization in your browser.",
+      "preparing": "Preparing authorization info...",
+      "openBrowser": "Open in Browser",
+      "hint": "Once authorized, this window will update automatically",
+      "success": "Authorization successful",
+      "failed": "Authorization failed",
+      "retry": "Regenerate authorization info",
+      "timeoutRetry": "Refresh authorization link",
+      "waiting": "Waiting for authorization...",
+      "meta": "Expires in: {{expires}}s; Poll interval: {{interval}}s"
+    },
+    "token": {
+      "desc": "Paste your GitHub Copilot access token or exported JSON data.",
+      "placeholder": "Paste token or JSON...",
+      "import": "Import",
+      "importing": "Importing...",
+      "importSuccessMsg": "Imported {{count}} account(s) successfully",
+      "importFailedMsg": "Import failed: {{error}}",
+      "empty": "Please enter a token or JSON"
+    },
+    "import": {
+      "label": "Import",
+      "localDesc": "Import GitHub Copilot account data from a JSON file.",
+      "importing": "Importing...",
+      "failedMsg": "Import failed: {{error}}",
+      "pickFile": "Select JSON file to import"
+    },
+    "quota": {
+      "hourly": "Inline Suggestions",
+      "weekly": "Chat messages",
+      "noData": "No quota data",
+      "resetDone": "Reset"
+    },
+    "usage": {
+      "resetUnknown": "Allowance resets -",
+      "resetLine": "Allowance resets {{dateText}}."
+    },
+    "time": {
+      "relativeDays": "{{days}}d",
+      "relativeDaysHours": "{{days}}d {{hours}}h",
+      "relativeHours": "{{hours}}h",
+      "relativeHoursMinutes": "{{hours}}h {{minutes}}m",
+      "relativeMinutes": "{{minutes}}m",
+      "lessThanMinute": "<1m",
+      "relativeWithAbsolute": "{{relative}} ({{absolute}})"
+    },
+    "search": "Search accounts...",
+    "view": {
+      "list": "List view",
+      "grid": "Card view"
+    },
+    "filter": {
+      "all": "All ({{count}})",
+      "free": "FREE ({{count}})",
+      "individual": "INDIVIDUAL ({{count}})",
+      "pro": "PRO ({{count}})",
+      "business": "BUSINESS ({{count}})",
+      "enterprise": "ENTERPRISE ({{count}})"
+    },
+    "filterLabel": "Filter",
+    "sortLabel": "Sort",
+    "sort": {
+      "createdAt": "Created time",
+      "weekly": "By Chat messages usage",
+      "hourly": "By Inline Suggestions usage",
+      "weeklyReset": "By Chat messages reset time",
+      "hourlyReset": "By Inline Suggestions reset time",
+      "descTooltip": "Current: Descending. Click to switch to ascending",
+      "ascTooltip": "Current: Ascending. Click to switch to descending",
+      "toggleDirection": "Toggle sort direction"
+    },
+    "columns": {
+      "email": "Account",
+      "plan": "Plan",
+      "hourly": "Inline Suggestions",
+      "weekly": "Chat messages",
+      "actions": "Actions"
+    },
+    "export": "Export",
+    "flowNotice": {
+      "title": "GitHub Copilot account guide (click to expand/collapse)",
+      "desc": "Current flow: authorize a new account -> fetch and display quotas -> bind account in multi-instance view.",
+      "reason": "Why one-click account switching is unavailable: VS Code login state is managed by GitHub sessions and extension SecretStorage, and external apps cannot replace these credentials.",
+      "storage": "Login data location: mainly in VS Code SecretStorage (system keychain/credential manager) and global state database (e.g. ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
+      "alternative": "Alternative: use multi-instance isolation (different --user-data-dir). Log in once per instance, then launch by instance for fast switching to the target account environment."
+    }
   },
   "dashboard": {
     "title": "Account Dashboard",
@@ -930,6 +1078,7 @@
     "panels": {
       "antigravity": "Antigravity",
       "codex": "Codex",
+      "githubCopilot": "GitHub Copilot",
       "planDistribution": "Plan distribution",
       "current": "Current account",
       "recommended": "Recommended account",
