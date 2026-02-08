@@ -5,11 +5,11 @@
 [![GitHub stars](https://img.shields.io/github/stars/jlcodes99/cockpit-tools?style=flat&color=gold)](https://github.com/jlcodes99/cockpit-tools)
 [![GitHub issues](https://img.shields.io/github/issues/jlcodes99/cockpit-tools)](https://github.com/jlcodes99/cockpit-tools/issues)
 
-一款**通用的 AI IDE 账号管理工具**，目前完美支持 **Antigravity** 和 **Codex**，并支持多账号多实例并行运行。
+一款**通用的 AI IDE 账号管理工具**，目前完美支持 **Antigravity**、**Codex** 和 **GitHub Copilot**，并支持多账号多实例并行运行。
 
 > 本工具旨在帮助用户高效管理多个 AI IDE 账号，支持一键切换、配额监控、自动唤醒与多开实例并行运行，助您充分利用不同账号的资源。
 
-**功能**：一键切号 · 多账号管理 · 多开实例 · 配额监控 · 唤醒任务 · 设备指纹 · 插件联动
+**功能**：一键切号 · 多账号管理 · 多开实例 · 配额监控 · 唤醒任务 · 设备指纹 · 插件联动 · GitHub Copilot 管理
 
 **语言**：支持 16 种语言
 
@@ -23,7 +23,7 @@
 
 全新的可视化仪表盘，为您提供一站式的状态概览：
 
-- **双平台支持**：同时展示 Antigravity 和 Codex 的账号状态
+- **三平台支持**：同时展示 Antigravity、Codex 与 GitHub Copilot 的账号状态
 - **配额监控**：实时查看各模型剩余配额、重置时间
 - **快捷操作**：一键刷新、一键唤醒
 - **可视化进度**：直观的进度条展示配额消耗情况
@@ -71,7 +71,22 @@ Codex 同样支持多账号多实例并行运行。比如同时打开两个 Code
 
 > ![Codex Instances](docs/images/codex_instances.png)
 
-### 4. 通用设置
+### 4. GitHub Copilot 账号管理
+
+- **账号导入**：支持 OAuth 授权、Token/JSON 导入
+- **配额视图**：展示 Inline Suggestions / Chat messages 使用情况与重置时间
+- **订阅识别**：自动识别 Free / Individual / Pro / Business / Enterprise 等计划类型
+- **批量管理**：支持标签与批量操作
+
+#### 4.1 GitHub Copilot 多开实例
+
+基于 VS Code 的 Copilot 多实例管理，支持独立配置与生命周期控制。
+
+- **独立配置**：每个实例拥有独立的用户目录
+- **快速启停**：一键启动/停止/强制关闭实例
+- **窗口管理**：支持打开实例窗口与批量关闭
+
+### 5. 通用设置
 
 - **个性化设置**：主题切换、语言设置、自动刷新间隔
 

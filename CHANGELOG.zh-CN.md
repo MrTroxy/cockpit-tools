@@ -7,6 +7,20 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。
 
 ---
+## [0.6.0] - 2026-02-08
+
+### 新增
+- **GitHub Copilot 账号管理**：支持 OAuth/Token/JSON 导入、配额状态、订阅标识、标签与批量操作，并提供账号总览界面。
+- **GitHub Copilot 多开实例**：支持 VS Code Copilot 多实例管理，包含独立配置、启动/停止与实例生命周期管理。
+
+### 变更
+- **仪表盘与导航**：新增 GitHub Copilot 入口与总览卡片，和 Antigravity/Codex 并列展示。
+- **启动路径行为**：回滚最近的路径自动重探测变更，恢复原有检测流程。
+
+### 修复
+- **Windows 构建告警**：收敛平台特定的进程处理逻辑，避免环境变量被 move 导致的编译告警。
+
+---
 ## [0.5.4] - 2026-02-07
 
 ### 新增

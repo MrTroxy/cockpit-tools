@@ -7,6 +7,20 @@ All notable changes to Cockpit Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+## [0.6.0] - 2026-02-08
+
+### Added
+- **GitHub Copilot account management**: OAuth/Token/JSON import, quota status, plan badges, tags, batch actions, and account overview UI.
+- **GitHub Copilot multi-instance**: Manage VS Code Copilot instances with isolated profiles, settings, and lifecycle actions.
+
+### Changed
+- **Dashboard & navigation**: Added GitHub Copilot entry and overview panel alongside Antigravity/Codex.
+- **App-path behavior**: Rolled back the recent app-path re-detect changes to restore the previous detection flow.
+
+### Fixed
+- **Windows build warnings**: Tightened platform-specific process helpers and avoided moved environment values.
+
+---
 ## [0.5.4] - 2026-02-07
 
 ### Added

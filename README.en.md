@@ -6,11 +6,11 @@ English · [简体中文](README.md)
 [![GitHub issues](https://img.shields.io/github/issues/jlcodes99/cockpit-tools)](https://github.com/jlcodes99/cockpit-tools/issues)
 [![License](https://img.shields.io/github/license/jlcodes99/cockpit-tools)](https://github.com/jlcodes99/cockpit-tools)
 
-A **universal AI IDE account management tool**, currently supporting **Antigravity** and **Codex**, with multi-instance parallel workflows.
+A **universal AI IDE account management tool**, currently supporting **Antigravity**, **Codex**, and **GitHub Copilot**, with multi-instance parallel workflows.
 
 > Designed to help users efficiently manage multiple AI IDE accounts, this tool supports one-click switching, quota monitoring, wake-up tasks, and multi-instance parallel runs, helping you fully utilize resources from different accounts.
 
-**Features**: One-click Switch · Multi-account Management · Multi-instance · Quota Monitoring · Wake-up Tasks · Device Fingerprints · Plugin Integration
+**Features**: One-click Switch · Multi-account Management · Multi-instance · Quota Monitoring · Wake-up Tasks · Device Fingerprints · Plugin Integration · GitHub Copilot Management
 
 **Languages**: Supports 16 languages
 
@@ -24,7 +24,7 @@ A **universal AI IDE account management tool**, currently supporting **Antigravi
 
 A brand new visual dashboard providing a one-stop status overview:
 
-- **Dual Platform Support**: Simultaneously displays Antigravity and Codex account status
+- **Three-Platform Support**: Simultaneously displays Antigravity, Codex, and GitHub Copilot account status
 - **Quota Monitoring**: Real-time view of remaining quotas and reset times for each model
 - **Quick Actions**: One-click refresh, one-click wake-up
 - **Visual Progress**: Intuitive progress bars showing quota consumption
@@ -72,7 +72,22 @@ Codex also supports parallel multi-instance usage. For example, open two Codex i
 
 > ![Codex Instances](docs/images/codex_instances.png)
 
-### 4. General Settings
+### 4. GitHub Copilot Account Management
+
+- **Account Import**: OAuth, Token/JSON import
+- **Quota View**: Inline Suggestions / Chat messages usage and reset time
+- **Plan Recognition**: Auto-detects Free / Individual / Pro / Business / Enterprise tiers
+- **Batch Operations**: Tags and bulk actions
+
+#### 4.1 GitHub Copilot Multi-Instance
+
+Manage VS Code Copilot instances with isolated profiles and lifecycle controls.
+
+- **Isolated Profiles**: Each instance uses its own user data directory
+- **Quick Lifecycle**: Start/stop/force stop instances
+- **Window Control**: Open instance windows and close all instances
+
+### 5. General Settings
 
 - **Personalized Settings**: Theme switching, language settings, auto-refresh interval
 
