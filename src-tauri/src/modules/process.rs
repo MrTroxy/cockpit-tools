@@ -606,13 +606,13 @@ fn detect_vscode_exec_path() -> Option<std::path::PathBuf> {
                     .join("Code.exe"),
             );
             candidates.push(
-                std::path::PathBuf::from(local_appdata)
+                std::path::PathBuf::from(&local_appdata)
                     .join("Programs")
                     .join("VSCode")
                     .join("Code.exe"),
             );
             candidates.push(
-                std::path::PathBuf::from(local_appdata)
+                std::path::PathBuf::from(&local_appdata)
                     .join("Programs")
                     .join("Microsoft VS Code Insiders")
                     .join("Code - Insiders.exe"),
