@@ -159,6 +159,53 @@ pub async fn refresh_all_codex_quotas(app: AppHandle) -> Result<i32, String> {
     Ok(success_count as i32)
 }
 
+#[tauri::command]
+pub async fn codex_trigger_wakeup(
+    account_id: String,
+    model: String,
+    prompt: Option<String>,
+    max_output_tokens: Option<u32>,
+) -> Result<crate::modules::codex_wakeup::WakeupResponse, String> {
+    let final_prompt = prompt.unwrap_or_else(|| "hi".to_string());
+    let final_tokens = max_output_tokens.unwrap_or(0);
+    crate::modules::codex_wakeup::trigger_wakeup(&account_id, &model, &final_prompt, final_tokens).await
+}
+
+#[tauri::command]
+pub async fn codex_fetch_available_models(
+) -> Result<Vec<crate::modules::codex_wakeup::AvailableModel>, String> {
+    crate::modules::codex_wakeup::fetch_available_models().await
+}
+
+#[tauri::command]
+pub async fn codex_wakeup_sync_state(
+    app: AppHandle,
+    enabled: bool,
+    tasks: Vec<crate::modules::codex_wakeup_scheduler::WakeupTaskInput>,
+) -> Result<(), String> {
+    crate::modules::codex_wakeup_scheduler::sync_state(enabled, tasks);
+    crate::modules::codex_wakeup_scheduler::ensure_started(app);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn codex_wakeup_load_history(
+) -> Result<Vec<crate::modules::codex_wakeup_history::WakeupHistoryItem>, String> {
+    crate::modules::codex_wakeup_history::load_history()
+}
+
+#[tauri::command]
+pub fn codex_wakeup_clear_history() -> Result<(), String> {
+    crate::modules::codex_wakeup_history::clear_history()
+}
+
+#[tauri::command]
+pub fn codex_wakeup_add_history_items(
+    items: Vec<crate::modules::codex_wakeup_history::WakeupHistoryItem>,
+) -> Result<(), String> {
+    crate::modules::codex_wakeup_history::add_history_items(items)
+}
+
 async fn save_codex_oauth_tokens(tokens: CodexTokens) -> Result<CodexAccount, String> {
     let account = codex_account::upsert_account(tokens)?;
 

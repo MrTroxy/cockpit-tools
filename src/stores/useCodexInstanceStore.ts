@@ -3,5 +3,6 @@ import { createInstanceStore } from './createInstanceStore';
 
 export const useCodexInstanceStore = createInstanceStore(
   codexInstanceService,
-  'agtools.codex.instances.cache',
+  'cockpit.codex.instances.cache',
+  ['agtools.codex.instances.cache']
 );

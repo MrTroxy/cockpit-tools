@@ -6,6 +6,23 @@ export interface CodexOAuthLoginStartResponse {
   authUrl: string;
 }
 
+export interface CodexWakeupInvokeResult {
+  reply: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  traceId?: string;
+  responseId?: string;
+  durationMs?: number;
+}
+
+export interface CodexWakeupModel {
+  id: string;
+  displayName: string;
+  modelConstant?: string;
+  recommended?: boolean;
+}
+
 /** 列出所有 Codex 账号 */
 export async function listCodexAccounts(): Promise<CodexAccount[]> {
   return await invoke('list_codex_accounts');
@@ -54,6 +71,40 @@ export async function refreshCodexQuota(accountId: string): Promise<CodexQuota> 
 /** 刷新所有账号配额 */
 export async function refreshAllCodexQuotas(): Promise<number> {
   return await invoke('refresh_all_codex_quotas');
+}
+
+export async function codexTriggerWakeup(
+  accountId: string,
+  model: string,
+  prompt?: string,
+  maxOutputTokens?: number
+): Promise<CodexWakeupInvokeResult> {
+  return await invoke('codex_trigger_wakeup', {
+    accountId,
+    model,
+    prompt: prompt ?? null,
+    maxOutputTokens: maxOutputTokens ?? null,
+  });
+}
+
+export async function codexFetchWakeupModels(): Promise<CodexWakeupModel[]> {
+  return await invoke('codex_fetch_available_models');
+}
+
+export async function codexWakeupSyncState(enabled: boolean, tasks: unknown[]): Promise<void> {
+  await invoke('codex_wakeup_sync_state', { enabled, tasks });
+}
+
+export async function codexWakeupLoadHistory<T>(): Promise<T[]> {
+  return await invoke('codex_wakeup_load_history');
+}
+
+export async function codexWakeupClearHistory(): Promise<void> {
+  await invoke('codex_wakeup_clear_history');
+}
+
+export async function codexWakeupAddHistoryItems<T extends object>(items: T[]): Promise<void> {
+  await invoke('codex_wakeup_add_history_items', { items });
 }
 
 /** 新 OAuth 流程：开始登录 */

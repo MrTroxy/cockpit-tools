@@ -2,12 +2,33 @@ import { create } from 'zustand';
 import { CodexAccount } from '../types/codex';
 import * as codexService from '../services/codexService';
 
-const CODEX_ACCOUNTS_CACHE_KEY = 'agtools.codex.accounts.cache';
-const CODEX_CURRENT_ACCOUNT_CACHE_KEY = 'agtools.codex.accounts.current';
+const CODEX_ACCOUNTS_CACHE_KEY = 'cockpit.codex.accounts.cache';
+const CODEX_CURRENT_ACCOUNT_CACHE_KEY = 'cockpit.codex.accounts.current';
+const LEGACY_CODEX_ACCOUNTS_CACHE_KEY = 'agtools.codex.accounts.cache';
+const LEGACY_CODEX_CURRENT_ACCOUNT_CACHE_KEY = 'agtools.codex.accounts.current';
+
+const readStorageWithLegacy = (key: string, legacyKey: string) => {
+  const value = localStorage.getItem(key);
+  if (value !== null) return value;
+
+  const legacyValue = localStorage.getItem(legacyKey);
+  if (legacyValue !== null) {
+    localStorage.setItem(key, legacyValue);
+    localStorage.removeItem(legacyKey);
+  }
+  return legacyValue;
+};
+
+const writeStorageAndCleanupLegacy = (key: string, legacyKey: string, value: string) => {
+  localStorage.setItem(key, value);
+  if (legacyKey !== key) {
+    localStorage.removeItem(legacyKey);
+  }
+};
 
 const loadCachedCodexAccounts = () => {
   try {
-    const raw = localStorage.getItem(CODEX_ACCOUNTS_CACHE_KEY);
+    const raw = readStorageWithLegacy(CODEX_ACCOUNTS_CACHE_KEY, LEGACY_CODEX_ACCOUNTS_CACHE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -18,7 +39,10 @@ const loadCachedCodexAccounts = () => {
 
 const loadCachedCodexCurrentAccount = () => {
   try {
-    const raw = localStorage.getItem(CODEX_CURRENT_ACCOUNT_CACHE_KEY);
+    const raw = readStorageWithLegacy(
+      CODEX_CURRENT_ACCOUNT_CACHE_KEY,
+      LEGACY_CODEX_CURRENT_ACCOUNT_CACHE_KEY
+    );
     if (!raw) return null;
     return JSON.parse(raw) as CodexAccount;
   } catch {
@@ -28,7 +52,11 @@ const loadCachedCodexCurrentAccount = () => {
 
 const persistCodexAccountsCache = (accounts: CodexAccount[]) => {
   try {
-    localStorage.setItem(CODEX_ACCOUNTS_CACHE_KEY, JSON.stringify(accounts));
+    writeStorageAndCleanupLegacy(
+      CODEX_ACCOUNTS_CACHE_KEY,
+      LEGACY_CODEX_ACCOUNTS_CACHE_KEY,
+      JSON.stringify(accounts)
+    );
   } catch {
     // ignore cache write failures
   }
@@ -38,9 +66,14 @@ const persistCodexCurrentAccountCache = (account: CodexAccount | null) => {
   try {
     if (!account) {
       localStorage.removeItem(CODEX_CURRENT_ACCOUNT_CACHE_KEY);
+      localStorage.removeItem(LEGACY_CODEX_CURRENT_ACCOUNT_CACHE_KEY);
       return;
     }
-    localStorage.setItem(CODEX_CURRENT_ACCOUNT_CACHE_KEY, JSON.stringify(account));
+    writeStorageAndCleanupLegacy(
+      CODEX_CURRENT_ACCOUNT_CACHE_KEY,
+      LEGACY_CODEX_CURRENT_ACCOUNT_CACHE_KEY,
+      JSON.stringify(account)
+    );
   } catch {
     // ignore cache write failures
   }

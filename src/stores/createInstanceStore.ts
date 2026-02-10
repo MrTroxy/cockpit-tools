@@ -58,13 +58,36 @@ type InstanceService = {
   openInstanceWindow: (instanceId: string) => Promise<void>;
 };
 
-export function createInstanceStore(service: InstanceService, cacheKey: string) {
-  const loadCachedInstances = () => {
+export function createInstanceStore(
+  service: InstanceService,
+  cacheKey: string,
+  legacyCacheKeys: string[] = []
+) {
+  const parseCachedInstances = (raw: string | null) => {
+    if (!raw) return null;
     try {
-      const raw = localStorage.getItem(cacheKey);
-      if (!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? (parsed as InstanceProfile[]) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const loadCachedInstances = () => {
+    try {
+      const current = parseCachedInstances(localStorage.getItem(cacheKey));
+      if (current !== null) return current;
+
+      for (const legacyKey of legacyCacheKeys) {
+        const legacyRaw = localStorage.getItem(legacyKey);
+        const legacyParsed = parseCachedInstances(legacyRaw);
+        if (legacyParsed !== null) {
+          localStorage.setItem(cacheKey, legacyRaw!);
+          localStorage.removeItem(legacyKey);
+          return legacyParsed;
+        }
+      }
+      return [];
     } catch {
       return [];
     }
@@ -73,6 +96,11 @@ export function createInstanceStore(service: InstanceService, cacheKey: string) 
   const persistInstancesCache = (instances: InstanceProfile[]) => {
     try {
       localStorage.setItem(cacheKey, JSON.stringify(instances));
+      for (const legacyKey of legacyCacheKeys) {
+        if (legacyKey !== cacheKey) {
+          localStorage.removeItem(legacyKey);
+        }
+      }
     } catch {
       // ignore cache write failures
     }

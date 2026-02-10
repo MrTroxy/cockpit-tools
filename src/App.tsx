@@ -41,6 +41,30 @@ type AppPathMissingDetail = {
 
 const WAKEUP_ENABLED_KEY = 'agtools.wakeup.enabled';
 const TASKS_STORAGE_KEY = 'agtools.wakeup.tasks';
+const CODEX_STORAGE_PREFIX = 'cockpit.codex';
+const CODEX_WAKEUP_ENABLED_KEY = `${CODEX_STORAGE_PREFIX}.wakeup.enabled`;
+const CODEX_TASKS_STORAGE_KEY = `${CODEX_STORAGE_PREFIX}.wakeup.tasks`;
+const LEGACY_CODEX_WAKEUP_ENABLED_KEY = 'agtools.codex.wakeup.enabled';
+const LEGACY_CODEX_TASKS_STORAGE_KEY = 'agtools.codex.wakeup.tasks';
+
+const readStorageWithLegacy = (key: string, legacyKey: string) => {
+  const value = localStorage.getItem(key);
+  if (value !== null) return value;
+
+  const legacyValue = localStorage.getItem(legacyKey);
+  if (legacyValue !== null) {
+    localStorage.setItem(key, legacyValue);
+    localStorage.removeItem(legacyKey);
+  }
+  return legacyValue;
+};
+
+const writeStorageAndCleanupLegacy = (key: string, legacyKey: string, value: string) => {
+  localStorage.setItem(key, value);
+  if (legacyKey !== key) {
+    localStorage.removeItem(legacyKey);
+  }
+};
 
 type WakeupHistoryRecord = {
   id: string;
@@ -157,6 +181,21 @@ function App() {
     syncWakeupStateOnStartup();
   }, []);
 
+  useEffect(() => {
+    const syncCodexWakeupStateOnStartup = async () => {
+      try {
+        const enabled =
+          readStorageWithLegacy(CODEX_WAKEUP_ENABLED_KEY, LEGACY_CODEX_WAKEUP_ENABLED_KEY) === 'true';
+        const tasksRaw = readStorageWithLegacy(CODEX_TASKS_STORAGE_KEY, LEGACY_CODEX_TASKS_STORAGE_KEY);
+        const tasks = tasksRaw ? JSON.parse(tasksRaw) : [];
+        await invoke('codex_wakeup_sync_state', { enabled, tasks });
+      } catch (error) {
+        console.error('Codex 唤醒任务状态同步失败:', error);
+      }
+    };
+    syncCodexWakeupStateOnStartup();
+  }, []);
+
   // Check for updates on startup
   useEffect(() => {
     const checkUpdates = async () => {
@@ -192,6 +231,46 @@ function App() {
       changeLanguage(nextLanguage);
       window.dispatchEvent(new CustomEvent('general-language-updated', { detail: { language: nextLanguage } }));
     }).then((fn) => { unlisten = fn; });
+
+    return () => {
+      if (unlisten) {
+        unlisten();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    let unlisten: UnlistenFn | undefined;
+
+    const handleWakeupResult = (payload: WakeupTaskResultPayload) => {
+      if (!payload || typeof payload.taskId !== 'string') return;
+
+      const tasksRaw = readStorageWithLegacy(CODEX_TASKS_STORAGE_KEY, LEGACY_CODEX_TASKS_STORAGE_KEY);
+      if (tasksRaw) {
+        try {
+          const tasks = JSON.parse(tasksRaw) as Array<{ id: string; lastRunAt?: number }>;
+          const nextTasks = tasks.map((task) =>
+            task.id === payload.taskId ? { ...task, lastRunAt: payload.lastRunAt } : task
+          );
+          writeStorageAndCleanupLegacy(
+            CODEX_TASKS_STORAGE_KEY,
+            LEGACY_CODEX_TASKS_STORAGE_KEY,
+            JSON.stringify(nextTasks)
+          );
+        } catch (error) {
+          console.error('更新 Codex 唤醒任务时间失败:', error);
+        }
+      }
+
+      window.dispatchEvent(new CustomEvent('codex-wakeup-task-result', { detail: payload }));
+      window.dispatchEvent(new Event('codex-wakeup-tasks-updated'));
+    };
+
+    listen<WakeupTaskResultPayload>('codex-wakeup://task-result', (event) => {
+      handleWakeupResult(event.payload);
+    }).then((fn) => {
+      unlisten = fn;
+    });
 
     return () => {
       if (unlisten) {

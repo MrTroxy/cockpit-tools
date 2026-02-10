@@ -52,8 +52,11 @@ pub fn init_logger() {
         .with_level(true)
         .with_timer(LocalTimer);
 
-    let filter_layer = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+    // tao/winit occasionally emit non-actionable event-loop warnings on Windows dev runs.
+    // Keep app logs informative while suppressing noisy framework warnings by default.
+    let filter_layer = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+        EnvFilter::new("info,tao=error,winit=error,tauri_runtime_wry=error,wry=error")
+    });
 
     let _ = tracing_subscriber::registry()
         .with(filter_layer)

@@ -39,6 +39,7 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import { invoke } from '@tauri-apps/api/core';
 import { CodexOverviewTabsHeader, CodexTab } from '../components/CodexOverviewTabsHeader';
 import { CodexInstancesContent } from './CodexInstancesPage';
+import { CodexWakeupTasksPage } from './CodexWakeupTasksPage';
 
 export function CodexAccountsPage() {
   const { t, i18n } = useTranslation();
@@ -1563,6 +1564,10 @@ export function CodexAccountsPage() {
 
       {activeTab === 'instances' && (
         <CodexInstancesContent />
+      )}
+
+      {activeTab === 'wakeup' && (
+        <CodexWakeupTasksPage />
       )}
     </div>
   );
