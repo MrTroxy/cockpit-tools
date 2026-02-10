@@ -3,6 +3,8 @@
 [English](README.en.md) · 简体中文
 
 [![GitHub stars](https://img.shields.io/github/stars/jlcodes99/cockpit-tools?style=flat&color=gold)](https://github.com/jlcodes99/cockpit-tools)
+[![GitHub downloads](https://img.shields.io/github/downloads/jlcodes99/cockpit-tools/total?style=flat&color=blue)](https://github.com/jlcodes99/cockpit-tools/releases)
+[![GitHub release](https://img.shields.io/github/v/release/jlcodes99/cockpit-tools?style=flat)](https://github.com/jlcodes99/cockpit-tools/releases)
 [![GitHub issues](https://img.shields.io/github/issues/jlcodes99/cockpit-tools)](https://github.com/jlcodes99/cockpit-tools/issues)
 
 一款**通用的 AI IDE 账号管理工具**，目前完美支持 **Antigravity**、**Codex** 和 **GitHub Copilot**，并支持多账号多实例并行运行。
@@ -91,6 +93,59 @@ Codex 同样支持多账号多实例并行运行。比如同时打开两个 Code
 - **个性化设置**：主题切换、语言设置、自动刷新间隔
 
 > ![Settings](docs/images/settings_page.png)
+
+---
+
+## 安全性与隐私（简明版）
+
+下面是最关心的几个问题，尽量用直白语言说明：
+
+- **这是本地桌面工具**：不需要单独注册平台账号，也不依赖项目自建云端来存你的账号列表。
+- **数据主要保存在本机**：
+  - `~/.antigravity_cockpit`：Antigravity 账号、配置、WebSocket 状态等
+  - `~/.codex`：Codex 官方当前登录 `auth.json`
+  - 系统本地应用数据目录下 `com.antigravity.cockpit-tools`：Codex / GitHub Copilot 多账号索引等
+- **WebSocket 默认仅本机访问**：监听 `127.0.0.1`，默认端口 `19528`，可在设置中关闭或改端口。
+- **什么时候会联网**：OAuth 登录、Token 刷新、配额查询、版本更新检查等官方接口请求。
+- **实用安全建议**：
+  1. 不使用插件联动时，可关闭 WebSocket 服务。
+  2. 不要把用户目录直接打包分享；备份前注意脱敏 token 文件。
+  3. 在公共或共用电脑上，使用后删除账号并退出应用。
+
+## 设置项说明（小白版）
+
+如果你只想“能用、稳定、不折腾”，优先按“推荐值”设置即可。
+
+### 通用设置
+
+| 设置项 | 这是做什么的（通俗） | 推荐值 | 什么时候改 |
+| --- | --- | --- | --- |
+| 显示语言 | 改界面文字语言 | 你最熟悉的语言 | 只在看不懂时改 |
+| 应用主题 | 改亮色/暗色外观 | 跟随系统 | 长时间夜间使用可改深色 |
+| 窗口关闭行为 | 点关闭按钮后的动作 | 每次询问 | 想后台常驻选“最小化到托盘” |
+| Antigravity 自动刷新配额 | 后台定时更新 Antigravity 配额 | 5~10 分钟 | 账号多、想更实时可改 2 分钟 |
+| Codex 自动刷新配额 | 后台定时更新 Codex 配额 | 5~10 分钟 | 同上 |
+| 数据目录 | 存账号与配置文件的位置 | 默认即可 | 仅用于排查、备份 |
+| Antigravity/Codex/VS Code/OpenCode 启动路径 | 指定应用可执行文件位置 | 留空（自动检测） | 自动检测失败、或你装在自定义路径时 |
+| 切换 Codex 时自动重启 OpenCode | 切换 Codex 后自动同步 OpenCode 账号信息 | 使用 OpenCode 就开启；不用就关闭 | 频繁切号且需要 OpenCode 同步时开启 |
+
+补充说明：
+- 自动刷新间隔越小，请求越频繁；若你更关注稳定，间隔可适当拉大。
+- 当启用“配额重置唤醒”相关任务时，部分刷新间隔会有最小值限制（界面会提示）。
+
+### 网络服务设置
+
+| 设置项 | 这是做什么的（通俗） | 推荐值 | 风险/注意点 |
+| --- | --- | --- | --- |
+| WebSocket 服务 | 给本机插件/客户端实时通信用 | 不用插件联动就关闭 | 开启后仍是本机 `127.0.0.1` 访问 |
+| 首选端口 | WebSocket 监听端口 | 默认 `19528` | 若端口冲突可改，保存后需重启应用 |
+| 当前运行端口 | 实际已使用端口 | 只读查看 | 配置端口被占用时会自动回退到其它端口 |
+
+### 三套推荐配置（直接抄）
+
+1. **稳定省心**：自动刷新 10 分钟 + WebSocket 关闭（不用插件时）+ 路径保持默认。  
+2. **高频切号**：自动刷新 2~5 分钟 + 需要联动时开启 WebSocket + OpenCode 联动开启。  
+3. **安全优先**：WebSocket 关闭 + 不共享用户目录 + 定期清理不再使用的账号。  
 
 ---
 

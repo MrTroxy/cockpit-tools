@@ -93,7 +93,13 @@
       "vscodePathSelect": "Chọn",
       "vscodePathReset": "Đặt lại mặc định",
       "antigravityAppPath": "Đường dẫn ứng dụng Antigravity",
-      "antigravityTitle": "Khởi chạy Antigravity"
+      "antigravityTitle": "Khởi chạy Antigravity",
+      "commonTitle": "Chung",
+      "antigravitySettingsTitle": "Cài đặt Antigravity",
+      "codexSettingsTitle": "Cài đặt Codex",
+      "githubCopilotSettingsTitle": "Cài đặt GitHub Copilot",
+      "ghcpAutoRefresh": "Tự động làm mới quota GitHub Copilot",
+      "ghcpAutoRefreshDesc": "Tần suất cập nhật nền"
     },
     "network": {
       "apiTitle": "API Antigravity Cockpit",
@@ -154,7 +160,7 @@
       "actions": "Thao tác"
     },
     "status": {
-      "current": "Đang sử dụng",
+      "current": "Hiện tại",
       "disabled": "Đã vô hiệu hóa",
       "authInvalid": "Invalid credentials",
       "refreshFailed": "Refresh failed",
@@ -767,6 +773,15 @@
           "commandWin": "Windows: taskkill /F /PID <pid> (khớp với CODEX_HOME)"
         }
       }
+    },
+    "refreshSuccess": "Đã làm mới quota",
+    "refreshFailed": "Làm mới quota thất bại: {{error}}",
+    "refreshAllSuccess": "Làm mới hoàn tất, {{count}} tài khoản thành công",
+    "refreshAllPartialFailed": "Làm mới hoàn tất, {{success}} / {{total}} tài khoản thành công và một số thất bại",
+    "quotaError": {
+      "badge": "Lỗi quota",
+      "generic": "Làm mới quota thất bại, vui lòng thử lại sau",
+      "deactivatedWorkspace": "Workspace đã bị vô hiệu hoá, hãy đổi tài khoản hoặc cấp quyền lại"
     }
   },
   "dashboard": {
@@ -846,7 +861,8 @@
       "openFolder": "Mở thư mục",
       "edit": "Chỉnh sửa",
       "openRootDir": "Mở thư mục",
-      "selectPath": "Chọn đường dẫn"
+      "selectPath": "Chọn đường dẫn",
+      "openWindow": "Mở cửa sổ"
     },
     "bulkConfirm": {
       "startAll": "Bắt đầu tất cả các phiên bản đang dừng?",
@@ -1115,10 +1131,47 @@
     "export": "Xuất",
     "flowNotice": {
       "title": "Hướng dẫn tài khoản GitHub Copilot (bấm để mở rộng/thu gọn)",
-      "desc": "Luồng hiện tại: cấp quyền tài khoản mới -> lấy và hiển thị hạn mức -> liên kết tài khoản trong chế độ đa phiên bản.",
-      "reason": "Vì sao không thể chuyển tài khoản bằng một cú nhấp: trạng thái đăng nhập VS Code được quản lý bởi phiên GitHub và SecretStorage của tiện ích, ứng dụng bên ngoài không thể thay thế các thông tin xác thực này.",
-      "storage": "Vị trí dữ liệu đăng nhập: chủ yếu trong SecretStorage của VS Code (keychain/trình quản lý thông tin xác thực hệ thống) và cơ sở dữ liệu trạng thái toàn cục (ví dụ: ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
-      "alternative": "Giải pháp thay thế: dùng cô lập đa phiên bản (khác --user-data-dir). Đăng nhập một lần cho mỗi phiên bản, sau đó khởi chạy theo phiên bản để chuyển nhanh sang môi trường tài khoản mục tiêu."
-    }
+      "desc": "Việc chuyển tài khoản yêu cầu đọc kho xác thực cục bộ của VS Code và dùng dịch vụ thông tin xác thực hệ thống để giải mã/ghi lại; dữ liệu chỉ được xử lý trên máy cục bộ.",
+      "reason": "Phạm vi quyền: đọc cơ sở dữ liệu xác thực VS Code (state.vscdb) và gọi khả năng mã hóa hệ thống (Windows DPAPI / macOS Keychain / Linux Secret Service) để giải mã/ghi lại.",
+      "storage": "Phạm vi đọc: chỉ xử lý dữ liệu liên quan đến phiên đăng nhập GitHub; không chỉnh sửa bí mật hệ thống và không tải lên khóa hay token.",
+      "alternative": "Giải pháp thay thế: dùng cô lập đa phiên bản (khác --user-data-dir). Đăng nhập một lần cho mỗi phiên bản, sau đó khởi chạy theo phiên bản để chuyển nhanh sang môi trường tài khoản mục tiêu.",
+      "inject": "Chuyển đổi một lần nhấp: công cụ này đọc dữ liệu mã hóa cục bộ của VS Code (DPAPI/Keychain/Secret Service), giải mã phiên xác thực trong state.vscdb, thay thế token GitHub Copilot rồi mã hóa lại — mọi thao tác đều diễn ra cục bộ trên máy của bạn."
+    },
+    "injectToVSCode": "Chuyển sang VS Code",
+    "injecting": "Đang chèn...",
+    "injectSuccess": "Đã chèn token vào VS Code thành công. VS Code đang được khởi chạy.",
+    "injectRequireClose": "Vui lòng đóng VS Code trước khi chèn."
+  },
+  "quickSettings": {
+    "antigravity": {
+      "title": "Cài đặt Antigravity",
+      "appPath": "Đường dẫn ứng dụng"
+    },
+    "codex": {
+      "title": "Cài đặt Codex",
+      "appPath": "Đường dẫn ứng dụng"
+    },
+    "githubCopilot": {
+      "title": "Cài đặt GitHub Copilot",
+      "appPath": "Đường dẫn VS Code"
+    },
+    "refreshInterval": "Tự động làm mới hạn ngạch",
+    "codexRefreshInterval": "Tự động làm mới hạn ngạch",
+    "ghcpRefreshInterval": "Tự động làm mới hạn ngạch",
+    "autoSwitch": {
+      "title": "Tự động chuyển đổi",
+      "enable": "Tự động chuyển đổi",
+      "threshold": "Ngưỡng chuyển đổi",
+      "thresholdDesc": "Tự động chuyển đổi được kích hoạt khi hạn ngạch của bất kỳ mô hình nào giảm xuống dưới tỷ lệ phần trăm này",
+      "hint": "Tự động chuyển sang tài khoản có hạn ngạch cao nhất khi hạn ngạch của bất kỳ mô hình nào giảm xuống dưới ngưỡng."
+    },
+    "customInput": "Tùy chỉnh",
+    "apply": "Áp dụng",
+    "inputMinutes": "Nhập số phút",
+    "inputPercent": "Nhập phần trăm"
+  },
+  "privacy": {
+    "hideSensitive": "Ẩn email",
+    "showSensitive": "Hiện email"
   }
 }

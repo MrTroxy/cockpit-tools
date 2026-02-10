@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelQuota {
     pub name: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
     pub percentage: i32, // 剩余百分比 0-100
     pub reset_time: String,
 }
@@ -30,9 +32,16 @@ impl QuotaData {
         }
     }
 
-    pub fn add_model(&mut self, name: String, percentage: i32, reset_time: String) {
+    pub fn add_model(
+        &mut self,
+        name: String,
+        display_name: Option<String>,
+        percentage: i32,
+        reset_time: String,
+    ) {
         self.models.push(ModelQuota {
             name,
+            display_name,
             percentage,
             reset_time,
         });

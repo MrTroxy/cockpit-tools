@@ -93,7 +93,13 @@
       "vscodePathSelect": "選択",
       "vscodePathReset": "既定に戻す",
       "antigravityAppPath": "Antigravity アプリのパス",
-      "antigravityTitle": "Antigravity 起動"
+      "antigravityTitle": "Antigravity 起動",
+      "commonTitle": "共通",
+      "antigravitySettingsTitle": "Antigravity 設定",
+      "codexSettingsTitle": "Codex 設定",
+      "githubCopilotSettingsTitle": "GitHub Copilot 設定",
+      "ghcpAutoRefresh": "GitHub Copilot クォータの自動更新",
+      "ghcpAutoRefreshDesc": "バックグラウンド更新頻度"
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -154,7 +160,7 @@
       "actions": "操作"
     },
     "status": {
-      "current": "使用中",
+      "current": "現在",
       "disabled": "無効",
       "authInvalid": "Invalid credentials",
       "refreshFailed": "Refresh failed",
@@ -767,6 +773,15 @@
           "commandWin": "Windows: taskkill /F /PID <pid> (CODEX_HOME に一致するもの)"
         }
       }
+    },
+    "refreshSuccess": "クォータを更新しました",
+    "refreshFailed": "クォータの更新に失敗しました: {{error}}",
+    "refreshAllSuccess": "更新完了、{{count}} アカウント成功",
+    "refreshAllPartialFailed": "更新完了、{{success}} / {{total}} アカウント成功、一部失敗",
+    "quotaError": {
+      "badge": "クォータエラー",
+      "generic": "クォータの更新に失敗しました。後でもう一度お試しください",
+      "deactivatedWorkspace": "ワークスペースが無効です。アカウントを切り替えるか再認証してください"
     }
   },
   "dashboard": {
@@ -846,7 +861,8 @@
       "openFolder": "フォルダーを開く",
       "edit": "編集",
       "openRootDir": "フォルダーを開く",
-      "selectPath": "フォルダーを選択"
+      "selectPath": "フォルダーを選択",
+      "openWindow": "ウィンドウを開く"
     },
     "bulkConfirm": {
       "startAll": "停止中のすべてのインスタンスを開始しますか？",
@@ -1115,10 +1131,47 @@
     "export": "エクスポート",
     "flowNotice": {
       "title": "GitHub Copilot アカウントガイド（クリックで展開/折りたたみ）",
-      "desc": "現在の流れ: 新しいアカウントを認可 -> クォータを取得して表示 -> マルチインスタンス画面でアカウントを紐付け。",
-      "reason": "ワンクリックでアカウント切り替えができない理由: VS Code のログイン状態は GitHub セッションと拡張機能の SecretStorage で管理されており、外部アプリからこれらの認証情報を置き換えることはできません。",
-      "storage": "ログイン関連データの保存先: 主に VS Code の SecretStorage（システムのキーチェーン/資格情報マネージャー）とグローバル状態データベース（例: ~/Library/Application Support/Code/User/globalStorage/state.vscdb）。",
-      "alternative": "代替案: マルチインスタンス分離（異なる --user-data-dir）を利用します。インスタンスごとに一度ログインすれば、以後はインスタンス単位で起動して目的のアカウント環境へ素早く切り替えられます。"
-    }
+      "desc": "アカウント切り替えでは、VS Code のローカル認証ストレージを読み取り、システムの資格情報サービスを使って復号・再書き込みを行う必要があります。データは端末内のみで処理されます。",
+      "reason": "必要な権限: VS Code 認証データベース（state.vscdb）を読み取り、システム暗号化機能（Windows DPAPI / macOS Keychain / Linux Secret Service）を呼び出して復号・再書き込みを行います。",
+      "storage": "読み取り範囲: GitHub ログインセッション関連データのみを処理し、システム秘密鍵自体は変更せず、鍵やトークンをアップロードしません。",
+      "alternative": "代替案: マルチインスタンス分離（異なる --user-data-dir）を利用します。インスタンスごとに一度ログインすれば、以後はインスタンス単位で起動して目的のアカウント環境へ素早く切り替えられます。",
+      "inject": "ワンクリック切り替え: このツールはローカルの VS Code 暗号化情報（DPAPI/Keychain/Secret Service）を読み取り、state.vscdb 内の認証セッションを復号して GitHub Copilot トークンを置き換え、再暗号化します。処理はすべて端末内で完結します。"
+    },
+    "injectToVSCode": "VS Codeに切り替え",
+    "injecting": "注入中...",
+    "injectSuccess": "トークンをVS Codeに正常に注入しました。VS Codeを起動しています。",
+    "injectRequireClose": "注入する前にVS Codeを閉じてください。"
+  },
+  "quickSettings": {
+    "antigravity": {
+      "title": "Antigravity 設定",
+      "appPath": "アプリパス"
+    },
+    "codex": {
+      "title": "Codex 設定",
+      "appPath": "アプリパス"
+    },
+    "githubCopilot": {
+      "title": "GitHub Copilot 設定",
+      "appPath": "VS Code パス"
+    },
+    "refreshInterval": "クォータ自動更新",
+    "codexRefreshInterval": "クォータ自動更新",
+    "ghcpRefreshInterval": "クォータ自動更新",
+    "autoSwitch": {
+      "title": "自動切替",
+      "enable": "自動切替",
+      "threshold": "切替閾値",
+      "thresholdDesc": "任意のモデルのクォータがこのパーセンテージを下回ると自動切替がトリガーされます",
+      "hint": "任意のモデルのクォータが閾値を下回ると、最もクォータの多いアカウントに自動的に切り替えます。"
+    },
+    "customInput": "カスタム",
+    "apply": "適用",
+    "inputMinutes": "分数を入力",
+    "inputPercent": "パーセントを入力"
+  },
+  "privacy": {
+    "hideSensitive": "メールを隠す",
+    "showSensitive": "メールを表示"
   }
 }

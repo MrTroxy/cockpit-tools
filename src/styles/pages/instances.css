@@ -123,7 +123,7 @@
 .instances-list-header > div:nth-child(3) { width: 90px; flex-shrink: 0; margin-left: 0; } /* 状态 - 紧挨实例 */
 .instances-list-header > div:nth-child(4) { width: 320px; flex-shrink: 0; margin-left: auto; } /* 账号 */
 .instances-list-header > div:nth-child(5) { width: 80px; flex-shrink: 0; margin-left: auto; } /* PID */
-.instances-list-header > div:nth-child(6) { width: 136px; flex-shrink: 0; margin-left: auto; } /* 操作 */
+.instances-list-header > div:nth-child(6) { width: 168px; flex-shrink: 0; margin-left: auto; } /* 操作 */
 
 /* 表头各列对齐 - 统一左对齐 */
 .instances-list-header > div:nth-child(2) { text-align: left; } /* 实例 */
@@ -154,7 +154,7 @@
 .instance-item > div:nth-child(3) { width: 90px; flex-shrink: 0; margin-left: 0; } /* 状态 - 紧挨实例 */
 .instance-item > div:nth-child(4) { width: 320px; flex-shrink: 0; margin-left: auto; } /* 账号 */
 .instance-item > div:nth-child(5) { width: 80px; flex-shrink: 0; margin-left: auto; } /* PID */
-.instance-item > div:nth-child(6) { width: 136px; flex-shrink: 0; margin-left: auto; } /* 操作 */
+.instance-item > div:nth-child(6) { width: 168px; flex-shrink: 0; margin-left: auto; } /* 操作 */
 
 /* Sticky action column (match accounts page behavior) */
 .instances-list-header > div:nth-child(6) {
@@ -361,7 +361,7 @@
   gap: 2px;
   justify-content: flex-start;
   width: 100%;
-  min-width: 128px;
+  min-width: 168px;
   background: transparent;
   padding: 0;
 }

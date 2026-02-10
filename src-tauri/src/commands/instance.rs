@@ -52,25 +52,32 @@ pub async fn get_instance_defaults() -> Result<modules::instance::InstanceDefaul
 pub async fn list_instances() -> Result<Vec<InstanceProfileView>, String> {
     let store = modules::instance::load_instance_store()?;
     let default_settings = store.default_settings.clone();
+    let process_entries = modules::process::collect_antigravity_process_entries();
     let mut result: Vec<InstanceProfileView> = store
         .instances
         .into_iter()
         .map(|instance| {
-            let running = instance
-                .last_pid
-                .map(modules::process::is_pid_running)
-                .unwrap_or(false);
+            let resolved_pid = modules::process::resolve_antigravity_pid_from_entries(
+                instance.last_pid,
+                Some(&instance.user_data_dir),
+                &process_entries,
+            );
+            let running = resolved_pid.is_some();
             let initialized = is_profile_initialized(&instance.user_data_dir);
-            InstanceProfileView::from_profile(instance, running, initialized)
+            let mut view = InstanceProfileView::from_profile(instance, running, initialized);
+            view.last_pid = resolved_pid;
+            view
         })
         .collect();
 
     let default_dir = modules::instance::get_default_user_data_dir()?;
     let default_dir_str = default_dir.to_string_lossy().to_string();
-    let default_running = default_settings
-        .last_pid
-        .map(modules::process::is_pid_running)
-        .unwrap_or(false);
+    let default_pid = modules::process::resolve_antigravity_pid_from_entries(
+        default_settings.last_pid,
+        None,
+        &process_entries,
+    );
+    let default_running = default_pid.is_some();
     let default_bind_account_id = resolve_default_account_id(&default_settings);
     result.push(InstanceProfileView {
         id: DEFAULT_INSTANCE_ID.to_string(),
@@ -80,7 +87,7 @@ pub async fn list_instances() -> Result<Vec<InstanceProfileView>, String> {
         bind_account_id: default_bind_account_id,
         created_at: 0,
         last_launched_at: None,
-        last_pid: default_settings.last_pid,
+        last_pid: default_pid,
         running: default_running,
         initialized: modules::instance::is_profile_initialized(&default_dir),
         is_default: true,
@@ -194,6 +201,12 @@ pub async fn start_instance(instance_id: String) -> Result<InstanceProfileView, 
         let default_dir_str = default_dir.to_string_lossy().to_string();
         let default_settings = modules::instance::load_default_settings()?;
         let default_bind_account_id = resolve_default_account_id(&default_settings);
+        if let Some(pid) =
+            modules::process::resolve_antigravity_pid(default_settings.last_pid, None)
+        {
+            modules::process::close_pid(pid, 20)?;
+            let _ = modules::instance::update_default_pid(None)?;
+        }
         if let Some(ref account_id) = default_bind_account_id {
             let _ = modules::prepare_account_for_injection(account_id).await?;
             modules::instance::inject_account_to_profile(&default_dir, account_id)?;
@@ -224,6 +237,14 @@ pub async fn start_instance(instance_id: String) -> Result<InstanceProfileView, 
         .find(|item| item.id == instance_id)
         .ok_or("实例不存在")?;
 
+    if let Some(pid) = modules::process::resolve_antigravity_pid(
+        instance.last_pid,
+        Some(&instance.user_data_dir),
+    ) {
+        modules::process::close_pid(pid, 20)?;
+        let _ = modules::instance::update_instance_pid(&instance.id, None)?;
+    }
+
     if let Some(ref account_id) = instance.bind_account_id {
         let _ = modules::prepare_account_for_injection(account_id).await?;
         let profile_dir = std::path::PathBuf::from(&instance.user_data_dir);
@@ -244,10 +265,12 @@ pub async fn stop_instance(instance_id: String) -> Result<InstanceProfileView, S
         let default_dir = modules::instance::get_default_user_data_dir()?;
         let default_dir_str = default_dir.to_string_lossy().to_string();
         let default_settings = modules::instance::load_default_settings()?;
-        if let Some(pid) = default_settings.last_pid {
+        if let Some(pid) =
+            modules::process::resolve_antigravity_pid(default_settings.last_pid, None)
+        {
             modules::process::close_pid(pid, 20)?;
-            let _ = modules::instance::update_default_pid(None)?;
         }
+        let _ = modules::instance::update_default_pid(None)?;
         let running = false;
         let default_bind_account_id = resolve_default_account_id(&default_settings);
         return Ok(InstanceProfileView {
@@ -273,7 +296,10 @@ pub async fn stop_instance(instance_id: String) -> Result<InstanceProfileView, S
         .find(|item| item.id == instance_id)
         .ok_or("实例不存在")?;
 
-    if let Some(pid) = instance.last_pid {
+    if let Some(pid) = modules::process::resolve_antigravity_pid(
+        instance.last_pid,
+        Some(&instance.user_data_dir),
+    ) {
         modules::process::close_pid(pid, 20)?;
     }
     let updated = modules::instance::update_instance_pid(&instance.id, None)?;
@@ -282,51 +308,19 @@ pub async fn stop_instance(instance_id: String) -> Result<InstanceProfileView, S
 }
 
 #[tauri::command]
-pub async fn force_stop_instance(instance_id: String) -> Result<InstanceProfileView, String> {
-    if instance_id == DEFAULT_INSTANCE_ID {
-        let default_dir = modules::instance::get_default_user_data_dir()?;
-        let default_dir_str = default_dir.to_string_lossy().to_string();
-        let default_settings = modules::instance::load_default_settings()?;
-        if let Some(pid) = default_settings.last_pid {
-            modules::process::force_kill_pid(pid)?;
-            let _ = modules::instance::update_default_pid(None)?;
-        }
-        let running = false;
-        let default_bind_account_id = resolve_default_account_id(&default_settings);
-        return Ok(InstanceProfileView {
-            id: DEFAULT_INSTANCE_ID.to_string(),
-            name: String::new(),
-            user_data_dir: default_dir_str,
-            extra_args: default_settings.extra_args,
-            bind_account_id: default_bind_account_id,
-            created_at: 0,
-            last_launched_at: None,
-            last_pid: None,
-            running,
-            initialized: modules::instance::is_profile_initialized(&default_dir),
-            is_default: true,
-            follow_local_account: default_settings.follow_local_account,
-        });
-    }
-
-    let store = modules::instance::load_instance_store()?;
-    let instance = store
-        .instances
-        .into_iter()
-        .find(|item| item.id == instance_id)
-        .ok_or("实例不存在")?;
-
-    if let Some(pid) = instance.last_pid {
-        modules::process::force_kill_pid(pid)?;
-    }
-    let updated = modules::instance::update_instance_pid(&instance.id, None)?;
-    let initialized = is_profile_initialized(&updated.user_data_dir);
-    Ok(InstanceProfileView::from_profile(updated, false, initialized))
-}
-
-#[tauri::command]
 pub async fn close_all_instances() -> Result<(), String> {
-    modules::process::close_antigravity(20)?;
+    let store = modules::instance::load_instance_store()?;
+    let default_dir = modules::instance::get_default_user_data_dir()?;
+    let mut target_dirs: Vec<String> = Vec::new();
+    target_dirs.push(default_dir.to_string_lossy().to_string());
+    for instance in &store.instances {
+        let dir = instance.user_data_dir.trim();
+        if !dir.is_empty() {
+            target_dirs.push(dir.to_string());
+        }
+    }
+
+    modules::process::close_antigravity_instances(&target_dirs, 20)?;
     let _ = modules::instance::clear_all_pids();
     Ok(())
 }
@@ -334,8 +328,15 @@ pub async fn close_all_instances() -> Result<(), String> {
 #[tauri::command]
 pub async fn open_instance_window(instance_id: String) -> Result<(), String> {
     if instance_id == DEFAULT_INSTANCE_ID {
-        let pid = modules::process::start_antigravity()?;
-        let _ = modules::instance::update_default_pid(Some(pid))?;
+        let default_settings = modules::instance::load_default_settings()?;
+        if let Err(err) = modules::process::focus_antigravity_instance(default_settings.last_pid, None) {
+            modules::logger::log_warn(&format!(
+                "定位 Antigravity 默认实例窗口失败，回退为启动实例: {}",
+                err
+            ));
+            let pid = modules::process::start_antigravity()?;
+            let _ = modules::instance::update_default_pid(Some(pid))?;
+        }
         return Ok(());
     }
 
@@ -346,8 +347,17 @@ pub async fn open_instance_window(instance_id: String) -> Result<(), String> {
         .find(|item| item.id == instance_id)
         .ok_or("实例不存在")?;
 
-    let extra_args = modules::process::parse_extra_args(&instance.extra_args);
-    let pid = modules::process::start_antigravity_with_args(&instance.user_data_dir, &extra_args)?;
-    let _ = modules::instance::update_instance_after_start(&instance.id, pid)?;
+    if let Err(err) = modules::process::focus_antigravity_instance(
+        instance.last_pid,
+        Some(&instance.user_data_dir),
+    ) {
+        modules::logger::log_warn(&format!(
+            "定位 Antigravity 实例窗口失败，回退为启动实例: instance_id={}, err={}",
+            instance.id, err
+        ));
+        let extra_args = modules::process::parse_extra_args(&instance.extra_args);
+        let pid = modules::process::start_antigravity_with_args(&instance.user_data_dir, &extra_args)?;
+        let _ = modules::instance::update_instance_after_start(&instance.id, pid)?;
+    }
     Ok(())
 }

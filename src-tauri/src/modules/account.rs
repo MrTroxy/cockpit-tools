@@ -1,14 +1,20 @@
+use serde::Serialize;
+use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
-use uuid::Uuid;
-use serde::Serialize;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-use std::collections::HashSet;
+use uuid::Uuid;
 
-use crate::models::{Account, AccountIndex, AccountSummary, TokenData, QuotaData, DeviceProfile, DeviceProfileVersion, QuotaErrorInfo};
+use crate::models::{
+    Account, AccountIndex, AccountSummary, DeviceProfile, DeviceProfileVersion, QuotaData,
+    QuotaErrorInfo, TokenData,
+};
 use crate::modules;
 
-static ACCOUNT_INDEX_LOCK: std::sync::LazyLock<Mutex<()>> = std::sync::LazyLock::new(|| Mutex::new(()));
+static ACCOUNT_INDEX_LOCK: std::sync::LazyLock<Mutex<()>> =
+    std::sync::LazyLock::new(|| Mutex::new(()));
+static AUTO_SWITCH_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
 
 // 使用与 AntigravityCockpit 插件相同的数据目录
 const DATA_DIR: &str = ".antigravity_cockpit";
@@ -19,12 +25,11 @@ const ACCOUNTS_DIR: &str = "accounts";
 pub fn get_data_dir() -> Result<PathBuf, String> {
     let home = dirs::home_dir().ok_or("无法获取用户主目录")?;
     let data_dir = home.join(DATA_DIR);
-    
+
     if !data_dir.exists() {
-        fs::create_dir_all(&data_dir)
-            .map_err(|e| format!("创建数据目录失败: {}", e))?;
+        fs::create_dir_all(&data_dir).map_err(|e| format!("创建数据目录失败: {}", e))?;
     }
-    
+
     Ok(data_dir)
 }
 
@@ -32,12 +37,11 @@ pub fn get_data_dir() -> Result<PathBuf, String> {
 pub fn get_accounts_dir() -> Result<PathBuf, String> {
     let data_dir = get_data_dir()?;
     let accounts_dir = data_dir.join(ACCOUNTS_DIR);
-    
+
     if !accounts_dir.exists() {
-        fs::create_dir_all(&accounts_dir)
-            .map_err(|e| format!("创建账号目录失败: {}", e))?;
+        fs::create_dir_all(&accounts_dir).map_err(|e| format!("创建账号目录失败: {}", e))?;
     }
-    
+
     Ok(accounts_dir)
 }
 
@@ -45,18 +49,18 @@ pub fn get_accounts_dir() -> Result<PathBuf, String> {
 pub fn load_account_index() -> Result<AccountIndex, String> {
     let data_dir = get_data_dir()?;
     let index_path = data_dir.join(ACCOUNTS_INDEX);
-    
+
     if !index_path.exists() {
         return Ok(AccountIndex::new());
     }
-    
-    let content = fs::read_to_string(&index_path)
-        .map_err(|e| format!("读取账号索引失败: {}", e))?;
-    
+
+    let content =
+        fs::read_to_string(&index_path).map_err(|e| format!("读取账号索引失败: {}", e))?;
+
     if content.trim().is_empty() {
         return Ok(AccountIndex::new());
     }
-    
+
     serde_json::from_str(&content).map_err(|e| {
         crate::error::file_corrupted_error(
             ACCOUNTS_INDEX,
@@ -71,43 +75,39 @@ pub fn save_account_index(index: &AccountIndex) -> Result<(), String> {
     let data_dir = get_data_dir()?;
     let index_path = data_dir.join(ACCOUNTS_INDEX);
     let temp_path = data_dir.join(format!("{}.tmp", ACCOUNTS_INDEX));
-    
-    let content = serde_json::to_string_pretty(index)
-        .map_err(|e| format!("序列化账号索引失败: {}", e))?;
-    
-    fs::write(&temp_path, content)
-        .map_err(|e| format!("写入临时索引文件失败: {}", e))?;
-        
-    fs::rename(temp_path, index_path)
-        .map_err(|e| format!("替换索引文件失败: {}", e))
+
+    let content =
+        serde_json::to_string_pretty(index).map_err(|e| format!("序列化账号索引失败: {}", e))?;
+
+    fs::write(&temp_path, content).map_err(|e| format!("写入临时索引文件失败: {}", e))?;
+
+    fs::rename(temp_path, index_path).map_err(|e| format!("替换索引文件失败: {}", e))
 }
 
 /// 加载账号数据
 pub fn load_account(account_id: &str) -> Result<Account, String> {
     let accounts_dir = get_accounts_dir()?;
     let account_path = accounts_dir.join(format!("{}.json", account_id));
-    
+
     if !account_path.exists() {
         return Err(format!("账号不存在: {}", account_id));
     }
-    
-    let content = fs::read_to_string(&account_path)
-        .map_err(|e| format!("读取账号数据失败: {}", e))?;
-    
-    serde_json::from_str(&content)
-        .map_err(|e| format!("解析账号数据失败: {}", e))
+
+    let content =
+        fs::read_to_string(&account_path).map_err(|e| format!("读取账号数据失败: {}", e))?;
+
+    serde_json::from_str(&content).map_err(|e| format!("解析账号数据失败: {}", e))
 }
 
 /// 保存账号数据
 pub fn save_account(account: &Account) -> Result<(), String> {
     let accounts_dir = get_accounts_dir()?;
     let account_path = accounts_dir.join(format!("{}.json", account.id));
-    
-    let content = serde_json::to_string_pretty(account)
-        .map_err(|e| format!("序列化账号数据失败: {}", e))?;
-    
-    fs::write(&account_path, content)
-        .map_err(|e| format!("保存账号数据失败: {}", e))
+
+    let content =
+        serde_json::to_string_pretty(account).map_err(|e| format!("序列化账号数据失败: {}", e))?;
+
+    fs::write(&account_path, content).map_err(|e| format!("保存账号数据失败: {}", e))
 }
 
 fn normalize_tags(tags: Vec<String>) -> Result<Vec<String>, String> {
@@ -149,40 +149,46 @@ pub fn list_accounts() -> Result<Vec<Account>, String> {
     modules::logger::log_info("开始列出账号...");
     let index = load_account_index()?;
     let mut accounts = Vec::new();
-    
+
     for summary in &index.accounts {
         match load_account(&summary.id) {
             Ok(mut account) => {
                 let _ = modules::quota_cache::apply_cached_quota(&mut account, "authorized");
                 accounts.push(account);
-            },
+            }
             Err(e) => {
                 modules::logger::log_error(&format!("加载账号失败: {}", e));
             }
         }
     }
-    
+
     Ok(accounts)
 }
 
 /// 添加账号
-pub fn add_account(email: String, name: Option<String>, token: TokenData) -> Result<Account, String> {
-    let _lock = ACCOUNT_INDEX_LOCK.lock().map_err(|e| format!("获取锁失败: {}", e))?;
+pub fn add_account(
+    email: String,
+    name: Option<String>,
+    token: TokenData,
+) -> Result<Account, String> {
+    let _lock = ACCOUNT_INDEX_LOCK
+        .lock()
+        .map_err(|e| format!("获取锁失败: {}", e))?;
     let mut index = load_account_index()?;
-    
+
     if index.accounts.iter().any(|s| s.email == email) {
         return Err(format!("账号已存在: {}", email));
     }
-    
+
     let account_id = Uuid::new_v4().to_string();
     let mut account = Account::new(account_id.clone(), email.clone(), token);
     account.name = name.clone();
 
     let fingerprint = crate::modules::fingerprint::generate_fingerprint(email.clone())?;
     account.fingerprint_id = Some(fingerprint.id.clone());
-    
+
     save_account(&account)?;
-    
+
     index.accounts.push(AccountSummary {
         id: account_id.clone(),
         email: email.clone(),
@@ -190,25 +196,33 @@ pub fn add_account(email: String, name: Option<String>, token: TokenData) -> Res
         created_at: account.created_at,
         last_used: account.last_used,
     });
-    
+
     if index.current_account_id.is_none() {
         index.current_account_id = Some(account_id);
     }
-    
+
     save_account_index(&index)?;
-    
+
     Ok(account)
 }
 
 /// 添加或更新账号
-pub fn upsert_account(email: String, name: Option<String>, token: TokenData) -> Result<Account, String> {
-    let _lock = ACCOUNT_INDEX_LOCK.lock().map_err(|e| format!("获取锁失败: {}", e))?;
+pub fn upsert_account(
+    email: String,
+    name: Option<String>,
+    token: TokenData,
+) -> Result<Account, String> {
+    let _lock = ACCOUNT_INDEX_LOCK
+        .lock()
+        .map_err(|e| format!("获取锁失败: {}", e))?;
     let mut index = load_account_index()?;
-    
-    let existing_account_id = index.accounts.iter()
+
+    let existing_account_id = index
+        .accounts
+        .iter()
         .find(|s| s.email == email)
         .map(|s| s.id.clone());
-    
+
     if let Some(account_id) = existing_account_id {
         match load_account(&account_id) {
             Ok(mut account) => {
@@ -221,12 +235,12 @@ pub fn upsert_account(email: String, name: Option<String>, token: TokenData) -> 
                 }
                 account.update_last_used();
                 save_account(&account)?;
-                
+
                 if let Some(idx_summary) = index.accounts.iter_mut().find(|s| s.id == account_id) {
                     idx_summary.name = name;
                     save_account_index(&index)?;
                 }
-                
+
                 return Ok(account);
             }
             Err(e) => {
@@ -236,102 +250,108 @@ pub fn upsert_account(email: String, name: Option<String>, token: TokenData) -> 
                 let fingerprint = crate::modules::fingerprint::generate_fingerprint(email.clone())?;
                 account.fingerprint_id = Some(fingerprint.id.clone());
                 save_account(&account)?;
-                
+
                 if let Some(idx_summary) = index.accounts.iter_mut().find(|s| s.id == account_id) {
                     idx_summary.name = name;
                     save_account_index(&index)?;
                 }
-                
+
                 return Ok(account);
             }
         }
     }
-    
+
     drop(_lock);
     add_account(email, name, token)
 }
 
 /// 删除账号
 pub fn delete_account(account_id: &str) -> Result<(), String> {
-    let _lock = ACCOUNT_INDEX_LOCK.lock().map_err(|e| format!("获取锁失败: {}", e))?;
+    let _lock = ACCOUNT_INDEX_LOCK
+        .lock()
+        .map_err(|e| format!("获取锁失败: {}", e))?;
     let mut index = load_account_index()?;
-    
+
     let original_len = index.accounts.len();
     index.accounts.retain(|s| s.id != account_id);
-    
+
     if index.accounts.len() == original_len {
         return Err(format!("找不到账号 ID: {}", account_id));
     }
-    
+
     if index.current_account_id.as_deref() == Some(account_id) {
         index.current_account_id = index.accounts.first().map(|s| s.id.clone());
     }
-    
+
     save_account_index(&index)?;
-    
+
     let accounts_dir = get_accounts_dir()?;
     let account_path = accounts_dir.join(format!("{}.json", account_id));
-    
+
     if account_path.exists() {
-        fs::remove_file(&account_path)
-            .map_err(|e| format!("删除账号文件失败: {}", e))?;
+        fs::remove_file(&account_path).map_err(|e| format!("删除账号文件失败: {}", e))?;
     }
-    
+
     Ok(())
 }
 
 /// 批量删除账号
 pub fn delete_accounts(account_ids: &[String]) -> Result<(), String> {
-    let _lock = ACCOUNT_INDEX_LOCK.lock().map_err(|e| format!("获取锁失败: {}", e))?;
+    let _lock = ACCOUNT_INDEX_LOCK
+        .lock()
+        .map_err(|e| format!("获取锁失败: {}", e))?;
     let mut index = load_account_index()?;
-    
+
     let accounts_dir = get_accounts_dir()?;
-    
+
     for account_id in account_ids {
         index.accounts.retain(|s| &s.id != account_id);
-        
+
         if index.current_account_id.as_deref() == Some(account_id) {
             index.current_account_id = None;
         }
-        
+
         let account_path = accounts_dir.join(format!("{}.json", account_id));
         if account_path.exists() {
             let _ = fs::remove_file(&account_path);
         }
     }
-    
+
     if index.current_account_id.is_none() {
         index.current_account_id = index.accounts.first().map(|s| s.id.clone());
     }
-    
+
     save_account_index(&index)
 }
 
 /// 重新排序账号列表
 pub fn reorder_accounts(account_ids: &[String]) -> Result<(), String> {
-    let _lock = ACCOUNT_INDEX_LOCK.lock().map_err(|e| format!("获取锁失败: {}", e))?;
+    let _lock = ACCOUNT_INDEX_LOCK
+        .lock()
+        .map_err(|e| format!("获取锁失败: {}", e))?;
     let mut index = load_account_index()?;
-    
-    let id_to_summary: std::collections::HashMap<_, _> = index.accounts
+
+    let id_to_summary: std::collections::HashMap<_, _> = index
+        .accounts
         .iter()
         .map(|s| (s.id.clone(), s.clone()))
         .collect();
-    
+
     let mut new_accounts = Vec::new();
     for id in account_ids {
         if let Some(summary) = id_to_summary.get(id) {
             new_accounts.push(summary.clone());
         }
     }
-    
+
     for summary in &index.accounts {
         if !account_ids.contains(&summary.id) {
             new_accounts.push(summary.clone());
         }
     }
-    
+
     index.accounts = new_accounts;
-    
+
     save_account_index(&index)
 }
 
@@ -354,16 +374,18 @@ pub fn get_current_account() -> Result<Option<Account>, String> {
 
 /// 设置当前激活账号 ID
 pub fn set_current_account_id(account_id: &str) -> Result<(), String> {
-    let _lock = ACCOUNT_INDEX_LOCK.lock().map_err(|e| format!("获取锁失败: {}", e))?;
+    let _lock = ACCOUNT_INDEX_LOCK
+        .lock()
+        .map_err(|e| format!("获取锁失败: {}", e))?;
     let mut index = load_account_index()?;
     index.current_account_id = Some(account_id.to_string());
     save_account_index(&index)?;
-    
+
     // 同时写入 current_account.json 供扩展读取
     if let Ok(account) = load_account(account_id) {
         let _ = save_current_account_file(&account.email);
     }
-    
+
     Ok(())
 }
 
@@ -371,23 +393,21 @@ pub fn set_current_account_id(account_id: &str) -> Result<(), String> {
 fn save_current_account_file(email: &str) -> Result<(), String> {
     use std::fs;
     use std::io::Write;
-    
+
     let data_dir = get_data_dir()?;
     let file_path = data_dir.join("current_account.json");
-    
+
     let content = serde_json::json!({
         "email": email,
         "updated_at": chrono::Utc::now().timestamp()
     });
-    
-    let json = serde_json::to_string_pretty(&content)
-        .map_err(|e| format!("序列化失败: {}", e))?;
-    
-    let mut file = fs::File::create(&file_path)
-        .map_err(|e| format!("创建文件失败: {}", e))?;
+
+    let json = serde_json::to_string_pretty(&content).map_err(|e| format!("序列化失败: {}", e))?;
+
+    let mut file = fs::File::create(&file_path).map_err(|e| format!("创建文件失败: {}", e))?;
     file.write_all(json.as_bytes())
         .map_err(|e| format!("写入文件失败: {}", e))?;
-    
+
     modules::logger::log_info("已保存当前账号");
     Ok(())
 }
@@ -395,7 +415,7 @@ fn save_current_account_file(email: &str) -> Result<(), String> {
 /// 更新账号配额
 pub fn update_account_quota(account_id: &str, quota: QuotaData) -> Result<(), String> {
     let mut account = load_account(account_id)?;
-    
+
     // 容错：如果新获取的 models 为空，但之前有数据，保留原来的 models
     if quota.models.is_empty() {
         if let Some(ref existing_quota) = account.quota {
@@ -415,7 +435,7 @@ pub fn update_account_quota(account_id: &str, quota: QuotaData) -> Result<(), St
             }
         }
     }
-    
+
     account.update_quota(quota);
     save_account(&account)?;
     if let Some(ref quota) = account.quota {
@@ -437,18 +457,20 @@ pub fn get_device_profiles(account_id: &str) -> Result<DeviceProfiles, String> {
     let storage_path = crate::modules::device::get_storage_path()?;
     let current = crate::modules::device::read_profile(&storage_path).ok();
     let account = load_account(account_id)?;
-    
+
     // 获取账号绑定的指纹
-    let bound = account.fingerprint_id.as_ref()
+    let bound = account
+        .fingerprint_id
+        .as_ref()
         .and_then(|fp_id| crate::modules::fingerprint::get_fingerprint(fp_id).ok())
         .map(|fp| fp.profile);
-    
+
     // 获取原始指纹
     let baseline = crate::modules::fingerprint::load_fingerprint_store()
         .ok()
         .and_then(|store| store.original_baseline)
         .map(|fp| fp.profile);
-    
+
     Ok(DeviceProfiles {
         current_storage: current,
         bound_profile: bound,
@@ -460,43 +482,46 @@ pub fn get_device_profiles(account_id: &str) -> Result<DeviceProfiles, String> {
 /// 绑定设备指纹（兼容旧 API，现在会创建新指纹并绑定）
 pub fn bind_device_profile(account_id: &str, mode: &str) -> Result<DeviceProfile, String> {
     let name = format!("自动生成 {}", chrono::Utc::now().format("%Y-%m-%d %H:%M"));
-    
+
     let fingerprint = match mode {
         "capture" => crate::modules::fingerprint::capture_fingerprint(name)?,
         "generate" => crate::modules::fingerprint::generate_fingerprint(name)?,
         _ => return Err("mode 只能是 capture 或 generate".to_string()),
     };
-    
+
     // 绑定到账号
     let mut account = load_account(account_id)?;
     account.fingerprint_id = Some(fingerprint.id.clone());
     save_account(&account)?;
-    
+
     Ok(fingerprint.profile)
 }
 
 /// 使用指定的 profile 绑定（创建新指纹并绑定）
-pub fn bind_device_profile_with_profile(account_id: &str, profile: DeviceProfile) -> Result<DeviceProfile, String> {
+pub fn bind_device_profile_with_profile(
+    account_id: &str,
+    profile: DeviceProfile,
+) -> Result<DeviceProfile, String> {
     use crate::modules::fingerprint;
-    
+
     let name = format!("自动生成 {}", chrono::Utc::now().format("%Y-%m-%d %H:%M"));
-    
+
     // 创建新指纹
     let mut store = fingerprint::load_fingerprint_store()?;
     let fp = fingerprint::Fingerprint::new(name, profile.clone());
     store.fingerprints.push(fp.clone());
     fingerprint::save_fingerprint_store(&store)?;
-    
+
     // 绑定到账号
     let mut account = load_account(account_id)?;
     account.fingerprint_id = Some(fp.id.clone());
     save_account(&account)?;
-    
+
     // 应用到系统
     if let Ok(storage_path) = crate::modules::device::get_storage_path() {
         let _ = crate::modules::device::write_profile(&storage_path, &fp.profile);
     }
-    
+
     Ok(fp.profile)
 }
 
@@ -506,7 +531,10 @@ pub fn list_device_versions(account_id: &str) -> Result<DeviceProfiles, String> 
 }
 
 /// 恢复指纹版本（兼容旧 API）
-pub fn restore_device_version(_account_id: &str, version_id: &str) -> Result<DeviceProfile, String> {
+pub fn restore_device_version(
+    _account_id: &str,
+    version_id: &str,
+) -> Result<DeviceProfile, String> {
     // 直接应用指定的指纹
     let fingerprint = crate::modules::fingerprint::get_fingerprint(version_id)?;
     let _ = crate::modules::fingerprint::apply_fingerprint(version_id);
@@ -525,6 +553,120 @@ pub struct RefreshStats {
     pub success: usize,
     pub failed: usize,
     pub details: Vec<String>,
+}
+
+fn normalize_auto_switch_threshold(raw: i32) -> i32 {
+    raw.clamp(1, 100)
+}
+
+fn should_trigger_auto_switch(account: &Account, threshold: i32) -> bool {
+    if account.disabled {
+        return true;
+    }
+
+    let Some(quota) = account.quota.as_ref() else {
+        return false;
+    };
+
+    if quota.is_forbidden {
+        return true;
+    }
+
+    quota.models.iter().any(|m| m.percentage < threshold)
+}
+
+fn can_be_auto_switch_candidate(account: &Account, current_id: &str, threshold: i32) -> bool {
+    if account.id == current_id || account.disabled {
+        return false;
+    }
+
+    let Some(quota) = account.quota.as_ref() else {
+        return false;
+    };
+
+    if quota.is_forbidden || quota.models.is_empty() {
+        return false;
+    }
+
+    quota.models.iter().all(|m| m.percentage >= threshold)
+}
+
+fn average_quota_percentage(account: &Account) -> f64 {
+    let Some(quota) = account.quota.as_ref() else {
+        return 0.0;
+    };
+    if quota.models.is_empty() {
+        return 0.0;
+    }
+    let sum: i32 = quota.models.iter().map(|m| m.percentage).sum();
+    sum as f64 / quota.models.len() as f64
+}
+
+async fn run_auto_switch_if_needed_inner() -> Result<Option<Account>, String> {
+    let cfg = crate::modules::config::get_user_config();
+    if !cfg.auto_switch_enabled {
+        return Ok(None);
+    }
+
+    let threshold = normalize_auto_switch_threshold(cfg.auto_switch_threshold);
+    let current_id = match get_current_account_id()? {
+        Some(id) => id,
+        None => return Ok(None),
+    };
+
+    let accounts = list_accounts()?;
+    let current = match accounts.iter().find(|a| a.id == current_id) {
+        Some(acc) => acc,
+        None => return Ok(None),
+    };
+
+    if !should_trigger_auto_switch(current, threshold) {
+        return Ok(None);
+    }
+
+    let mut candidates: Vec<Account> = accounts
+        .into_iter()
+        .filter(|a| can_be_auto_switch_candidate(a, &current_id, threshold))
+        .collect();
+
+    if candidates.is_empty() {
+        modules::logger::log_warn(&format!(
+            "[AutoSwitch] 当前账号低于阈值 {}%，但没有可切换候选账号",
+            threshold
+        ));
+        return Ok(None);
+    }
+
+    candidates.sort_by(|a, b| {
+        let avg_a = average_quota_percentage(a);
+        let avg_b = average_quota_percentage(b);
+        avg_b
+            .partial_cmp(&avg_a)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.last_used.cmp(&b.last_used))
+    });
+
+    let target = &candidates[0];
+    modules::logger::log_info(&format!(
+        "[AutoSwitch] 触发自动切号: current_id={}, target_id={}, threshold={}%",
+        current_id, target.id, threshold
+    ));
+
+    let switched = switch_account_internal(&target.id).await?;
+    modules::websocket::broadcast_account_switched(&switched.id, &switched.email);
+    modules::websocket::broadcast_data_changed("auto_switch");
+    Ok(Some(switched))
+}
+
+pub async fn run_auto_switch_if_needed() -> Result<Option<Account>, String> {
+    if AUTO_SWITCH_IN_PROGRESS.swap(true, Ordering::SeqCst) {
+        modules::logger::log_info("[AutoSwitch] 自动切号进行中，跳过本次检查");
+        return Ok(None);
+    }
+
+    let result = run_auto_switch_if_needed_inner().await;
+    AUTO_SWITCH_IN_PROGRESS.store(false, Ordering::SeqCst);
+    result
 }
 
 /// 批量刷新所有账号配额
@@ -618,10 +760,13 @@ pub async fn refresh_all_quotas_logic() -> Result<RefreshStats, String> {
 
 /// 带重试的配额查询
 /// skip_cache: 是否跳过缓存，单个账号刷新应传 true
-pub async fn fetch_quota_with_retry(account: &mut Account, skip_cache: bool) -> crate::error::AppResult<QuotaData> {
-    use crate::modules::oauth;
+pub async fn fetch_quota_with_retry(
+    account: &mut Account,
+    skip_cache: bool,
+) -> crate::error::AppResult<QuotaData> {
     use crate::error::AppError;
-    
+    use crate::modules::oauth;
+
     let token = match oauth::ensure_fresh_token(&account.token).await {
         Ok(t) => t,
         Err(e) => {
@@ -640,13 +785,14 @@ pub async fn fetch_quota_with_retry(account: &mut Account, skip_cache: bool) -> 
             return Err(AppError::OAuth(e));
         }
     };
-    
+
     if token.access_token != account.token.access_token {
         account.token = token.clone();
         let _ = upsert_account(account.email.clone(), account.name.clone(), token.clone());
     }
 
-    let result = modules::quota::fetch_quota(&account.token.access_token, &account.email, skip_cache).await;
+    let result =
+        modules::quota::fetch_quota(&account.token.access_token, &account.email, skip_cache).await;
     match result {
         Ok(payload) => {
             account.quota_error = payload.error.map(|err| QuotaErrorInfo {
@@ -672,66 +818,61 @@ pub async fn fetch_quota_with_retry(account: &mut Account, skip_cache: bool) -> 
 /// 内部切换账号函数（供 WebSocket 调用）
 /// 完整流程：Token刷新 + 关闭程序 + 注入 + 指纹同步 + 重启
 pub async fn switch_account_internal(account_id: &str) -> Result<Account, String> {
-    use std::fs;
-    
     modules::logger::log_info("[Switch] 开始切换账号");
-    
+
     // 1. 加载并验证账号存在
     let mut account = prepare_account_for_injection(account_id).await?;
     modules::logger::log_info("[Switch] 正在切换到账号");
-    
-    // 3. 关闭 Antigravity（等待最多 20 秒）
-    if modules::process::is_antigravity_running() {
-        modules::logger::log_info("[Switch] 检测到 Antigravity 正在运行，正在关闭...");
-        modules::process::close_antigravity(20)?;
-    }
-    
-    // 4. 写入设备指纹到 storage.json
+
+    // 3. 写入设备指纹到 storage.json
     if let Ok(storage_path) = modules::device::get_storage_path() {
         if let Some(ref fp_id) = account.fingerprint_id {
             // 优先使用绑定的指纹
             if let Ok(fingerprint) = modules::fingerprint::get_fingerprint(fp_id) {
                 modules::logger::log_info("[Switch] 写入设备指纹");
                 let _ = modules::device::write_profile(&storage_path, &fingerprint.profile);
-                let _ = modules::db::write_service_machine_id(&fingerprint.profile.service_machine_id);
+                let _ =
+                    modules::db::write_service_machine_id(&fingerprint.profile.service_machine_id);
             }
         }
     }
-    
-    // 5. 备份数据库
-    let db_path = modules::db::get_db_path()?;
-    if db_path.exists() {
-        let backup_path = db_path.with_extension("vscdb.backup");
-        if let Err(e) = fs::copy(&db_path, &backup_path) {
-            modules::logger::log_warn(&format!("[Switch] 备份数据库失败: {}", e));
-        } else {
-            modules::logger::log_info("[Switch] 数据库已备份");
-        }
-    }
-    
-    // 6. 注入 Token 到 Antigravity 数据库
-    modules::logger::log_info("[Switch] 正在注入 Token 到数据库...");
-    modules::db::inject_token(
-        &account.token.access_token,
-        &account.token.refresh_token,
-        account.token.expiry_timestamp,
-    ).map_err(|e| {
-        modules::logger::log_error(&format!("[Switch] Token 注入失败: {}", e));
-        e
-    })?;
-    
-    // 7. 更新工具内部状态
+
+    // 4. 更新工具内部状态
     set_current_account_id(account_id)?;
     account.update_last_used();
     save_account(&account)?;
-    
-    // 8. 重启 Antigravity
-    modules::logger::log_info("[Switch] 正在重启 Antigravity...");
-    if let Err(e) = modules::process::start_antigravity() {
-        modules::logger::log_warn(&format!("[Switch] Antigravity 启动失败: {}", e));
-        // 不中断流程，允许用户手动启动
+
+    // 5. 同步更新默认实例绑定账号，确保默认实例注入目标明确
+    if let Err(e) = modules::instance::update_default_settings(
+        Some(Some(account_id.to_string())),
+        None,
+        Some(false),
+    ) {
+        modules::logger::log_warn(&format!("[Switch] 更新默认实例绑定账号失败: {}", e));
     }
-    
+
+    // 6. 对齐默认实例启动逻辑：按 PID 精准关闭旧进程，再注入默认实例目录
+    let default_settings = modules::instance::load_default_settings()?;
+    if let Some(pid) = modules::process::resolve_antigravity_pid(default_settings.last_pid, None) {
+        modules::logger::log_info(&format!("[Switch] 命中默认实例 PID={}，准备关闭", pid));
+        modules::process::close_pid(pid, 20)?;
+        let _ = modules::instance::update_default_pid(None);
+    }
+    let default_dir = modules::instance::get_default_user_data_dir()?;
+    modules::instance::inject_account_to_profile(&default_dir, account_id)?;
+
+    // 7. 启动 Antigravity（启动失败不阻断切号，保持原行为）
+    modules::logger::log_info("[Switch] 正在启动 Antigravity 默认实例...");
+    match modules::process::start_antigravity() {
+        Ok(pid) => {
+            let _ = modules::instance::update_default_pid(Some(pid));
+        }
+        Err(e) => {
+            modules::logger::log_warn(&format!("[Switch] Antigravity 启动失败: {}", e));
+            // 不中断流程，允许用户手动启动
+        }
+    }
+
     modules::logger::log_info("[Switch] 账号切换完成");
     Ok(account)
 }

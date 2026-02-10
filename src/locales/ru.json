@@ -93,7 +93,13 @@
       "vscodePathSelect": "Выбрать",
       "vscodePathReset": "Сбросить по умолчанию",
       "antigravityAppPath": "Путь к приложению Antigravity",
-      "antigravityTitle": "Запуск Antigravity"
+      "antigravityTitle": "Запуск Antigravity",
+      "commonTitle": "Общие",
+      "antigravitySettingsTitle": "Настройки Antigravity",
+      "codexSettingsTitle": "Настройки Codex",
+      "githubCopilotSettingsTitle": "Настройки GitHub Copilot",
+      "ghcpAutoRefresh": "Автообновление квоты GitHub Copilot",
+      "ghcpAutoRefreshDesc": "Частота фонового обновления"
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -767,6 +773,15 @@
           "commandWin": "Windows: taskkill /F /PID <pid> (совпадение по CODEX_HOME)"
         }
       }
+    },
+    "refreshSuccess": "Квота обновлена",
+    "refreshFailed": "Не удалось обновить квоту: {{error}}",
+    "refreshAllSuccess": "Обновление завершено, успешно: {{count}} аккаунт(ов)",
+    "refreshAllPartialFailed": "Обновление завершено, успешно: {{success}} / {{total}}, часть с ошибками",
+    "quotaError": {
+      "badge": "Ошибка квоты",
+      "generic": "Не удалось обновить квоту, попробуйте позже",
+      "deactivatedWorkspace": "Рабочее пространство деактивировано, переключите аккаунт или авторизуйтесь заново"
     }
   },
   "dashboard": {
@@ -846,7 +861,8 @@
       "openFolder": "Открыть папку",
       "edit": "Редактировать",
       "openRootDir": "Открыть папку",
-      "selectPath": "Выбрать путь"
+      "selectPath": "Выбрать путь",
+      "openWindow": "Открыть окно"
     },
     "bulkConfirm": {
       "startAll": "Запустить все остановленные инстансы?",
@@ -1115,10 +1131,47 @@
     "export": "Экспорт",
     "flowNotice": {
       "title": "Руководство по аккаунтам GitHub Copilot (нажмите, чтобы развернуть/свернуть)",
-      "desc": "Текущий процесс: авторизовать новый аккаунт -> получить и показать лимиты -> привязать аккаунт в режиме мульти-инстансов.",
-      "reason": "Почему недоступно переключение аккаунта в один клик: состояние входа VS Code управляется сессиями GitHub и SecretStorage расширения, и внешние приложения не могут подменить эти учетные данные.",
-      "storage": "Где хранятся данные входа: в основном в SecretStorage VS Code (системная связка ключей/менеджер учетных данных) и в глобальной базе состояния (например, ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
-      "alternative": "Альтернатива: использовать изоляцию мульти-инстансов (разные --user-data-dir). Войдите один раз для каждого инстанса, затем запускайте нужный инстанс для быстрого переключения на целевую среду аккаунта."
-    }
+      "desc": "Для переключения аккаунта требуется чтение локального хранилища аутентификации VS Code и использование системной службы учетных данных для расшифровки и обратной записи; данные обрабатываются только локально.",
+      "reason": "Объем разрешений: чтение базы аутентификации VS Code (state.vscdb) и вызов системного шифрования (Windows DPAPI / macOS Keychain / Linux Secret Service) для расшифровки и обратной записи.",
+      "storage": "Область чтения: обрабатываются только данные, связанные с сессией входа GitHub; системные секреты не изменяются, ключи и токены не отправляются.",
+      "alternative": "Альтернатива: использовать изоляцию мульти-инстансов (разные --user-data-dir). Войдите один раз для каждого инстанса, затем запускайте нужный инстанс для быстрого переключения на целевую среду аккаунта.",
+      "inject": "Переключение в один клик: инструмент читает локальный криптографический материал VS Code (DPAPI/Keychain/Secret Service), расшифровывает сессию авторизации в state.vscdb, заменяет токен GitHub Copilot и шифрует обратно — всё локально на вашем устройстве."
+    },
+    "injectToVSCode": "Переключить в VS Code",
+    "injecting": "Внедрение...",
+    "injectSuccess": "Токен успешно внедрён в VS Code. VS Code запускается.",
+    "injectRequireClose": "Перед внедрением закройте VS Code."
+  },
+  "quickSettings": {
+    "antigravity": {
+      "title": "Настройки Antigravity",
+      "appPath": "Путь к приложению"
+    },
+    "codex": {
+      "title": "Настройки Codex",
+      "appPath": "Путь к приложению"
+    },
+    "githubCopilot": {
+      "title": "Настройки GitHub Copilot",
+      "appPath": "Путь к VS Code"
+    },
+    "refreshInterval": "Автообновление квоты",
+    "codexRefreshInterval": "Автообновление квоты",
+    "ghcpRefreshInterval": "Автообновление квоты",
+    "autoSwitch": {
+      "title": "Автопереключение",
+      "enable": "Автопереключение",
+      "threshold": "Порог переключения",
+      "thresholdDesc": "Автопереключение срабатывает, когда квота любой модели падает ниже этого процента",
+      "hint": "Автоматически переключается на аккаунт с наибольшей квотой, когда квота любой модели падает ниже порога."
+    },
+    "customInput": "Другое",
+    "apply": "Применить",
+    "inputMinutes": "Введите минуты",
+    "inputPercent": "Введите процент"
+  },
+  "privacy": {
+    "hideSensitive": "Скрыть e-mail",
+    "showSensitive": "Показать e-mail"
   }
 }

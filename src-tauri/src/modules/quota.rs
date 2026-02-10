@@ -115,6 +115,8 @@ struct QuotaResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ModelInfo {
+    #[serde(rename = "displayName")]
+    display_name: Option<String>,
     #[serde(rename = "quotaInfo")]
     quota_info: Option<QuotaInfo>,
 }
@@ -450,13 +452,19 @@ pub async fn fetch_quota(access_token: &str, email: &str, skip_cache: bool) -> c
                 if let Ok(quota_response) = serde_json::from_value::<QuotaResponse>(record.payload.clone()) {
                     let mut quota_data = QuotaData::new();
                     for (name, info) in quota_response.models {
+                        let display_name = info
+                            .display_name
+                            .as_deref()
+                            .map(str::trim)
+                            .filter(|value| !value.is_empty())
+                            .map(str::to_string);
                         if let Some(quota_info) = info.quota_info {
                             let percentage = quota_info.remaining_fraction
                                 .map(|f| (f * 100.0) as i32)
                                 .unwrap_or(0);
                             let reset_time = quota_info.reset_time.unwrap_or_default();
                             if name.contains("gemini") || name.contains("claude") {
-                                quota_data.add_model(name, percentage, reset_time);
+                                quota_data.add_model(name, display_name, percentage, reset_time);
                             }
                         }
                     }
@@ -544,6 +552,12 @@ pub async fn fetch_quota(access_token: &str, email: &str, skip_cache: bool) -> c
                 let mut quota_data = QuotaData::new();
 
                 for (name, info) in quota_response.models {
+                    let display_name = info
+                        .display_name
+                        .as_deref()
+                        .map(str::trim)
+                        .filter(|value| !value.is_empty())
+                        .map(str::to_string);
                     if let Some(quota_info) = info.quota_info {
                         let percentage = quota_info.remaining_fraction
                             .map(|f| (f * 100.0) as i32)
@@ -552,7 +566,7 @@ pub async fn fetch_quota(access_token: &str, email: &str, skip_cache: bool) -> c
                         let reset_time = quota_info.reset_time.unwrap_or_default();
                         
                         if name.contains("gemini") || name.contains("claude") {
-                            quota_data.add_model(name, percentage, reset_time);
+                            quota_data.add_model(name, display_name, percentage, reset_time);
                         }
                     }
                 }

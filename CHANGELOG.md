@@ -7,6 +7,35 @@ All notable changes to Cockpit Tools will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+## [0.6.10] - 2026-02-10
+
+### Added
+- **Privacy mode for screenshots**: Added Eye/EyeOff toggle and masking for email-like identifiers in Antigravity/Codex/GitHub Copilot account overviews and instance pages.
+- **GitHub Copilot one-click switching pipeline**: Added default-profile VS Code switching path with token injection and restart integration.
+- **Cross-instance window focus/open support**: Added and localized `openWindow` action and improved focus behavior by PID for Antigravity/Codex/VS Code instances.
+- **Quota/switch diagnostics**: Added richer runtime logs and metadata outputs for refresh/switch troubleshooting.
+- **Codex multi-team identity support**: Added account matching based on `account_id`/`organization_id` to support multi-team scenarios.
+- **macOS distribution postflight hook**: Added Cask postflight logic to auto-remove quarantine attributes.
+- **Release process templates/scripts**: Added release checklist/docs and helper scripts for preflight validation and checksum generation.
+
+### Changed
+- **Unified switch flow (overview -> default instance)**: Antigravity/Codex/GitHub Copilot overview switching now follows default-instance startup logic (PID-targeted close -> inject -> start).
+- **GitHub Copilot flow alignment**: Overview switching and multi-instance startup now share the same injection/start semantics.
+- **Instance lifecycle alignment**: Unified start/stop/close behavior across Antigravity/Codex/VS Code with managed-directory matching and PID tracking.
+- **Windows VS Code launch strategy**: Switched to `cmd /C code` for `.cmd` wrapper compatibility.
+- **PID resolution semantics alignment**: VS Code PID resolving/focus now uses `Option<&str>` semantics (`None` => default instance), matching Antigravity behavior and reducing default-instance mismatch edge cases.
+- **Docs and settings guidance**: Updated README/security/settings guidance for new switching and path behaviors.
+- **Localization synchronization**: Updated locale keys across all supported languages for Copilot switching, open-window action, privacy mode, and related error messages.
+
+### Fixed
+- **Error compatibility and messaging**: Improved non-success status handling paths and user-facing error propagation for refresh/switch operations.
+- **PR review follow-ups**: Improved error handling, added SQLite transaction safeguards in injection flow, and fixed branding inconsistencies.
+- **Build hygiene**: Cleaned Windows-specific warnings and removed/quieted stale dead-code warnings.
+
+### Removed
+- **Deprecated Copilot injection entrypoint**: Removed unused legacy wrapper in favor of the unified instance-based switching pipeline.
+
+---
 ## [0.6.0] - 2026-02-08
 
 ### Added

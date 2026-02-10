@@ -21,6 +21,8 @@ import {
   Clock,
   Calendar,
   Tag,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCodexAccountStore } from '../stores/useCodexAccountStore';
@@ -30,6 +32,7 @@ import {
   getCodexPlanDisplayName,
   getCodexQuotaClass,
   formatCodexResetTime,
+  type CodexQuotaErrorInfo,
 } from '../types/codex';
 
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
@@ -39,7 +42,12 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import { invoke } from '@tauri-apps/api/core';
 import { CodexOverviewTabsHeader, CodexTab } from '../components/CodexOverviewTabsHeader';
 import { CodexInstancesContent } from './CodexInstancesPage';
-import { CodexWakeupTasksPage } from './CodexWakeupTasksPage';
+import { QuickSettingsPopover } from '../components/QuickSettingsPopover';
+import {
+  isPrivacyModeEnabledByDefault,
+  maskSensitiveValue,
+  persistPrivacyModeEnabled,
+} from '../utils/privacy';
 
 export function CodexAccountsPage() {
   const { t, i18n } = useTranslation();
@@ -66,6 +74,9 @@ export function CodexAccountsPage() {
   const [refreshing, setRefreshing] = useState<string | null>(null);
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [privacyModeEnabled, setPrivacyModeEnabled] = useState<boolean>(() =>
+    isPrivacyModeEnabledByDefault()
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'FREE' | 'PLUS' | 'PRO' | 'TEAM' | 'ENTERPRISE'>('all');
   const [tagFilter, setTagFilter] = useState<string[]>([]);
@@ -103,6 +114,17 @@ export function CodexAccountsPage() {
   const oauthLog = useCallback((...args: unknown[]) => {
     console.info('[CodexOAuth]', ...args);
   }, []);
+  const togglePrivacyMode = useCallback(() => {
+    setPrivacyModeEnabled((prev) => {
+      const next = !prev;
+      persistPrivacyModeEnabled(next);
+      return next;
+    });
+  }, []);
+  const maskAccountText = useCallback(
+    (value?: string | null) => maskSensitiveValue(value, privacyModeEnabled),
+    [privacyModeEnabled]
+  );
 
   useEffect(() => {
     showAddModalRef.current = showAddModal;
@@ -370,12 +392,41 @@ export function CodexAccountsPage() {
     setOauthTimeoutInfo(null);
   }, [showAddModal, addTab]);
 
+  const resolveQuotaErrorMeta = useCallback((quotaError?: CodexQuotaErrorInfo) => {
+    if (!quotaError?.message) {
+      return {
+        statusCode: '',
+        errorCode: '',
+        displayText: '',
+        rawMessage: '',
+      };
+    }
+
+    const rawMessage = quotaError.message;
+    const statusCode =
+      rawMessage.match(/API 返回错误\s+(\d{3})/i)?.[1] ||
+      rawMessage.match(/status[=: ]+(\d{3})/i)?.[1] ||
+      '';
+    const errorCode =
+      quotaError.code ||
+      rawMessage.match(/\[error_code:([^\]]+)\]/)?.[1] ||
+      '';
+
+    return {
+      statusCode,
+      errorCode,
+      displayText: errorCode || rawMessage,
+      rawMessage,
+    };
+  }, []);
+
   const handleRefresh = async (accountId: string) => {
     setRefreshing(accountId);
     try {
       await refreshQuota(accountId);
     } catch (e) {
       console.error(e);
+      await fetchAccounts();
     }
     setRefreshing(null);
   };
@@ -450,7 +501,7 @@ export function CodexAccountsPage() {
     setSwitching(accountId);
     try {
       const account = await switchAccount(accountId);
-      setMessage({ text: t('codex.switched', { email: account.email }) });
+      setMessage({ text: t('codex.switched', { email: maskAccountText(account.email) }) });
     } catch (e) {
       setMessage({ text: t('codex.switchFailed', { error: String(e) }), tone: 'error' });
     }
@@ -473,7 +524,12 @@ export function CodexAccountsPage() {
       }
       
       setAddStatus('success');
-      setAddMessage(t('codex.import.successMsg', '导入成功: {{email}}').replace('{{email}}', account.email));
+      setAddMessage(
+        t('codex.import.successMsg', '导入成功: {{email}}').replace(
+          '{{email}}',
+          maskAccountText(account.email)
+        )
+      );
       setTimeout(() => {
         setShowAddModal(false);
         resetAddModalState();
@@ -833,6 +889,8 @@ export function CodexAccountsPage() {
       const planKey = getCodexPlanDisplayName(account.plan_type);
       const planLabel = t(`codex.plan.${planKey.toLowerCase()}`, planKey);
       const isSelected = selected.has(account.id);
+      const quotaErrorMeta = resolveQuotaErrorMeta(account.quota_error);
+      const hasQuotaError = Boolean(quotaErrorMeta.rawMessage);
 
       return (
         <div
@@ -847,14 +905,26 @@ export function CodexAccountsPage() {
                 onChange={() => toggleSelect(account.id)}
               />
             </div>
-            <span className="account-email" title={account.email}>
-              {account.email}
+            <span className="account-email" title={maskAccountText(account.email)}>
+              {maskAccountText(account.email)}
             </span>
             {isCurrent && <span className="current-tag">{t('codex.current', '当前')}</span>}
+            {hasQuotaError && (
+              <span className="codex-status-pill quota-error" title={quotaErrorMeta.rawMessage}>
+                <CircleAlert size={12} />
+                {quotaErrorMeta.statusCode || t('codex.quotaError.badge', '配额异常')}
+              </span>
+            )}
             <span className={`tier-badge ${planKey.toLowerCase()}`}>{planLabel}</span>
           </div>
 
           <div className="codex-quota-section">
+            {hasQuotaError && (
+              <div className="quota-error-inline" title={quotaErrorMeta.rawMessage}>
+                <CircleAlert size={14} />
+                <span>{quotaErrorMeta.displayText}</span>
+              </div>
+            )}
             <div className="quota-item">
               <div className="quota-header">
                 <Clock size={14} />
@@ -953,6 +1023,8 @@ export function CodexAccountsPage() {
       const isCurrent = currentAccount?.id === account.id;
       const planKey = getCodexPlanDisplayName(account.plan_type);
       const planLabel = t(`codex.plan.${planKey.toLowerCase()}`, planKey);
+      const quotaErrorMeta = resolveQuotaErrorMeta(account.quota_error);
+      const hasQuotaError = Boolean(quotaErrorMeta.rawMessage);
       return (
         <tr key={groupKey ? `${groupKey}-${account.id}` : account.id} className={isCurrent ? 'current' : ''}>
           <td>
@@ -965,9 +1037,19 @@ export function CodexAccountsPage() {
           <td>
             <div className="account-cell">
               <div className="account-main-line">
-                <span className="account-email-text" title={account.email}>{account.email}</span>
+                <span className="account-email-text" title={maskAccountText(account.email)}>
+                  {maskAccountText(account.email)}
+                </span>
                 {isCurrent && <span className="mini-tag current">{t('codex.current', '当前')}</span>}
               </div>
+              {hasQuotaError && (
+                <div className="account-sub-line">
+                  <span className="codex-status-pill quota-error" title={quotaErrorMeta.rawMessage}>
+                    <CircleAlert size={12} />
+                    {quotaErrorMeta.statusCode || t('codex.quotaError.badge', '配额异常')}
+                  </span>
+                </div>
+              )}
             </div>
           </td>
           <td>
@@ -1018,6 +1100,12 @@ export function CodexAccountsPage() {
                 </div>
               )}
             </div>
+            {hasQuotaError && (
+              <div className="quota-error-inline table" title={quotaErrorMeta.rawMessage}>
+                <CircleAlert size={12} />
+                <span>{quotaErrorMeta.displayText}</span>
+              </div>
+            )}
           </td>
           <td className="sticky-action-cell table-action-cell">
             <div className="action-buttons">
@@ -1226,6 +1314,22 @@ export function CodexAccountsPage() {
           </button>
           <button
             className="btn btn-secondary icon-only"
+            onClick={togglePrivacyMode}
+            title={
+              privacyModeEnabled
+                ? t('privacy.showSensitive', '显示邮箱')
+                : t('privacy.hideSensitive', '隐藏邮箱')
+            }
+            aria-label={
+              privacyModeEnabled
+                ? t('privacy.showSensitive', '显示邮箱')
+                : t('privacy.hideSensitive', '隐藏邮箱')
+            }
+          >
+            {privacyModeEnabled ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+          <button
+            className="btn btn-secondary icon-only"
             onClick={() => openAddModal('token')}
             disabled={importing}
             title={t('codex.import.label', '导入')}
@@ -1252,6 +1356,7 @@ export function CodexAccountsPage() {
               <Trash2 size={14} />
             </button>
           )}
+            <QuickSettingsPopover type="codex" />
         </div>
       </div>
 

@@ -21,6 +21,9 @@ import {
   Calendar,
   Tag,
   ChevronDown,
+  Play,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useGitHubCopilotAccountStore } from '../stores/useGitHubCopilotAccountStore';
@@ -37,8 +40,15 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import { invoke } from '@tauri-apps/api/core';
 import { GitHubCopilotOverviewTabsHeader, GitHubCopilotTab } from '../components/GitHubCopilotOverviewTabsHeader';
 import { GitHubCopilotInstancesContent } from './GitHubCopilotInstancesPage';
+import { QuickSettingsPopover } from '../components/QuickSettingsPopover';
+import {
+  isPrivacyModeEnabledByDefault,
+  maskSensitiveValue,
+  persistPrivacyModeEnabled,
+} from '../utils/privacy';
 
 const GHCP_FLOW_NOTICE_COLLAPSED_KEY = 'agtools.github_copilot.flow_notice_collapsed';
+const GHCP_CURRENT_ACCOUNT_ID_KEY = 'agtools.github_copilot.current_account_id';
 
 export function GitHubCopilotAccountsPage() {
   const { t, i18n } = useTranslation();
@@ -61,7 +71,11 @@ export function GitHubCopilotAccountsPage() {
   const [addTab, setAddTab] = useState<'oauth' | 'token' | 'import'>('oauth');
   const [refreshing, setRefreshing] = useState<string | null>(null);
   const [refreshingAll, setRefreshingAll] = useState(false);
+  const [injecting, setInjecting] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [privacyModeEnabled, setPrivacyModeEnabled] = useState<boolean>(() =>
+    isPrivacyModeEnabledByDefault()
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'FREE' | 'INDIVIDUAL' | 'PRO' | 'BUSINESS' | 'ENTERPRISE'>('all');
   const [tagFilter, setTagFilter] = useState<string[]>([]);
@@ -96,6 +110,14 @@ export function GitHubCopilotAccountsPage() {
       return false;
     }
   });
+  const [currentAccountId, setCurrentAccountId] = useState<string | null>(() => {
+    try {
+      const value = localStorage.getItem(GHCP_CURRENT_ACCOUNT_ID_KEY);
+      return value && value.trim() ? value : null;
+    } catch {
+      return null;
+    }
+  });
 
   const showAddModalRef = useRef(showAddModal);
   const addTabRef = useRef(addTab);
@@ -108,6 +130,17 @@ export function GitHubCopilotAccountsPage() {
   const oauthLog = useCallback((...args: unknown[]) => {
     console.info('[GitHubCopilotOAuth]', ...args);
   }, []);
+  const togglePrivacyMode = useCallback(() => {
+    setPrivacyModeEnabled((prev) => {
+      const next = !prev;
+      persistPrivacyModeEnabled(next);
+      return next;
+    });
+  }, []);
+  const maskAccountText = useCallback(
+    (value?: string | null) => maskSensitiveValue(value, privacyModeEnabled),
+    [privacyModeEnabled]
+  );
 
   useEffect(() => {
     showAddModalRef.current = showAddModal;
@@ -138,6 +171,26 @@ export function GitHubCopilotAccountsPage() {
       // ignore persistence failures
     }
   }, [isFlowNoticeCollapsed]);
+
+  useEffect(() => {
+    if (!currentAccountId) return;
+    const exists = accounts.some((account) => account.id === currentAccountId);
+    if (!exists) {
+      setCurrentAccountId(null);
+    }
+  }, [accounts, currentAccountId]);
+
+  useEffect(() => {
+    try {
+      if (currentAccountId) {
+        localStorage.setItem(GHCP_CURRENT_ACCOUNT_ID_KEY, currentAccountId);
+      } else {
+        localStorage.removeItem(GHCP_CURRENT_ACCOUNT_ID_KEY);
+      }
+    } catch {
+      // ignore persistence failures
+    }
+  }, [currentAccountId]);
 
   const handleOauthPrepareError = useCallback((e: unknown) => {
     const msg = String(e).replace(/^Error:\s*/, '');
@@ -279,6 +332,24 @@ export function GitHubCopilotAccountsPage() {
       ids: [accountId],
       message: t('messages.deleteConfirm', '确定要删除此账号吗？'),
     });
+  };
+
+  const handleInjectToVSCode = async (accountId: string) => {
+    setMessage(null);
+    setInjecting(accountId);
+    const account = accounts.find((item) => item.id === accountId);
+    const displayEmail = account?.email ?? account?.github_email ?? account?.github_login ?? accountId;
+    try {
+      await githubCopilotService.injectGitHubCopilotToVSCode(accountId);
+      setCurrentAccountId(accountId);
+      setMessage({ text: t('messages.switched', { email: maskAccountText(displayEmail) }) });
+    } catch (e: any) {
+      setMessage({
+        text: t('messages.switchFailed', { error: e?.toString() || t('common.failed', 'Failed') }),
+        tone: 'error',
+      });
+    }
+    setInjecting(null);
   };
 
   const handleBatchDelete = () => {
@@ -723,14 +794,16 @@ export function GitHubCopilotAccountsPage() {
   const renderGridCards = (items: typeof filteredAccounts, groupKey?: string) =>
     items.map((account) => {
       const displayEmail = account.email ?? account.github_email ?? account.github_login;
+      const maskedDisplayEmail = maskAccountText(displayEmail);
       const planKey = getGitHubCopilotPlanDisplayName(account.plan_type);
       const planLabel = t(`githubCopilot.plan.${planKey.toLowerCase()}`, planKey);
       const isSelected = selected.has(account.id);
+      const isCurrent = currentAccountId === account.id;
 
       return (
         <div
           key={groupKey ? `${groupKey}-${account.id}` : account.id}
-          className={`ghcp-account-card ${isSelected ? 'selected' : ''}`}
+          className={`ghcp-account-card ${isCurrent ? 'current' : ''} ${isSelected ? 'selected' : ''}`}
         >
           <div className="card-top">
             <div className="card-select">
@@ -740,9 +813,14 @@ export function GitHubCopilotAccountsPage() {
                 onChange={() => toggleSelect(account.id)}
               />
             </div>
-            <span className="account-email" title={displayEmail}>
-              {displayEmail}
+            <span className="account-email" title={maskedDisplayEmail}>
+              {maskedDisplayEmail}
             </span>
+            {isCurrent && (
+              <span className="current-tag">
+                {t('accounts.status.current')}
+              </span>
+            )}
             <span className={`tier-badge ${planKey.toLowerCase()}`}>{planLabel}</span>
           </div>
 
@@ -798,6 +876,18 @@ export function GitHubCopilotAccountsPage() {
             <span className="card-date">{formatDate(account.created_at)}</span>
             <div className="card-actions">
               <button
+                className="card-action-btn success"
+                onClick={() => handleInjectToVSCode(account.id)}
+                disabled={!!injecting}
+                title={t('githubCopilot.injectToVSCode', 'Switch to VS Code')}
+              >
+                {injecting === account.id ? (
+                  <RefreshCw size={14} className="loading-spinner" />
+                ) : (
+                  <Play size={14} />
+                )}
+              </button>
+              <button
                 className="card-action-btn"
                 onClick={() => openTagModal(account.id)}
                 title={t('accounts.editTags', '编辑标签')}
@@ -831,10 +921,12 @@ export function GitHubCopilotAccountsPage() {
   const renderTableRows = (items: typeof filteredAccounts, groupKey?: string) =>
     items.map((account) => {
       const displayEmail = account.email ?? account.github_email ?? account.github_login;
+      const maskedDisplayEmail = maskAccountText(displayEmail);
       const planKey = getGitHubCopilotPlanDisplayName(account.plan_type);
       const planLabel = t(`githubCopilot.plan.${planKey.toLowerCase()}`, planKey);
+      const isCurrent = currentAccountId === account.id;
       return (
-        <tr key={groupKey ? `${groupKey}-${account.id}` : account.id}>
+        <tr key={groupKey ? `${groupKey}-${account.id}` : account.id} className={isCurrent ? 'current' : ''}>
           <td>
             <input
               type="checkbox"
@@ -845,7 +937,10 @@ export function GitHubCopilotAccountsPage() {
           <td>
             <div className="account-cell">
               <div className="account-main-line">
-                <span className="account-email-text" title={displayEmail}>{displayEmail}</span>
+                <span className="account-email-text" title={maskedDisplayEmail}>
+                  {maskedDisplayEmail}
+                </span>
+                {isCurrent && <span className="mini-tag current">{t('accounts.status.current')}</span>}
               </div>
             </div>
           </td>
@@ -901,6 +996,14 @@ export function GitHubCopilotAccountsPage() {
           <td className="sticky-action-cell table-action-cell">
             <div className="action-buttons">
               <button
+                className="action-btn success"
+                onClick={() => handleInjectToVSCode(account.id)}
+                disabled={!!injecting}
+                title={t('githubCopilot.injectToVSCode', 'Switch to VS Code')}
+              >
+                {injecting === account.id ? <RefreshCw size={14} className="loading-spinner" /> : <Play size={14} />}
+              </button>
+              <button
                 className="action-btn"
                 onClick={() => openTagModal(account.id)}
                 title={t('accounts.editTags', '编辑标签')}
@@ -949,26 +1052,20 @@ export function GitHubCopilotAccountsPage() {
             <div className="ghcp-flow-notice-desc">
               {t(
                 'githubCopilot.flowNotice.desc',
-                '当前流程：新增账号授权 → 查询并展示配额 → 在多开实例中绑定账号用于展示。',
+                'Switching accounts requires reading VS Code local auth storage and using the system credential service for decrypt/re-encrypt. Data is processed locally only.',
               )}
             </div>
             <ul className="ghcp-flow-notice-list">
               <li>
                 {t(
                   'githubCopilot.flowNotice.reason',
-                  '为什么不能一键切号：VS Code 的登录态由 GitHub 登录会话和扩展 SecretStorage 管理，外部应用无法替换登录凭证。',
+                  'Permission scope: read VS Code auth database (state.vscdb) and call system credential capability (Windows DPAPI / macOS Keychain / Linux Secret Service) for decrypt/write-back.',
                 )}
               </li>
               <li>
                 {t(
                   'githubCopilot.flowNotice.storage',
-                  '登录相关数据位置：主要在 VS Code SecretStorage（系统钥匙串/凭据管理器）与全局状态数据库（例如 ~/Library/Application Support/Code/User/globalStorage/state.vscdb）。',
-                )}
-              </li>
-              <li>
-                {t(
-                  'githubCopilot.flowNotice.alternative',
-                  '可替代方案：使用多开实例（不同 --user-data-dir）做账号隔离；每个实例登录一次，后续按实例启动即可实现“快速切换到对应账号环境”。',
+                  'Data scope: only GitHub auth-session related entries are read/updated; system secrets are not modified and no key/token is uploaded.',
                 )}
               </li>
             </ul>
@@ -1162,6 +1259,22 @@ export function GitHubCopilotAccountsPage() {
           </button>
           <button
             className="btn btn-secondary icon-only"
+            onClick={togglePrivacyMode}
+            title={
+              privacyModeEnabled
+                ? t('privacy.showSensitive', '显示邮箱')
+                : t('privacy.hideSensitive', '隐藏邮箱')
+            }
+            aria-label={
+              privacyModeEnabled
+                ? t('privacy.showSensitive', '显示邮箱')
+                : t('privacy.hideSensitive', '隐藏邮箱')
+            }
+          >
+            {privacyModeEnabled ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+          <button
+            className="btn btn-secondary icon-only"
             onClick={() => openAddModal('token')}
             disabled={importing}
             title={t('githubCopilot.import.label', '导入')}
@@ -1188,6 +1301,7 @@ export function GitHubCopilotAccountsPage() {
               <Trash2 size={14} />
             </button>
           )}
+            <QuickSettingsPopover type="github_copilot" />
         </div>
       </div>
 

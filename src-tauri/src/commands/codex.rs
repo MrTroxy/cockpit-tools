@@ -68,18 +68,10 @@ pub async fn switch_codex_account(app: AppHandle, account_id: String) -> Result<
     #[cfg(target_os = "macos")]
     {
         if process::is_codex_running() {
-            logger::log_info("检测到 Codex 正在运行，正在关闭...");
-            if let Err(e) = process::close_codex(20) {
-                logger::log_warn(&format!("Codex 关闭失败: {}", e));
-            }
+            logger::log_info("检测到 Codex 正在运行，将按默认实例 PID 逻辑重启");
         }
-
-        match process::start_codex_default() {
-            Ok(pid) => {
-                if let Err(e) = crate::modules::codex_instance::update_default_pid(Some(pid)) {
-                    logger::log_warn(&format!("更新 Codex 默认实例 PID 失败: {}", e));
-                }
-            }
+        match crate::commands::codex_instance::codex_start_instance("__default__".to_string()).await {
+            Ok(_) => {}
             Err(e) => {
                 logger::log_warn(&format!("Codex 启动失败: {}", e));
                 if e.starts_with("APP_PATH_NOT_FOUND:") {

@@ -93,7 +93,13 @@
       "vscodePathSelect": "Auswählen",
       "vscodePathReset": "Standard zurücksetzen",
       "antigravityAppPath": "Antigravity-App-Pfad",
-      "antigravityTitle": "Antigravity-Start"
+      "antigravityTitle": "Antigravity-Start",
+      "commonTitle": "Allgemein",
+      "antigravitySettingsTitle": "Antigravity-Einstellungen",
+      "codexSettingsTitle": "Codex-Einstellungen",
+      "githubCopilotSettingsTitle": "GitHub Copilot-Einstellungen",
+      "ghcpAutoRefresh": "GitHub Copilot-Kontingent automatisch aktualisieren",
+      "ghcpAutoRefreshDesc": "Aktualisierungsintervall im Hintergrund"
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -767,6 +773,15 @@
           "commandWin": "Windows: taskkill /F /PID <pid> (Übereinstimmung mit CODEX_HOME)"
         }
       }
+    },
+    "refreshSuccess": "Kontingent aktualisiert",
+    "refreshFailed": "Kontingent-Aktualisierung fehlgeschlagen: {{error}}",
+    "refreshAllSuccess": "Aktualisierung abgeschlossen, {{count}} Konto/Konten erfolgreich",
+    "refreshAllPartialFailed": "Aktualisierung abgeschlossen, {{success}} / {{total}} Konten erfolgreich, einige fehlgeschlagen",
+    "quotaError": {
+      "badge": "Kontingentfehler",
+      "generic": "Kontingent-Aktualisierung fehlgeschlagen, bitte später erneut versuchen",
+      "deactivatedWorkspace": "Workspace ist deaktiviert, bitte Konto wechseln oder neu autorisieren"
     }
   },
   "dashboard": {
@@ -846,7 +861,8 @@
       "openFolder": "Ordner öffnen",
       "edit": "Bearbeiten",
       "openRootDir": "Ordner öffnen",
-      "selectPath": "Pfad auswählen"
+      "selectPath": "Pfad auswählen",
+      "openWindow": "Fenster öffnen"
     },
     "bulkConfirm": {
       "startAll": "Alle gestoppten Instanzen starten?",
@@ -1115,10 +1131,47 @@
     "export": "Exportieren",
     "flowNotice": {
       "title": "GitHub-Copilot-Kontoleitfaden (zum Auf-/Zuklappen klicken)",
-      "desc": "Aktueller Ablauf: neues Konto autorisieren -> Kontingente abrufen und anzeigen -> Konto in der Multi-Instanz-Ansicht verknüpfen.",
-      "reason": "Warum kein Kontowechsel per Ein-Klick möglich ist: Der VS-Code-Anmeldestatus wird durch GitHub-Sitzungen und das SecretStorage der Erweiterung verwaltet; externe Apps können diese Anmeldedaten nicht ersetzen.",
-      "storage": "Speicherort der Anmeldedaten: hauptsächlich im VS-Code-SecretStorage (System-Schlüsselbund/Anmeldedatenverwaltung) und in der globalen Statusdatenbank (z. B. ~/Library/Application Support/Code/User/globalStorage/state.vscdb).",
-      "alternative": "Alternative: Multi-Instanz-Isolierung verwenden (unterschiedliche --user-data-dir). Pro Instanz einmal anmelden und danach instanzweise starten, um schnell in die Zielkontoumgebung zu wechseln."
-    }
+      "desc": "Für den Kontowechsel muss der lokale VS-Code-Auth-Speicher gelesen und der System-Anmeldedienst zum Entschlüsseln und Zurückschreiben verwendet werden; die Datenverarbeitung erfolgt nur lokal.",
+      "reason": "Berechtigungsumfang: Lesen der VS-Code-Auth-Datenbank (state.vscdb) und Aufruf der System-Verschlüsselung (Windows DPAPI / macOS Keychain / Linux Secret Service) zum Entschlüsseln und Zurückschreiben.",
+      "storage": "Lesebereich: Es werden nur GitHub-Login-Sitzungsdaten verarbeitet; System-Geheimnisse selbst werden nicht verändert und keine Schlüssel oder Tokens hochgeladen.",
+      "alternative": "Alternative: Multi-Instanz-Isolierung verwenden (unterschiedliche --user-data-dir). Pro Instanz einmal anmelden und danach instanzweise starten, um schnell in die Zielkontoumgebung zu wechseln.",
+      "inject": "Ein-Klick-Wechsel: Dieses Tool liest das lokale Verschlüsselungsmaterial von VS Code (DPAPI/Keychain/Secret Service), entschlüsselt die Auth-Sitzung in state.vscdb, ersetzt das GitHub-Copilot-Token und verschlüsselt sie erneut – alles lokal auf deinem Gerät."
+    },
+    "injectToVSCode": "Zu VS Code wechseln",
+    "injecting": "Wird injiziert...",
+    "injectSuccess": "Das Token wurde erfolgreich in VS Code eingefügt. VS Code wird gestartet.",
+    "injectRequireClose": "Bitte schließen Sie VS Code vor dem Injizieren."
+  },
+  "quickSettings": {
+    "antigravity": {
+      "title": "Antigravity-Einstellungen",
+      "appPath": "App-Pfad"
+    },
+    "codex": {
+      "title": "Codex-Einstellungen",
+      "appPath": "App-Pfad"
+    },
+    "githubCopilot": {
+      "title": "GitHub Copilot-Einstellungen",
+      "appPath": "VS Code-Pfad"
+    },
+    "refreshInterval": "Kontingent automatisch aktualisieren",
+    "codexRefreshInterval": "Kontingent automatisch aktualisieren",
+    "ghcpRefreshInterval": "Kontingent automatisch aktualisieren",
+    "autoSwitch": {
+      "title": "Automatisch wechseln",
+      "enable": "Automatisch wechseln",
+      "threshold": "Wechselschwelle",
+      "thresholdDesc": "Automatischer Wechsel wird ausgelöst, wenn das Kontingent eines Modells unter diesen Prozentsatz fällt",
+      "hint": "Wechselt automatisch zum Konto mit dem höchsten Kontingent, wenn das Kontingent eines Modells unter den Schwellenwert fällt."
+    },
+    "customInput": "Benutzerdefiniert",
+    "apply": "Anwenden",
+    "inputMinutes": "Minuten eingeben",
+    "inputPercent": "Prozentsatz eingeben"
+  },
+  "privacy": {
+    "hideSensitive": "E-Mails ausblenden",
+    "showSensitive": "E-Mails anzeigen"
   }
 }

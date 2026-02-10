@@ -93,7 +93,13 @@
       "vscodePathSelect": "選擇",
       "vscodePathReset": "重設預設值",
       "antigravityAppPath": "Antigravity 啟動路徑",
-      "antigravityTitle": "Antigravity 啟動"
+      "antigravityTitle": "Antigravity 啟動",
+      "commonTitle": "通用",
+      "antigravitySettingsTitle": "Antigravity 設定",
+      "codexSettingsTitle": "Codex 設定",
+      "githubCopilotSettingsTitle": "GitHub Copilot 設定",
+      "ghcpAutoRefresh": "GitHub Copilot 自動重新整理配額",
+      "ghcpAutoRefreshDesc": "背景更新頻率"
     },
     "network": {
       "apiTitle": "Antigravity Cockpit API",
@@ -154,7 +160,7 @@
       "actions": "操作"
     },
     "status": {
-      "current": "目前使用",
+      "current": "目前",
       "disabled": "已停用",
       "authInvalid": "憑證失效",
       "refreshFailed": "刷新失敗",
@@ -767,6 +773,15 @@
           "commandWin": "Windows: taskkill /F /PID <pid>（匹配 CODEX_HOME）"
         }
       }
+    },
+    "refreshSuccess": "配額已重新整理",
+    "refreshFailed": "配額重新整理失敗：{{error}}",
+    "refreshAllSuccess": "重新整理完成，成功 {{count}} 個帳號",
+    "refreshAllPartialFailed": "重新整理完成，成功 {{success}} / {{total}} 個帳號，部分失敗",
+    "quotaError": {
+      "badge": "配額異常",
+      "generic": "配額重新整理失敗，請稍後再試",
+      "deactivatedWorkspace": "工作區已停用，請切換帳號或重新授權"
     }
   },
   "dashboard": {
@@ -846,7 +861,8 @@
       "openFolder": "打開目錄",
       "edit": "編輯",
       "openRootDir": "打開目錄",
-      "selectPath": "選擇路徑"
+      "selectPath": "選擇路徑",
+      "openWindow": "定位視窗"
     },
     "bulkConfirm": {
       "startAll": "是否啟動所有已停止的實例？",
@@ -1115,10 +1131,47 @@
     "export": "匯出",
     "flowNotice": {
       "title": "GitHub Copilot 帳號指南（點擊展開/收合）",
-      "desc": "目前流程：授權新帳號 -> 查詢並顯示額度 -> 在多開檢視中綁定帳號。",
-      "reason": "為何無法一鍵切換帳號：VS Code 的登入狀態由 GitHub 工作階段與擴充套件 SecretStorage 管理，外部應用無法替換這些憑證。",
-      "storage": "登入資料位置：主要在 VS Code SecretStorage（系統鑰匙圈/憑證管理器）與全域狀態資料庫（例如 ~/Library/Application Support/Code/User/globalStorage/state.vscdb）。",
-      "alternative": "替代方案：使用多開隔離（不同 --user-data-dir）。每個實例登入一次，之後按實例啟動即可快速切換到目標帳號環境。"
-    }
+      "desc": "切換帳號時需要讀取 VS Code 本機認證儲存，並呼叫系統憑證服務完成解密與回寫；資料僅在本機處理。",
+      "reason": "權限需求：讀取 VS Code 認證資料庫（state.vscdb），並呼叫系統加密能力（Windows DPAPI / macOS Keychain / Linux Secret Service）進行解密與寫回。",
+      "storage": "讀取範圍：僅處理 GitHub 登入工作階段相關資料，不會修改系統密鑰本身，也不會上傳密鑰或權杖。",
+      "alternative": "替代方案：使用多開隔離（不同 --user-data-dir）。每個實例登入一次，之後按實例啟動即可快速切換到目標帳號環境。",
+      "inject": "一鍵切換：本工具會讀取本機 VS Code 加密材料（DPAPI/Keychain/Secret Service），解密 state.vscdb 中的驗證工作階段，替換 GitHub Copilot 權杖後再加密，全部流程都在本機完成。"
+    },
+    "injectToVSCode": "切換到 VS Code",
+    "injecting": "注入中...",
+    "injectSuccess": "已成功將權杖注入 VS Code，VS Code 正在啟動。",
+    "injectRequireClose": "注入前請先關閉 VS Code。"
+  },
+  "quickSettings": {
+    "antigravity": {
+      "title": "Antigravity 設定",
+      "appPath": "啟動路徑"
+    },
+    "codex": {
+      "title": "Codex 設定",
+      "appPath": "啟動路徑"
+    },
+    "githubCopilot": {
+      "title": "GitHub Copilot 設定",
+      "appPath": "VS Code 路徑"
+    },
+    "refreshInterval": "配額自動重新整理",
+    "codexRefreshInterval": "配額自動重新整理",
+    "ghcpRefreshInterval": "配額自動重新整理",
+    "autoSwitch": {
+      "title": "自動切換",
+      "enable": "自動切換",
+      "threshold": "切換閾值",
+      "thresholdDesc": "任意模型配額低於此百分比時觸發自動切換",
+      "hint": "當任意模型配額低於閾值時，自動切換到配額最高的帳號。"
+    },
+    "customInput": "自訂",
+    "apply": "確定",
+    "inputMinutes": "輸入分鐘數",
+    "inputPercent": "輸入百分比"
+  },
+  "privacy": {
+    "hideSensitive": "隱藏電子郵件",
+    "showSensitive": "顯示電子郵件"
   }
 }

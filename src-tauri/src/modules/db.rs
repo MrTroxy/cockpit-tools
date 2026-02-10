@@ -135,6 +135,7 @@ pub fn inject_unified_oauth_token_to_path(
 }
 
 /// 注入 Token 到 Antigravity 默认数据库
+#[allow(dead_code)]
 pub fn inject_token(
     access_token: &str,
     refresh_token: &str,

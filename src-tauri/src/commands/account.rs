@@ -1,10 +1,8 @@
-
-
-use tauri::AppHandle;
-use tauri::Emitter;
+use crate::error::{AppError, AppResult};
 use crate::models;
 use crate::modules;
-use crate::error::{AppError, AppResult};
+use tauri::AppHandle;
+use tauri::Emitter;
 
 #[tauri::command]
 pub async fn list_accounts() -> Result<Vec<models::Account>, String> {
@@ -18,9 +16,7 @@ pub async fn sync_from_extension() -> Result<usize, String> {
 }
 
 #[tauri::command]
-pub async fn add_account(
-    refresh_token: String,
-) -> Result<models::Account, String> {
+pub async fn add_account(refresh_token: String) -> Result<models::Account, String> {
     let token_res = modules::oauth::refresh_access_token(&refresh_token).await?;
     let user_info = modules::oauth::get_user_info(&token_res.access_token).await?;
 
@@ -33,7 +29,8 @@ pub async fn add_account(
         None,
     );
 
-    let account = modules::upsert_account(user_info.email.clone(), user_info.get_display_name(), token)?;
+    let account =
+        modules::upsert_account(user_info.email.clone(), user_info.get_display_name(), token)?;
     modules::logger::log_info(&format!("添加账号成功: {}", account.email));
 
     // 广播通知
@@ -82,9 +79,20 @@ pub async fn fetch_account_quota(account_id: String) -> AppResult<models::QuotaD
 }
 
 #[tauri::command]
-pub async fn refresh_all_quotas(app: tauri::AppHandle) -> Result<modules::account::RefreshStats, String> {
+pub async fn refresh_all_quotas(
+    app: tauri::AppHandle,
+) -> Result<modules::account::RefreshStats, String> {
     let result = modules::account::refresh_all_quotas_logic().await;
     if result.is_ok() {
+        match modules::account::run_auto_switch_if_needed().await {
+            Ok(Some(account)) => {
+                modules::logger::log_info(&format!("[AutoSwitch] 自动切号完成: {}", account.email));
+            }
+            Ok(None) => {}
+            Err(e) => {
+                modules::logger::log_warn(&format!("[AutoSwitch] 自动切号执行失败: {}", e));
+            }
+        }
         let _ = crate::modules::tray::update_tray_menu(&app);
     }
     result
@@ -99,8 +107,12 @@ pub async fn refresh_current_quota(app: tauri::AppHandle) -> Result<(), String> 
     let quota = modules::fetch_quota_with_retry(&mut account, true)
         .await
         .map_err(|e| e.to_string())?;
-    modules::update_account_quota(&account.id, quota)
-        .map_err(|e| e.to_string())?;
+    modules::update_account_quota(&account.id, quota).map_err(|e| e.to_string())?;
+
+    if let Err(e) = modules::account::run_auto_switch_if_needed().await {
+        modules::logger::log_warn(&format!("[AutoSwitch] 当前账号刷新后自动切号失败: {}", e));
+    }
+
     let _ = crate::modules::tray::update_tray_menu(&app);
     Ok(())
 }
@@ -108,77 +120,51 @@ pub async fn refresh_current_quota(app: tauri::AppHandle) -> Result<(), String> 
 /// 切换账号（完整流程：Token刷新 + 关闭程序 + 注入 + 指纹同步 + 重启）
 #[tauri::command]
 pub async fn switch_account(app: AppHandle, account_id: String) -> Result<models::Account, String> {
-    use std::fs;
-    
     modules::logger::log_info(&format!("开始切换账号: {}", account_id));
-    
+
     // 1. 加载并验证账号存在
     let mut account = modules::load_account(&account_id)?;
-    modules::logger::log_info(&format!("正在切换到账号: {} (ID: {})", account.email, account.id));
-    
+    modules::logger::log_info(&format!(
+        "正在切换到账号: {} (ID: {})",
+        account.email, account.id
+    ));
+
     // 2. 确保 Token 有效（自动刷新过期的 Token）
-    let fresh_token = modules::oauth::ensure_fresh_token(&account.token).await
+    let fresh_token = modules::oauth::ensure_fresh_token(&account.token)
+        .await
         .map_err(|e| format!("Token 刷新失败: {}", e))?;
-    
+
     // 如果 Token 更新了，保存回账号文件
     if fresh_token.access_token != account.token.access_token {
         modules::logger::log_info(&format!("Token 已刷新: {}", account.email));
         account.token = fresh_token.clone();
         modules::save_account(&account)?;
     }
-    
-    // 3. 关闭 Antigravity（等待最多 20 秒）
-    if modules::process::is_antigravity_running() {
-        modules::logger::log_info("检测到 Antigravity 正在运行，正在关闭...");
-        modules::process::close_antigravity(20)?;
-    }
-    
-    // 4. 写入设备指纹到 storage.json
+
+    // 3. 写入设备指纹到 storage.json
     if let Ok(storage_path) = modules::device::get_storage_path() {
         if let Some(ref fp_id) = account.fingerprint_id {
             // 优先使用绑定的指纹
             if let Ok(fingerprint) = modules::fingerprint::get_fingerprint(fp_id) {
                 modules::logger::log_info(&format!(
                     "写入设备指纹: machineId={}, serviceMachineId={}",
-                    fingerprint.profile.machine_id,
-                    fingerprint.profile.service_machine_id
+                    fingerprint.profile.machine_id, fingerprint.profile.service_machine_id
                 ));
                 let _ = modules::device::write_profile(&storage_path, &fingerprint.profile);
-                let _ = modules::db::write_service_machine_id(&fingerprint.profile.service_machine_id);
+                let _ =
+                    modules::db::write_service_machine_id(&fingerprint.profile.service_machine_id);
                 // 更新当前应用的指纹ID
                 let _ = modules::fingerprint::set_current_fingerprint_id(fp_id);
             }
         }
     }
-    
-    // 5. 备份数据库
-    let db_path = modules::db::get_db_path()?;
-    if db_path.exists() {
-        let backup_path = db_path.with_extension("vscdb.backup");
-        if let Err(e) = fs::copy(&db_path, &backup_path) {
-            modules::logger::log_warn(&format!("备份数据库失败: {}", e));
-        } else {
-            modules::logger::log_info("数据库已备份");
-        }
-    }
-    
-    // 6. 注入 Token 到 Antigravity 数据库
-    modules::logger::log_info("正在注入 Token 到数据库...");
-    modules::db::inject_token(
-        &account.token.access_token,
-        &account.token.refresh_token,
-        account.token.expiry_timestamp,
-    ).map_err(|e| {
-        modules::logger::log_error(&format!("Token 注入失败: {}", e));
-        e
-    })?;
-    
-    // 7. 更新工具内部状态
+
+    // 4. 更新工具内部状态
     modules::set_current_account_id(&account_id)?;
     account.update_last_used();
     modules::save_account(&account)?;
-    
-    // 8. 同步更新 Antigravity 默认实例的绑定账号（不同步到 Codex，因为账号体系不同）
+
+    // 5. 同步更新 Antigravity 默认实例的绑定账号（不同步到 Codex，因为账号体系不同）
     if let Err(e) = modules::instance::update_default_settings(
         Some(Some(account_id.clone())),
         None,
@@ -186,11 +172,24 @@ pub async fn switch_account(app: AppHandle, account_id: String) -> Result<models
     ) {
         modules::logger::log_warn(&format!("更新 Antigravity 默认实例绑定账号失败: {}", e));
     } else {
-        modules::logger::log_info(&format!("已同步更新 Antigravity 默认实例绑定账号: {}", account_id));
+        modules::logger::log_info(&format!(
+            "已同步更新 Antigravity 默认实例绑定账号: {}",
+            account_id
+        ));
     }
-    
-    // 9. 重启 Antigravity
-    modules::logger::log_info("正在重启 Antigravity...");
+
+    // 6. 对齐默认实例启动逻辑：按 PID 精准关闭旧进程，再将账号注入默认实例目录
+    let default_settings = modules::instance::load_default_settings()?;
+    if let Some(pid) = modules::process::resolve_antigravity_pid(default_settings.last_pid, None) {
+        modules::logger::log_info(&format!("命中默认实例运行 PID: {}，准备关闭", pid));
+        modules::process::close_pid(pid, 20)?;
+        let _ = modules::instance::update_default_pid(None);
+    }
+    let default_dir = modules::instance::get_default_user_data_dir()?;
+    modules::instance::inject_account_to_profile(&default_dir, &account_id)?;
+
+    // 7. 启动 Antigravity（启动失败不阻断切号，保持原行为）
+    modules::logger::log_info("正在启动 Antigravity 默认实例...");
     match modules::process::start_antigravity() {
         Ok(pid) => {
             if let Err(e) = modules::instance::update_default_pid(Some(pid)) {
@@ -208,17 +207,20 @@ pub async fn switch_account(app: AppHandle, account_id: String) -> Result<models
             // 不中断流程，允许用户手动启动
         }
     }
-    
+
     modules::logger::log_info(&format!("账号切换完成: {}", account.email));
-    
+
     // 广播切换完成通知
     modules::websocket::broadcast_account_switched(&account.id, &account.email);
-    
+
     Ok(account)
 }
 
 #[tauri::command]
-pub async fn bind_account_fingerprint(account_id: String, fingerprint_id: String) -> Result<(), String> {
+pub async fn bind_account_fingerprint(
+    account_id: String,
+    fingerprint_id: String,
+) -> Result<(), String> {
     let mut account = modules::load_account(&account_id)?;
     // 验证指纹存在
     let _ = modules::fingerprint::get_fingerprint(&fingerprint_id)?;
@@ -227,7 +229,10 @@ pub async fn bind_account_fingerprint(account_id: String, fingerprint_id: String
 }
 
 #[tauri::command]
-pub async fn update_account_tags(account_id: String, tags: Vec<String>) -> Result<models::Account, String> {
+pub async fn update_account_tags(
+    account_id: String,
+    tags: Vec<String>,
+) -> Result<models::Account, String> {
     let account = modules::update_account_tags(&account_id, tags)?;
     modules::websocket::broadcast_data_changed("account_tags_updated");
     Ok(account)
@@ -244,18 +249,18 @@ pub async fn get_bound_accounts(fingerprint_id: String) -> Result<Vec<models::Ac
 #[tauri::command]
 pub async fn sync_current_from_client() -> Result<Option<String>, String> {
     use base64::{engine::general_purpose, Engine as _};
-    
+
     // 读取本地数据库中的 refresh_token
     let db_path = modules::db::get_db_path()?;
-    let conn = rusqlite::Connection::open(&db_path)
-        .map_err(|e| format!("打开数据库失败: {}", e))?;
-    
+    let conn =
+        rusqlite::Connection::open(&db_path).map_err(|e| format!("打开数据库失败: {}", e))?;
+
     let state_data: Result<String, _> = conn.query_row(
         "SELECT value FROM ItemTable WHERE key = ?",
         ["jetskiStateSync.agentManagerInitState"],
         |row| row.get(0),
     );
-    
+
     let state_data = match state_data {
         Ok(data) => data,
         Err(_) => {
@@ -263,24 +268,24 @@ pub async fn sync_current_from_client() -> Result<Option<String>, String> {
             return Ok(None);
         }
     };
-    
+
     // Base64 解码
     let blob = general_purpose::STANDARD
         .decode(&state_data)
         .map_err(|e| format!("Base64 解码失败: {}", e))?;
-    
+
     // 提取 refresh_token
     let local_refresh_token = match crate::utils::protobuf::extract_refresh_token(&blob) {
         Some(token) if !token.is_empty() => token,
         _ => return Ok(None),
     };
-    
+
     // 获取当前 Tools 记录的账号 ID
     let current_account_id = modules::get_current_account_id().ok().flatten();
-    
+
     // 遍历账号列表，查找匹配的 refresh_token
     let accounts = modules::list_accounts()?;
-    
+
     for account in &accounts {
         if account.token.refresh_token == local_refresh_token {
             // 找到匹配账号
@@ -298,7 +303,7 @@ pub async fn sync_current_from_client() -> Result<Option<String>, String> {
             }
         }
     }
-    
+
     // 未找到匹配账号（可能是新账号，未导入到 Tools）
     modules::logger::log_info("[SyncClient] 本地客户端账号未在 Tools 中找到");
     Ok(None)

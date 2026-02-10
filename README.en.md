@@ -3,6 +3,8 @@
 English · [简体中文](README.md)
 
 [![GitHub stars](https://img.shields.io/github/stars/jlcodes99/cockpit-tools?style=flat&color=gold)](https://github.com/jlcodes99/cockpit-tools)
+[![GitHub downloads](https://img.shields.io/github/downloads/jlcodes99/cockpit-tools/total?style=flat&color=blue)](https://github.com/jlcodes99/cockpit-tools/releases)
+[![GitHub release](https://img.shields.io/github/v/release/jlcodes99/cockpit-tools?style=flat)](https://github.com/jlcodes99/cockpit-tools/releases)
 [![GitHub issues](https://img.shields.io/github/issues/jlcodes99/cockpit-tools)](https://github.com/jlcodes99/cockpit-tools/issues)
 [![License](https://img.shields.io/github/license/jlcodes99/cockpit-tools)](https://github.com/jlcodes99/cockpit-tools)
 
@@ -92,6 +94,59 @@ Manage VS Code Copilot instances with isolated profiles and lifecycle controls.
 - **Personalized Settings**: Theme switching, language settings, auto-refresh interval
 
 > ![Settings](docs/images/settings_page.png)
+
+---
+
+## Security & Privacy (Plain-English)
+
+These are the most common security questions answered directly:
+
+- **This is a local desktop tool**: it does not require a separate cloud account for this project, and it does not rely on a project-hosted cloud account storage.
+- **Data is mainly stored on your machine**:
+  - `~/.antigravity_cockpit`: Antigravity accounts, configs, WebSocket status, etc.
+  - `~/.codex`: official Codex current login `auth.json`
+  - local app data folder under `com.antigravity.cockpit-tools`: Codex / GitHub Copilot multi-account index data, etc.
+- **WebSocket is local-only by default**: binds to `127.0.0.1`, default port `19528`; you can disable it or change the port in Settings.
+- **When network access happens**: OAuth login, token refresh, quota fetching, update checks, and other official API requests.
+- **Practical safety tips**:
+  1. If you do not need plugin integration, disable WebSocket.
+  2. Do not share your full user directory directly; redact token files before backup/share.
+  3. On shared/public computers, remove accounts and quit the app after use.
+
+## Settings Guide (Beginner Friendly)
+
+If you want a stable setup with minimal tuning, follow the "Recommended" values.
+
+### General Settings
+
+| Setting | What it does (simple) | Recommended | When to change |
+| --- | --- | --- | --- |
+| Display Language | Changes UI language | Your native/comfortable language | Only if current language is hard to read |
+| Theme | Light/dark appearance | System | Use dark mode for long night sessions |
+| Window Close Behavior | What happens when clicking close | Ask every time | Choose "Minimize to tray" if you want background running |
+| Antigravity Auto Refresh | Periodically updates Antigravity quota | 5-10 minutes | Use 2 minutes if you need near real-time updates |
+| Codex Auto Refresh | Periodically updates Codex quota | 5-10 minutes | Same as above |
+| Data Directory | Where account/config files are stored | Keep default | Only for troubleshooting or backups |
+| Antigravity/Codex/VS Code/OpenCode App Path | Manually set executable path | Leave empty (auto-detect) | Change only if auto-detect fails or you use custom install paths |
+| Auto-restart OpenCode on Codex switch | Sync OpenCode auth after Codex switch | ON if you use OpenCode; otherwise OFF | Enable for frequent Codex switching with OpenCode |
+
+Notes:
+- Smaller refresh intervals mean more frequent requests.
+- If quota-reset wake-up tasks are enabled, some minimum refresh limits may apply (UI will show hints).
+
+### Network Settings
+
+| Setting | What it does (simple) | Recommended | Risk / Notes |
+| --- | --- | --- | --- |
+| WebSocket Service | Real-time local integration for plugins/clients | OFF if not needed | Still local-only (`127.0.0.1`) when enabled |
+| Preferred Port | Listening port for WebSocket | Default `19528` | Change only on conflict; restart required after save |
+| Current Running Port | The actual active port | Read-only info | May differ if preferred port is occupied |
+
+### 3 Ready-to-Use Presets
+
+1. **Stable default**: 10-min refresh, WebSocket OFF (if no plugin), keep default paths.  
+2. **Frequent switching**: 2-5 min refresh, WebSocket ON if needed, OpenCode sync ON.  
+3. **Security-first**: WebSocket OFF, do not share user directory, remove unused accounts regularly.  
 
 ---
 

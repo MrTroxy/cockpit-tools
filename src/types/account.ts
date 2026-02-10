@@ -38,6 +38,7 @@ export interface QuotaErrorInfo {
 
 export interface ModelQuota {
     name: string;
+    display_name?: string;
     percentage: number;
     reset_time: string;
 }

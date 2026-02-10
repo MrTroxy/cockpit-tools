@@ -34,23 +34,30 @@ pub async fn codex_list_instances() -> Result<Vec<InstanceProfileView>, String> 
     let default_dir_str = default_dir.to_string_lossy().to_string();
 
     let default_settings = store.default_settings.clone();
+    let process_entries = modules::process::collect_codex_process_entries();
     let mut result: Vec<InstanceProfileView> = store
         .instances
         .into_iter()
         .map(|instance| {
-            let running = instance
-                .last_pid
-                .map(modules::process::is_pid_running)
-                .unwrap_or(false);
+            let resolved_pid = modules::process::resolve_codex_pid_from_entries(
+                instance.last_pid,
+                Some(&instance.user_data_dir),
+                &process_entries,
+            );
+            let running = resolved_pid.is_some();
             let initialized = is_profile_initialized(&instance.user_data_dir);
-            InstanceProfileView::from_profile(instance, running, initialized)
+            let mut view = InstanceProfileView::from_profile(instance, running, initialized);
+            view.last_pid = resolved_pid;
+            view
         })
         .collect();
 
-    let default_running = default_settings
-        .last_pid
-        .map(modules::process::is_pid_running)
-        .unwrap_or(false);
+    let default_pid = modules::process::resolve_codex_pid_from_entries(
+        default_settings.last_pid,
+        None,
+        &process_entries,
+    );
+    let default_running = default_pid.is_some();
     let default_bind_account_id = resolve_default_account_id(&default_settings);
     result.push(InstanceProfileView {
         id: DEFAULT_INSTANCE_ID.to_string(),
@@ -60,7 +67,7 @@ pub async fn codex_list_instances() -> Result<Vec<InstanceProfileView>, String> 
         bind_account_id: default_bind_account_id,
         created_at: 0,
         last_launched_at: None,
-        last_pid: default_settings.last_pid,
+        last_pid: default_pid,
         running: default_running,
         initialized: modules::instance::is_profile_initialized(&default_dir),
         is_default: true,
@@ -174,6 +181,10 @@ pub async fn codex_start_instance(instance_id: String) -> Result<InstanceProfile
         let default_dir_str = default_dir.to_string_lossy().to_string();
         let default_settings = modules::codex_instance::load_default_settings()?;
         let default_bind_account_id = resolve_default_account_id(&default_settings);
+        if let Some(pid) = modules::process::resolve_codex_pid(default_settings.last_pid, None) {
+            modules::process::close_pid(pid, 20)?;
+            let _ = modules::codex_instance::update_default_pid(None)?;
+        }
         if let Some(ref account_id) = default_bind_account_id {
             modules::codex_instance::inject_account_to_profile(&default_dir, account_id).await?;
         }
@@ -203,6 +214,14 @@ pub async fn codex_start_instance(instance_id: String) -> Result<InstanceProfile
         .find(|item| item.id == instance_id)
         .ok_or("实例不存在")?;
 
+    if let Some(pid) = modules::process::resolve_codex_pid(
+        instance.last_pid,
+        Some(&instance.user_data_dir),
+    ) {
+        modules::process::close_pid(pid, 20)?;
+        let _ = modules::codex_instance::update_instance_pid(&instance.id, None)?;
+    }
+
     if let Some(ref account_id) = instance.bind_account_id {
         modules::codex_instance::inject_account_to_profile(Path::new(&instance.user_data_dir), account_id).await?;
     }
@@ -221,10 +240,10 @@ pub async fn codex_stop_instance(instance_id: String) -> Result<InstanceProfileV
         let default_dir = modules::codex_instance::get_default_codex_home()?;
         let default_dir_str = default_dir.to_string_lossy().to_string();
         let default_settings = modules::codex_instance::load_default_settings()?;
-        if let Some(pid) = default_settings.last_pid {
+        if let Some(pid) = modules::process::resolve_codex_pid(default_settings.last_pid, None) {
             modules::process::close_pid(pid, 20)?;
-            let _ = modules::codex_instance::update_default_pid(None)?;
         }
+        let _ = modules::codex_instance::update_default_pid(None)?;
         let running = false;
         let default_bind_account_id = resolve_default_account_id(&default_settings);
         return Ok(InstanceProfileView {
@@ -250,7 +269,10 @@ pub async fn codex_stop_instance(instance_id: String) -> Result<InstanceProfileV
         .find(|item| item.id == instance_id)
         .ok_or("实例不存在")?;
 
-    if let Some(pid) = instance.last_pid {
+    if let Some(pid) = modules::process::resolve_codex_pid(
+        instance.last_pid,
+        Some(&instance.user_data_dir),
+    ) {
         modules::process::close_pid(pid, 20)?;
     }
     let updated = modules::codex_instance::update_instance_pid(&instance.id, None)?;
@@ -259,51 +281,19 @@ pub async fn codex_stop_instance(instance_id: String) -> Result<InstanceProfileV
 }
 
 #[tauri::command]
-pub async fn codex_force_stop_instance(instance_id: String) -> Result<InstanceProfileView, String> {
-    if instance_id == DEFAULT_INSTANCE_ID {
-        let default_dir = modules::codex_instance::get_default_codex_home()?;
-        let default_dir_str = default_dir.to_string_lossy().to_string();
-        let default_settings = modules::codex_instance::load_default_settings()?;
-        if let Some(pid) = default_settings.last_pid {
-            modules::process::force_kill_pid(pid)?;
-            let _ = modules::codex_instance::update_default_pid(None)?;
-        }
-        let running = false;
-        let default_bind_account_id = resolve_default_account_id(&default_settings);
-        return Ok(InstanceProfileView {
-            id: DEFAULT_INSTANCE_ID.to_string(),
-            name: String::new(),
-            user_data_dir: default_dir_str,
-            extra_args: default_settings.extra_args,
-            bind_account_id: default_bind_account_id,
-            created_at: 0,
-            last_launched_at: None,
-            last_pid: None,
-            running,
-            initialized: modules::instance::is_profile_initialized(&default_dir),
-            is_default: true,
-            follow_local_account: default_settings.follow_local_account,
-        });
-    }
-
-    let store = modules::codex_instance::load_instance_store()?;
-    let instance = store
-        .instances
-        .into_iter()
-        .find(|item| item.id == instance_id)
-        .ok_or("实例不存在")?;
-
-    if let Some(pid) = instance.last_pid {
-        modules::process::force_kill_pid(pid)?;
-    }
-    let updated = modules::codex_instance::update_instance_pid(&instance.id, None)?;
-    let initialized = is_profile_initialized(&updated.user_data_dir);
-    Ok(InstanceProfileView::from_profile(updated, false, initialized))
-}
-
-#[tauri::command]
 pub async fn codex_close_all_instances() -> Result<(), String> {
-    modules::process::close_codex(20)?;
+    let store = modules::codex_instance::load_instance_store()?;
+    let default_home = modules::codex_instance::get_default_codex_home()?;
+    let mut target_homes: Vec<String> = Vec::new();
+    target_homes.push(default_home.to_string_lossy().to_string());
+    for instance in &store.instances {
+        let home = instance.user_data_dir.trim();
+        if !home.is_empty() {
+            target_homes.push(home.to_string());
+        }
+    }
+
+    modules::process::close_codex_instances(&target_homes, 20)?;
     let _ = modules::codex_instance::clear_all_pids();
     Ok(())
 }
@@ -311,8 +301,15 @@ pub async fn codex_close_all_instances() -> Result<(), String> {
 #[tauri::command]
 pub async fn codex_open_instance_window(instance_id: String) -> Result<(), String> {
     if instance_id == DEFAULT_INSTANCE_ID {
-        let pid = modules::process::start_codex_default()?;
-        let _ = modules::codex_instance::update_default_pid(Some(pid))?;
+        let default_settings = modules::codex_instance::load_default_settings()?;
+        if let Err(err) = modules::process::focus_codex_instance(default_settings.last_pid, None) {
+            modules::logger::log_warn(&format!(
+                "定位 Codex 默认实例窗口失败，回退为启动实例: {}",
+                err
+            ));
+            let pid = modules::process::start_codex_default()?;
+            let _ = modules::codex_instance::update_default_pid(Some(pid))?;
+        }
         return Ok(());
     }
 
@@ -323,8 +320,17 @@ pub async fn codex_open_instance_window(instance_id: String) -> Result<(), Strin
         .find(|item| item.id == instance_id)
         .ok_or("实例不存在")?;
 
-    let extra_args = modules::process::parse_extra_args(&instance.extra_args);
-    let pid = modules::process::start_codex_with_args(&instance.user_data_dir, &extra_args)?;
-    let _ = modules::codex_instance::update_instance_after_start(&instance.id, pid)?;
+    if let Err(err) = modules::process::focus_codex_instance(
+        instance.last_pid,
+        Some(&instance.user_data_dir),
+    ) {
+        modules::logger::log_warn(&format!(
+            "定位 Codex 实例窗口失败，回退为启动实例: instance_id={}, err={}",
+            instance.id, err
+        ));
+        let extra_args = modules::process::parse_extra_args(&instance.extra_args);
+        let pid = modules::process::start_codex_with_args(&instance.user_data_dir, &extra_args)?;
+        let _ = modules::codex_instance::update_instance_after_start(&instance.id, pid)?;
+    }
     Ok(())
 }

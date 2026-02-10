@@ -1,13 +1,15 @@
 {
   "name": "cockpit-tools",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.6.10",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "prebuild": "npm run typecheck",
     "build": "npm run sync-version && tsc && vite build",
+    "release:preflight": "node scripts/release/preflight.cjs",
+    "release:checksums": "node scripts/release/gen_checksums.cjs",
     "preview": "vite preview",
     "pretauri": "npm run typecheck",
     "tauri": "npm run sync-version && tauri",

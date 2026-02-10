@@ -61,6 +61,12 @@ import {
 import { OverviewTabsHeader } from '../components/OverviewTabsHeader'
 import styles from '../styles/CompactView.module.css'
 import { FileCorruptedModal, parseFileCorruptedError, type FileCorruptedError } from '../components/FileCorruptedModal'
+import { QuickSettingsPopover } from '../components/QuickSettingsPopover'
+import {
+  isPrivacyModeEnabledByDefault,
+  maskSensitiveValue,
+  persistPrivacyModeEnabled
+} from '../utils/privacy'
 
 interface AccountsPageProps {
   onNavigate?: (page: Page) => void
@@ -108,12 +114,28 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
       ? saved
       : 'grid'
   })
+  const [privacyModeEnabled, setPrivacyModeEnabled] = useState<boolean>(() =>
+    isPrivacyModeEnabledByDefault()
+  )
 
   // Persist view mode changes
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode)
     localStorage.setItem('accountsViewMode', mode)
   }
+
+  const togglePrivacyMode = () => {
+    setPrivacyModeEnabled((prev) => {
+      const next = !prev
+      persistPrivacyModeEnabled(next)
+      return next
+    })
+  }
+
+  const maskAccountText = useCallback(
+    (value?: string | null) => maskSensitiveValue(value, privacyModeEnabled),
+    [privacyModeEnabled]
+  )
 
   // 筛选
   const [searchQuery, setSearchQuery] = useState('')
@@ -866,7 +888,7 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
     try {
       const account = await switchAccount(accountId)
       await fetchCurrentAccount()
-      setMessage({ text: t('messages.switched', { email: account.email }) })
+      setMessage({ text: t('messages.switched', { email: maskAccountText(account.email) }) })
     } catch (e) {
       setMessage({
         text: t('messages.switchFailed', { error: String(e) }),
@@ -914,7 +936,9 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
       await refreshQuota(imported.id)
       await fetchAccounts()
       setAddStatus('success')
-      setAddMessage(t('messages.importLocalSuccess', { email: imported.email }))
+      setAddMessage(
+        t('messages.importLocalSuccess', { email: maskAccountText(imported.email) })
+      )
       setTimeout(() => {
         setShowAddModal(false)
         resetAddModalState()
@@ -1351,8 +1375,8 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
                 onChange={() => toggleSelect(account.id)}
               />
             </div>
-            <span className="account-email" title={account.email}>
-              {account.email}
+            <span className="account-email" title={maskAccountText(account.email)}>
+              {maskAccountText(account.email)}
             </span>
             {isCurrent && (
               <span className="current-tag">
@@ -1625,7 +1649,7 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
             onClick={() => {
               if (!switching) toggleSelect(account.id)
             }}
-            title={account.email}
+            title={maskAccountText(account.email)}
             style={{ pointerEvents: switching ? 'none' : undefined }}
           >
             <input
@@ -1645,7 +1669,9 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
                   !
                 </span>
               )}
-              <span className={styles.emailText}>{account.email}</span>
+              <span className={styles.emailText}>
+                {maskAccountText(account.email)}
+              </span>
             </span>
             <div className={styles.quotas}>
               {groupQuotas.length > 0 ? (
@@ -1858,8 +1884,8 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
           <td>
             <div className="account-cell">
               <div className="account-main-line">
-                <span className="account-email-text" title={account.email}>
-                  {account.email}
+                <span className="account-email-text" title={maskAccountText(account.email)}>
+                  {maskAccountText(account.email)}
                 </span>
                 {isCurrent && (
                   <span className="mini-tag current">
@@ -2267,6 +2293,22 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
             </button>
             <button
               className="btn btn-secondary icon-only"
+              onClick={togglePrivacyMode}
+              title={
+                privacyModeEnabled
+                  ? t('privacy.showSensitive', '显示邮箱')
+                  : t('privacy.hideSensitive', '隐藏邮箱')
+              }
+              aria-label={
+                privacyModeEnabled
+                  ? t('privacy.showSensitive', '显示邮箱')
+                  : t('privacy.hideSensitive', '隐藏邮箱')
+              }
+            >
+              {privacyModeEnabled ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+            <button
+              className="btn btn-secondary icon-only"
               onClick={() => setShowGroupModal(true)}
               title={t('group_settings.title', '分组管理')}
               aria-label={t('group_settings.title', '分组管理')}
@@ -2309,6 +2351,7 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
                 <Trash2 size={14} />
               </button>
             )}
+            <QuickSettingsPopover type="antigravity" />
           </div>
         </div>
 
@@ -2650,8 +2693,9 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
                 <Trans
                   i18nKey="modals.fingerprint.desc"
                   values={{
-                    email: accounts.find((a) => a.id === showFpSelectModal)
-                      ?.email
+                    email: maskAccountText(
+                      accounts.find((a) => a.id === showFpSelectModal)?.email
+                    )
                   }}
                   components={{ 1: <strong></strong> }}
                 />
@@ -2770,7 +2814,7 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
                     <div className="quota-list">
                       {account.quota.models.map((model) => (
                         <div key={model.name} className="quota-card">
-                          <h4>{model.name}</h4>
+                          <h4>{model.display_name?.trim() || model.name}</h4>
                           <div className="quota-value-row">
                             <span
                               className={`quota-value ${getQuotaClass(model.percentage)}`}
@@ -2862,7 +2906,7 @@ export function AccountsPage({ onNavigate }: AccountsPageProps) {
                     <div className="error-detail">
                       <div className="error-detail-meta">
                         <span>
-                          {t('modals.errors.account')}: {account.email}
+                          {t('modals.errors.account')}: {maskAccountText(account.email)}
                         </span>
                         {errorInfo.code && (
                           <span>
