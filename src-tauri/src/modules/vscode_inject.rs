@@ -13,8 +13,10 @@
 //! re-encrypts, and writes back.
 
 use std::path::{Path, PathBuf};
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 use std::process::Command;
 
+#[cfg(not(target_os = "windows"))]
 use aes::Aes128;
 #[cfg(target_os = "windows")]
 use aes_gcm::aead::generic_array::GenericArray;
@@ -24,10 +26,14 @@ use aes_gcm::aead::{Aead, AeadCore, OsRng};
 use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
 #[cfg(target_os = "windows")]
 use base64::{engine::general_purpose, Engine as _};
+#[cfg(not(target_os = "windows"))]
 use cbc::cipher::block_padding::Pkcs7;
+#[cfg(not(target_os = "windows"))]
 use cbc::cipher::{BlockDecryptMut, BlockEncryptMut, KeyIvInit};
+#[cfg(not(target_os = "windows"))]
 use pbkdf2::pbkdf2_hmac;
 use rusqlite::Connection;
+#[cfg(not(target_os = "windows"))]
 use sha1::Sha1;
 
 #[cfg(target_os = "windows")]
@@ -35,12 +41,16 @@ use windows::Win32::Foundation::{LocalFree, HLOCAL};
 #[cfg(target_os = "windows")]
 use windows::Win32::Security::Cryptography::{CryptUnprotectData, CRYPT_INTEGER_BLOB};
 
+#[cfg(not(target_os = "windows"))]
 type Aes128CbcEnc = cbc::Encryptor<Aes128>;
+#[cfg(not(target_os = "windows"))]
 type Aes128CbcDec = cbc::Decryptor<Aes128>;
 
 const V10_PREFIX: &[u8] = b"v10";
 const V11_PREFIX: &[u8] = b"v11";
+#[cfg(not(target_os = "windows"))]
 const CBC_IV: [u8; 16] = [b' '; 16];
+#[cfg(not(target_os = "windows"))]
 const SALT: &[u8] = b"saltysalt";
 
 // PBKDF2-HMAC-SHA1(1 iteration, key = "peanuts", salt = "saltysalt")
@@ -233,6 +243,7 @@ fn encrypt_windows_gcm_v10(key: &[u8], plaintext: &[u8]) -> Result<Vec<u8>, Stri
     Ok(result)
 }
 
+#[cfg(not(target_os = "windows"))]
 fn decrypt_cbc_prefixed(
     encrypted: &[u8],
     expected_prefix: &[u8],
@@ -255,6 +266,7 @@ fn decrypt_cbc_prefixed(
     Ok(plaintext)
 }
 
+#[cfg(not(target_os = "windows"))]
 fn encrypt_cbc_prefixed(
     prefix: &[u8],
     key: &[u8; 16],
@@ -278,6 +290,7 @@ fn encrypt_cbc_prefixed(
     Ok(result)
 }
 
+#[cfg(not(target_os = "windows"))]
 fn pbkdf2_sha1_key(password: &str, iterations: u32) -> [u8; 16] {
     let mut key = [0u8; 16];
     pbkdf2_hmac::<Sha1>(password.as_bytes(), SALT, iterations, &mut key);

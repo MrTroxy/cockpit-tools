@@ -3046,6 +3046,7 @@ pub fn start_codex_default() -> Result<u32, String> {
 }
 
 /// 关闭 Codex 进程（仅 macOS）
+#[allow(dead_code)]
 pub fn close_codex(timeout_secs: u64) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
