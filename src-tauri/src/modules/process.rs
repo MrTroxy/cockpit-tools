@@ -20,6 +20,18 @@ const VSCODE_APP_PATH: &str = "/Applications/Visual Studio Code.app/Contents/Mac
 const CREATE_NEW_PROCESS_GROUP: u32 = 0x0000_0200;
 #[cfg(target_os = "windows")]
 const DETACHED_PROCESS: u32 = 0x0000_0008;
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
+#[cfg(target_os = "windows")]
+fn powershell_output(args: &[&str]) -> std::io::Result<std::process::Output> {
+    use std::os::windows::process::CommandExt;
+
+    Command::new("powershell")
+        .creation_flags(CREATE_NO_WINDOW)
+        .args(args)
+        .output()
+}
 
 fn should_detach_child() -> bool {
     if let Ok(value) = std::env::var("COCKPIT_CHILD_LOGS") {
@@ -1029,13 +1041,11 @@ fn collect_antigravity_process_entries_from_ps() -> Vec<(u32, Option<String>)> {
 #[cfg(target_os = "windows")]
 fn collect_antigravity_process_entries_from_powershell() -> Vec<(u32, Option<String>)> {
     let mut result = Vec::new();
-    let output = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-Command",
-            "Get-CimInstance Win32_Process -Filter \"Name='Antigravity.exe'\" | ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }",
-        ])
-        .output();
+    let output = powershell_output(&[
+        "-NoProfile",
+        "-Command",
+        "Get-CimInstance Win32_Process -Filter \"Name='Antigravity.exe'\" | ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }",
+    ]);
     let output = match output {
         Ok(value) => value,
         Err(_) => return result,
@@ -1285,9 +1295,7 @@ public class Win32 {{
         "[Focus] Windows PowerShell start pid={}",
         pid
     ));
-    let output = Command::new("powershell")
-        .args(["-NoProfile", "-Command", &command])
-        .output()
+    let output = powershell_output(&["-NoProfile", "-Command", &command])
         .map_err(|e| format!("调用 PowerShell 失败: {}", e))?;
     if output.status.success() {
         crate::modules::logger::log_info(&format!(
@@ -1527,13 +1535,11 @@ pub fn collect_vscode_process_entries() -> Vec<(u32, Option<String>)> {
 
     #[cfg(target_os = "windows")]
     {
-        let output = Command::new("powershell")
-            .args([
-                "-NoProfile",
-                "-Command",
-                "Get-CimInstance Win32_Process -Filter \"Name='Code.exe'\" | ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }",
-            ])
-            .output();
+        let output = powershell_output(&[
+            "-NoProfile",
+            "-Command",
+            "Get-CimInstance Win32_Process -Filter \"Name='Code.exe'\" | ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }",
+        ]);
         if let Ok(output) = output {
             let stdout = String::from_utf8_lossy(&output.stdout);
             for line in stdout.lines() {
@@ -1875,13 +1881,11 @@ fn collect_antigravity_process_entries_macos() -> Vec<(u32, Option<String>)> {
 #[cfg(target_os = "windows")]
 fn list_user_data_dirs_from_powershell() -> Vec<String> {
     let mut result = Vec::new();
-    let output = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-Command",
-            "Get-CimInstance Win32_Process -Filter \"Name='Antigravity.exe'\" | Select-Object -Expand CommandLine",
-        ])
-        .output();
+    let output = powershell_output(&[
+        "-NoProfile",
+        "-Command",
+        "Get-CimInstance Win32_Process -Filter \"Name='Antigravity.exe'\" | Select-Object -Expand CommandLine",
+    ]);
     let output = match output {
         Ok(value) => value,
         Err(_) => return result,
@@ -2046,13 +2050,11 @@ fn collect_antigravity_pids_by_user_data_dir(user_data_dir: &str) -> Vec<u32> {
 
     #[cfg(target_os = "windows")]
     {
-        let output = Command::new("powershell")
-            .args([
-                "-NoProfile",
-                "-Command",
-                "Get-CimInstance Win32_Process -Filter \"Name='Antigravity.exe'\" | ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }",
-            ])
-            .output();
+        let output = powershell_output(&[
+            "-NoProfile",
+            "-Command",
+            "Get-CimInstance Win32_Process -Filter \"Name='Antigravity.exe'\" | ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }",
+        ]);
         if let Ok(output) = output {
             let stdout = String::from_utf8_lossy(&output.stdout);
             for line in stdout.lines() {
@@ -3628,13 +3630,11 @@ fn get_vscode_pids() -> Vec<u32> {
 
     #[cfg(target_os = "windows")]
     {
-        let output = Command::new("powershell")
-            .args([
-                "-NoProfile",
-                "-Command",
-                "Get-CimInstance Win32_Process -Filter \"Name='Code.exe'\" | ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }",
-            ])
-            .output();
+        let output = powershell_output(&[
+            "-NoProfile",
+            "-Command",
+            "Get-CimInstance Win32_Process -Filter \"Name='Code.exe'\" | ForEach-Object { \"$($_.ProcessId)|$($_.CommandLine)\" }",
+        ]);
         if let Ok(output) = output {
             let stdout = String::from_utf8_lossy(&output.stdout);
             for line in stdout.lines() {

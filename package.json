@@ -8,6 +8,8 @@
     "typecheck": "tsc --noEmit",
     "prebuild": "npm run typecheck",
     "build": "npm run sync-version && tsc && vite build",
+    "release:preflight": "node scripts/release/preflight.cjs",
+    "release:checksums": "node scripts/release/gen_checksums.cjs",
     "preview": "vite preview",
     "pretauri": "npm run typecheck",
     "tauri": "npm run sync-version && tauri",
